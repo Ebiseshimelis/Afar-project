@@ -7,6 +7,7 @@ use App\Models\Tender;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class TenderController extends Controller
@@ -32,21 +33,31 @@ class TenderController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        if (!$request->user()?->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
         $validated = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
             'title'       => ['required', 'array'],
             'content'     => ['required', 'array'],
-            'file_path'   => ['required', 'string'],
+            'file'        => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:2048'],
             'opens_at'    => ['required', 'date'],
             'closes_at'   => ['required', 'date', 'after:opens_at'],
             'status'      => ['required', 'in:draft,published'],
         ]);
 
         try {
-            $tender = Tender::create([
+            $payload = [
                 ...$validated,
                 'created_by' => $request->user()->id,
-            ]);
+            ];
+
+            if ($request->hasFile('file')) {
+                $payload['file_path'] = $request->file('file')->store('tenders', 'public');
+            }
+
+            $tender = Tender::create($payload);
 
             return response()->json(['message' => 'Tender published.', 'data' => $tender], 201);
         } catch (Throwable $e) {
@@ -61,16 +72,30 @@ class TenderController extends Controller
 
     public function update(Request $request, Tender $tender): JsonResponse
     {
+        if (!$request->user()?->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
         $validated = $request->validate([
             'title'     => ['sometimes', 'array'],
             'content'   => ['sometimes', 'array'],
-            'file_path' => ['sometimes', 'string'],
+            'file'      => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png,webp', 'max:2048'],
             'closes_at' => ['sometimes', 'date'],
             'status'    => ['sometimes', 'in:draft,published'],
         ]);
 
         try {
-            $tender->update($validated);
+            $payload = $validated;
+
+            if ($request->hasFile('file')) {
+                if ($tender->file_path && Storage::disk('public')->exists($tender->file_path)) {
+                    Storage::disk('public')->delete($tender->file_path);
+                }
+
+                $payload['file_path'] = $request->file('file')->store('tenders', 'public');
+            }
+
+            $tender->update($payload);
             return response()->json(['message' => 'Tender updated.', 'data' => $tender], 200);
         } catch (Throwable $e) {
             return response()->json(['message' => 'Failed to update tender.'], 500);

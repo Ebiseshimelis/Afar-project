@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreNewsRequest extends FormRequest
+class StoreEventRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,13 +16,11 @@ class StoreNewsRequest extends FormRequest
         return [
             'category_id' => ['required', 'exists:categories,id'],
             'title' => ['required', 'array'],
-            'title.en' => ['required', 'string', 'max:255'],
-            'title.am' => ['required', 'string', 'max:255'],
             'content' => ['required', 'array'],
-            'content.en' => ['required', 'string'],
-            'content.am' => ['required', 'string'],
+            'location' => ['nullable', 'string', 'max:255'],
+            'start_at' => ['required', 'date'],
+            'end_at' => ['required', 'date', 'after:start_at'],
             'status' => ['required', 'in:draft,published'],
-            'published_at' => ['nullable', 'date'],
         ];
     }
 }

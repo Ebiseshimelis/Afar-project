@@ -5,7 +5,7 @@ namespace App\Http\Resources\Api;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class NewsResource extends JsonResource
+class EventResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -21,6 +21,8 @@ class NewsResource extends JsonResource
             ] : null,
             'title' => $this->title,
             'content' => $this->content,
+            'start_at' => $this->start_at?->toIso8601String(),
+            'end_at' => $this->end_at?->toIso8601String(),
             'status' => $this->status,
             'published_at' => $this->published_at?->toIso8601String(),
             'media' => $this->whenLoaded('media') ? MediaResource::collection($this->media) : [],

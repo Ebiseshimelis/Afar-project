@@ -17,6 +17,7 @@ class News extends Model
         'created_by',
         'title',
         'content',
+        'image_path',
         'status',
         'published_at',
     ];

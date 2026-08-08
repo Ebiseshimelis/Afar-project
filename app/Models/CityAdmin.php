@@ -4,27 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CityAdmin extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'city_administrations';
+
     protected $fillable = [
-        'category_id',
-        'title',
-        'content',
-        'file_path',
+        'name',
+        'description',
+        'mayor_name',
+        'location',
+        'email',
+        'phone',
+        'image_path',
     ];
 
     protected $casts = [
-        'title' => 'array',
-        'content' => 'array',
+        'name' => 'array',
+        'description' => 'array',
     ];
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
-    }
 }

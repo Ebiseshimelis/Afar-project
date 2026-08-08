@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreNewsRequest;
+use App\Http\Requests\UpdateNewsRequest;
 use App\Models\News;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class NewsController extends Controller
@@ -38,25 +41,25 @@ class NewsController extends Controller
         }
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreNewsRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'category_id'  => ['required', 'exists:categories,id'],
-            'title'        => ['required', 'array'],
-            'title.en'     => ['required', 'string', 'max:255'],
-            'title.am'     => ['required', 'string', 'max:255'],
-            'content'      => ['required', 'array'],
-            'content.en'   => ['required', 'string'],
-            'content.am'   => ['required', 'string'],
-            'status'       => ['required', 'in:draft,published'],
-            'published_at' => ['nullable', 'date'],
-        ]);
+        if (!$request->user()?->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $validated = $request->validated();
 
         try {
-            $news = DB::transaction(fn() => News::create([
+            $payload = [
                 ...$validated,
                 'created_by' => $request->user()->id,
-            ]));
+            ];
+
+            if ($request->hasFile('image')) {
+                $payload['image_path'] = $request->file('image')->store('news', 'public');
+            }
+
+            $news = DB::transaction(fn() => News::create($payload));
 
             return response()->json(['message' => 'News created successfully.', 'data' => $news->load(['category', 'author'])], 201);
         } catch (Throwable $e) {
@@ -70,18 +73,26 @@ class NewsController extends Controller
         return response()->json(['data' => $news->load(['category', 'author', 'media'])], 200);
     }
 
-    public function update(Request $request, News $news): JsonResponse
+    public function update(UpdateNewsRequest $request, News $news): JsonResponse
     {
-        $validated = $request->validate([
-            'category_id'  => ['sometimes', 'exists:categories,id'],
-            'title'        => ['sometimes', 'array'],
-            'content'      => ['sometimes', 'array'],
-            'status'       => ['sometimes', 'in:draft,published'],
-            'published_at' => ['nullable', 'date'],
-        ]);
+        if (!$request->user()?->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $validated = $request->validated();
 
         try {
-            DB::transaction(fn() => $news->update($validated));
+            $payload = $validated;
+
+            if ($request->hasFile('image')) {
+                if ($news->image_path && Storage::disk('public')->exists($news->image_path)) {
+                    Storage::disk('public')->delete($news->image_path);
+                }
+
+                $payload['image_path'] = $request->file('image')->store('news', 'public');
+            }
+
+            DB::transaction(fn() => $news->update($payload));
             return response()->json(['message' => 'News updated successfully.', 'data' => $news->fresh(['category', 'author'])], 200);
         } catch (Throwable $e) {
             Log::error('News Update Error: ' . $e->getMessage());

@@ -3,6 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Directorate;
+use App\Models\CityAdmin;
+use App\Models\Category;
+use App\Models\News;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,11 +19,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
+        // Create test user (needed for news created_by)
+        $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Create categories (needed for news)
+        Category::factory(5)->create();
+
+        // Create news
+        News::factory(10)->create([
+            'created_by' => $user->id,
+        ]);
+
+        // Create city administrations
+        CityAdmin::factory(5)->create();
+
+        // Create directorates
+        Directorate::factory(10)->create();
     }
 }

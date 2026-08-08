@@ -17,6 +17,8 @@ class Event extends Model
         'created_by',
         'title',
         'content',
+        'image_path',
+        'location',
         'start_at',
         'end_at',
         'status',

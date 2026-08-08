@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreEventRequest;
+use App\Http\Requests\UpdateEventRequest;
 use App\Models\Event;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class EventController extends Controller
@@ -35,22 +38,25 @@ class EventController extends Controller
         }
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreEventRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'category_id' => ['required', 'exists:categories,id'],
-            'title'       => ['required', 'array'],
-            'content'     => ['required', 'array'],
-            'start_at'    => ['required', 'date'],
-            'end_at'      => ['required', 'date', 'after:start_at'],
-            'status'      => ['required', 'in:draft,published'],
-        ]);
+        if (!$request->user()?->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $validated = $request->validated();
 
         try {
-            $event = DB::transaction(fn() => Event::create([
+            $payload = [
                 ...$validated,
                 'created_by' => $request->user()->id,
-            ]));
+            ];
+
+            if ($request->hasFile('image')) {
+                $payload['image_path'] = $request->file('image')->store('events', 'public');
+            }
+
+            $event = DB::transaction(fn() => Event::create($payload));
 
             return response()->json(['message' => 'Event created.', 'data' => $event], 201);
         } catch (Throwable $e) {
@@ -64,19 +70,26 @@ class EventController extends Controller
         return response()->json(['data' => $event->load(['category', 'author', 'media'])], 200);
     }
 
-    public function update(Request $request, Event $event): JsonResponse
+    public function update(UpdateEventRequest $request, Event $event): JsonResponse
     {
-        $validated = $request->validate([
-            'category_id' => ['sometimes', 'exists:categories,id'],
-            'title'       => ['sometimes', 'array'],
-            'content'     => ['sometimes', 'array'],
-            'start_at'    => ['sometimes', 'date'],
-            'end_at'      => ['sometimes', 'date'],
-            'status'      => ['sometimes', 'in:draft,published'],
-        ]);
+        if (!$request->user()?->isAdmin()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $validated = $request->validated();
 
         try {
-            $event->update($validated);
+            $payload = $validated;
+
+            if ($request->hasFile('image')) {
+                if ($event->image_path && Storage::disk('public')->exists($event->image_path)) {
+                    Storage::disk('public')->delete($event->image_path);
+                }
+
+                $payload['image_path'] = $request->file('image')->store('events', 'public');
+            }
+
+            $event->update($payload);
             return response()->json(['message' => 'Event updated.', 'data' => $event], 200);
         } catch (Throwable $e) {
             Log::error('Event Update Error: ' . $e->getMessage());
