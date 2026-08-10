@@ -76,7 +76,7 @@ class PortalContentSeeder extends Seeder
 
         $cities = [
             ['Semera City Administration', 'Mayor Ahmed Hassan', '033-666-1001', 'semera@afarudcb.gov.et', '/samara.jpg'],
-            ['Logia City Administration', 'Mayor Ali Mohammed', '033-666-1002', 'logia@afarudcb.gov.et', "/ab'ala.jpg"],
+            ['Abala City Administration', 'Mayor Ali Mohammed', '033-666-1002', 'Abala@afarudcb.gov.et', "/ab'ala.jpg"],
             ['Awash City Administration', 'Mayor Kedir Ibrahim', '033-666-1003', 'awash@afarudcb.gov.et', '/awash.jpg'],
             ['Dubti City Administration', 'Mayor Amina Yusuf', '033-666-1004', 'dubti@afarudcb.gov.et', '/dubti.jpg'],
             ['Asayita City Administration', 'Mayor Ibrahim Yusuf', '033-666-1005', 'asayita@afarudcb.gov.et', '/Asayita.jpg'],
