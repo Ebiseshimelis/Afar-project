@@ -3,6 +3,7 @@ export type CityAdmin = {
   name: string;
   nameAm?: string;
   description: string;
+  descriptionAm?: string;
   mayor_name: string;
   location: string;
   email: string;
@@ -16,7 +17,9 @@ export async function getCityAdmins(): Promise<CityAdmin[]> {
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch city administrations: ${response.status}`);
+    throw new Error(
+      `Failed to fetch city administrations: ${response.status}`
+    );
   }
 
   const result = await response.json();
@@ -26,12 +29,11 @@ export async function getCityAdmins(): Promise<CityAdmin[]> {
     name: item.name?.en || item.name_en || "",
     nameAm: item.name?.am || item.name_am || "",
     description: item.description?.en || "",
-    mayor: item.mayor_name || "",
+    descriptionAm: item.description?.am || "",
+    mayor_name: item.mayor_name || "",
     location: item.location || "",
     email: item.email || "",
     phone: item.phone || "",
-
-    // Images are stored directly in UI2/public/
     photo: item.image_path
       ? String(item.image_path).startsWith("/")
         ? String(item.image_path)
