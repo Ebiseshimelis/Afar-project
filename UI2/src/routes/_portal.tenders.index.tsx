@@ -1,0 +1,272 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { PageHeader } from "@/components/portal/PortalLayout";
+import { getTenders, type Tender } from "@/services/tenderService";
+import { Search, Calendar, FileText, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+
+export const Route = createFileRoute("/_portal/tenders/")({
+  head: () => ({
+    meta: [
+      { title: "Tenders — Afar UDCB" },
+      {
+        name: "description",
+        content:
+          "Open, closed, and awarded tenders published by the Afar UDCB.",
+      },
+    ],
+  }),
+  component: TendersListPage,
+});
+
+const STATUSES = ["All", "Open", "Closed", "Awarded"] as const;
+
+type Status = (typeof STATUSES)[number];
+
+function getTitle(tender: Tender, lang: "en" | "am" = "en"): string {
+  return (
+    tender.title?.[lang] ||
+    tender.title?.en ||
+    tender.title?.am ||
+    "Untitled Tender"
+  );
+}
+
+function getContent(tender: Tender, lang: "en" | "am" = "en"): string {
+  return (
+    tender.content?.[lang] ||
+    tender.content?.en ||
+    tender.content?.am ||
+    ""
+  );
+}
+
+function normalizeStatus(status: string): "Open" | "Closed" | "Awarded" {
+  const normalized = status.toLowerCase();
+
+  if (normalized === "open") return "Open";
+  if (normalized === "awarded") return "Awarded";
+
+  return "Closed";
+}
+
+function formatDate(date: string | null): string {
+  if (!date) return "—";
+
+  const parsed = new Date(date);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "—";
+  }
+
+  return parsed.toLocaleDateString();
+}
+
+function TendersListPage() {
+  const [tenders, setTenders] = useState<Tender[]>([]);
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState<Status>("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTenders() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const data = await getTenders();
+
+        if (!cancelled) {
+          setTenders(data);
+        }
+      } catch (err) {
+        console.error("Failed to load tenders:", err);
+
+        if (!cancelled) {
+          setError("Unable to load tenders.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadTenders();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    const search = q.trim().toLowerCase();
+
+    return tenders.filter((tender) => {
+      const tenderStatus = normalizeStatus(tender.status);
+
+      if (status !== "All" && tenderStatus !== status) {
+        return false;
+      }
+
+      if (!search) {
+        return true;
+      }
+
+      const title = getTitle(tender).toLowerCase();
+      const titleAm = getTitle(tender, "am").toLowerCase();
+      const content = getContent(tender).toLowerCase();
+
+      return (
+        title.includes(search) ||
+        titleAm.includes(search) ||
+        content.includes(search) ||
+        String(tender.id).includes(search)
+      );
+    });
+  }, [tenders, q, status]);
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Public Procurement"
+        title="Tenders"
+        description="Open, closed, and awarded tenders published by the Afar UDCB."
+        section="default"
+      />
+
+      <section className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+        <div className="rounded-xl border bg-card p-4 shadow-soft">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search tender..."
+              className="h-11 w-full rounded-lg border bg-card pl-10 pr-3 text-sm outline-none ring-ring focus:ring-2"
+            />
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {STATUSES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setStatus(s)}
+                className={
+                  "rounded-full border px-3 py-1.5 text-xs font-medium " +
+                  (status === s
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-card text-foreground/70 hover:bg-secondary")
+                }
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {loading && (
+          <div className="mt-6 rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
+            Loading tenders...
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="mt-6 rounded-xl border border-destructive/30 bg-card p-8 text-center text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <div className="mt-6 rounded-xl border bg-card p-8 text-center">
+            <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
+
+            <h3 className="mt-3 font-display text-base font-semibold">
+              No tenders found
+            </h3>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              There are currently no tenders matching your search.
+            </p>
+          </div>
+        )}
+
+        {!loading && !error && filtered.length > 0 && (
+          <div className="mt-6 space-y-3">
+            {filtered.map((tender) => {
+              const tenderStatus = normalizeStatus(tender.status);
+              const title = getTitle(tender);
+
+              return (
+                <Link
+                  key={tender.id}
+                  to="/tenders/$id"
+                  params={{ id: String(tender.id) }}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border bg-card p-5 shadow-soft transition hover:shadow-elegant"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-secondary px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+                        #{tender.id}
+                      </span>
+
+                      <StatusBadge status={tenderStatus} />
+
+                      {tender.category_id && (
+                        <span className="text-xs text-muted-foreground">
+                          Category {tender.category_id}
+                        </span>
+                      )}
+                    </div>
+
+                    <h3 className="mt-2 font-display text-base font-semibold text-foreground">
+                      {title}
+                    </h3>
+
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <FileText className="h-3 w-3" />
+                        Published {formatDate(tender.published_at)}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Deadline {formatDate(tender.closes_at)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
+
+export function StatusBadge({
+  status,
+}: {
+  status: "Open" | "Closed" | "Awarded";
+}) {
+  const map = {
+    Open: "bg-success/15 text-success",
+    Closed: "bg-muted text-muted-foreground",
+    Awarded: "bg-warning/15 text-warning",
+  } as const;
+
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${map[status]}`}
+    >
+      {status}
+    </span>
+  );
+}

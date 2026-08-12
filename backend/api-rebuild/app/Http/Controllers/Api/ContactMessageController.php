@@ -1,0 +1,60 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\ContactMessage;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Throwable;
+
+class ContactMessageController extends Controller
+{
+    public function index(Request $request): JsonResponse
+    {
+        try {
+            $messages = ContactMessage::orderBy('created_at', 'desc')
+                ->paginate($request->integer('per_page', 20));
+
+            return response()->json($messages, 200);
+        } catch (Throwable $e) {
+            return response()->json(['message' => 'Failed to load contact messages.'], 500);
+        }
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name'    => ['required', 'string', 'max:255'],
+            'email'   => ['required', 'email', 'max:255'],
+            'phone'   => ['nullable', 'string', 'max:50'],
+            'message' => ['required', 'string'],
+        ]);
+
+        try {
+            $msg = ContactMessage::create($validated);
+            return response()->json(['message' => 'Thank you. Your message has been received.'], 201);
+        } catch (Throwable $e) {
+            return response()->json(['message' => 'Failed to submit contact message.'], 500);
+        }
+    }
+
+    public function show(ContactMessage $contactMessage): JsonResponse
+    {
+        if ($contactMessage->status === 'new') {
+            $contactMessage->update(['status' => 'read']);
+        }
+
+        return response()->json(['data' => $contactMessage], 200);
+    }
+
+    public function destroy(ContactMessage $contactMessage): JsonResponse
+    {
+        try {
+            $contactMessage->delete();
+            return response()->json(['message' => 'Message deleted.'], 200);
+        } catch (Throwable $e) {
+            return response()->json(['message' => 'Failed to delete message.'], 500);
+        }
+    }
+}
