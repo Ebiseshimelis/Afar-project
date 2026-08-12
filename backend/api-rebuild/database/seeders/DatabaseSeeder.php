@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
         // Create city administrations
         CityAdmin::factory(5)->create();
 
-        // Create directorates
-        Directorate::factory(10)->create();
+        // Create real directorates
+        $this->call(DirectorateSeeder::class);
     }
 }
