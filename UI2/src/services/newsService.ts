@@ -29,21 +29,6 @@ function mapNewsItem(item: any): NewsItem {
 
     date: item.published_at,
 
-    /*
-     * News images are stored directly in:
-     *
-     * UI2/public/News1.jpg
-     * UI2/public/News2.jpg
-     * ...
-     *
-     * Therefore the browser URL must be:
-     *
-     * /News1.jpg
-     *
-     * NOT:
-     *
-     * /images/News1.jpg
-     */
     image: item.image_path
       ? `/${String(item.image_path).replace(/^\/+/, "")}`
       : "/News1.jpg",
@@ -58,9 +43,6 @@ function mapNewsItem(item: any): NewsItem {
   };
 }
 
-/**
- * Get all news from the Laravel API.
- */
 export async function getNews(): Promise<NewsItem[]> {
   const response = await fetch(NEWS_API_URL);
 
@@ -77,11 +59,6 @@ export async function getNews(): Promise<NewsItem[]> {
   return result.data.map(mapNewsItem);
 }
 
-/**
- * Get one news article by its ID.
- * The detail page uses the same News API/service
- * instead of mock-data.ts.
- */
 export async function getNewsById(
   id: string
 ): Promise<NewsItem | null> {

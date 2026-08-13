@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ContactMessageController;
 use App\Http\Controllers\Api\MultimediaController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -35,6 +36,8 @@ require __DIR__.'/auth.php';
 
 Route::prefix('v1')->group(function () {
 
+    //Auth
+    Route::post('/login', [AuthController::class, 'login']);
 
     // About
     Route::get('/about', [AboutController::class, 'index']);
