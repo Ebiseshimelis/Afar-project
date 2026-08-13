@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/portal/PortalLayout";
 import { Phone, Mail, MapPin, Send } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-
+import { sendContactMessage } from "@/services/contactService";
 export const Route = createFileRoute("/_portal/contact")({
   head: () => ({ meta: [
     { title: "Contact — Afar UDCB" },
@@ -15,16 +15,37 @@ export const Route = createFileRoute("/_portal/contact")({
 function ContactPage() {
   const [sending, setSending] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSending(true);
-    setTimeout(() => {
-      setSending(false);
-      toast.success("Message sent — we'll get back to you shortly.");
-      (e.target as HTMLFormElement).reset();
-    }, 900);
-  }
+ async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+   e.preventDefault();
+   setSending(true);
 
+   const form = e.currentTarget;
+  
+   const formData = new FormData(form);
+
+   try {
+     await sendContactMessage({
+      full_name: String(formData.get("full_name") || ""),
+      email: String(formData.get("email") || ""),
+      phone: String(formData.get("phone") || ""),
+      subject: String(formData.get("subject") || ""),
+      message: String(formData.get("message") || ""),
+    });
+
+    toast.success("Message sent — we'll get back to you shortly.");
+    form.reset();
+  } catch (error) {
+    console.error("Failed to send contact message:", error);
+
+    toast.error(
+      error instanceof Error
+        ? error.message
+        : "Failed to send your message."
+    );
+  } finally {
+    setSending(false);
+  }
+}
   return (
     <>
       <PageHeader eyebrow="Get in touch" title="Contact Us" description="Reach directorates and city administrations, or send us a message." />
@@ -33,9 +54,11 @@ function ContactPage() {
           <h2 className="font-display text-xl font-bold">Send a message</h2>
           <p className="text-sm text-muted-foreground">We aim to respond within 3 working days.</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <Field label="Full name" name="name" required />
+            <Field label="Full name" name="full_name" required />
             <Field label="Email" name="email" type="email" required />
-            <div className="md:col-span-2"><Field label="Subject" name="subject" required /></div>
+            <Field label="Phone" name="phone" type="tel" />
+            <div className="md:col-span-2">
+              <Field label="Subject" name="subject" required /></div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium">Message</label>
               <textarea name="message" rows={6} required className="mt-1 w-full rounded-lg border bg-background p-3 text-sm outline-none ring-ring focus:ring-2" />

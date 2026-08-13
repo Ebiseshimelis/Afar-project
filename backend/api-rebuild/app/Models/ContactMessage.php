@@ -11,10 +11,12 @@ class ContactMessage extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'name',
+        'full_name',
         'email',
         'phone',
+        'subject',
         'message',
-        'status',
+        'is_read',
+        'replied_at',
     ];
 }

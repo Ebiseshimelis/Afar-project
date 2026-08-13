@@ -2,7 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\Api\AboutController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\TenderController;
@@ -35,6 +35,10 @@ require __DIR__.'/auth.php';
 
 Route::prefix('v1')->group(function () {
 
+
+    // About
+    Route::get('/about', [AboutController::class, 'index']);
+    
     // News
     Route::get('/news', [NewsController::class, 'index']);
     Route::get('/news/{news}', [NewsController::class, 'show']);
