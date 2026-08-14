@@ -18,27 +18,22 @@ export type Directorate = {
 
 type ApiDirectorate = {
   id: number;
-
   name: {
     en?: string;
     am?: string;
-  };
-
+  } | null;
   description: {
     en?: string;
     am?: string;
   } | null;
-
   head_name: {
     en?: string;
     am?: string;
   } | null;
-
   head_title: {
     en?: string;
     am?: string;
   } | null;
-
   email: string | null;
   phone: string | null;
   photo_path: string | null;
@@ -53,9 +48,6 @@ const API_BASE =
   import.meta.env.VITE_API_URL ||
   "http://127.0.0.1:8000/api/v1";
 
-/**
- * Convert the Laravel storage path into a browser URL.
- */
 function makePhotoUrl(path: string | null): string {
   if (!path) {
     return "/land.jpg";
@@ -73,10 +65,6 @@ function makePhotoUrl(path: string | null): string {
   return `http://127.0.0.1:8000/storage/${cleanPath}`;
 }
 
-/**
- * Convert the API directorate object into the
- * format used by the React admin page.
- */
 function mapDirectorate(
   d: ApiDirectorate
 ): Directorate {
@@ -104,9 +92,6 @@ function mapDirectorate(
   };
 }
 
-/**
- * Authentication headers for admin operations.
- */
 function getAuthHeaders(): HeadersInit {
   const token = getAdminToken();
 
@@ -122,9 +107,6 @@ function getAuthHeaders(): HeadersInit {
   };
 }
 
-/**
- * GET all directorates.
- */
 export async function getDirectorates(): Promise<
   Directorate[]
 > {
@@ -138,70 +120,58 @@ export async function getDirectorates(): Promise<
     }
   );
 
-  const json = await response.json().catch(() => null);
+  const data = await response.json().catch(() => null);
 
   if (!response.ok) {
     throw new Error(
-      json?.message ||
+      data?.message ||
         `Failed to fetch directorates: ${response.status}`
     );
   }
 
-  return ((json?.data || []) as ApiDirectorate[])
+  return (data?.data || [])
     .map(mapDirectorate)
     .sort(
-      (a, b) => a.sortOrder - b.sortOrder
+      (a: Directorate, b: Directorate) =>
+        a.sortOrder - b.sortOrder
     );
 }
 
-/**
- * Data used by the create/edit form.
- */
 export type DirectorateFormData = {
   name: string;
   nameAm: string;
-
   description: string;
   descriptionAm: string;
-
   headName: string;
   headNameAm: string;
-
   headTitle: string;
   headTitleAm: string;
-
   email: string;
   phone: string;
-
   sortOrder: number;
-
   photo?: File | null;
 };
 
-/**
- * Build Laravel-compatible multipart form data.
- *
- * IMPORTANT:
- * We do NOT manually set Content-Type.
- * The browser automatically adds the multipart boundary.
- */
 function buildFormData(
   data: DirectorateFormData
 ): FormData {
   const formData = new FormData();
 
-  // Name
-  formData.append(
-    "name[en]",
-    data.name.trim()
-  );
+  /*
+   * Laravel receives these as nested arrays:
+   *
+   * name[en]
+   * name[am]
+   *
+   * description[en]
+   * description[am]
+   *
+   * etc.
+   */
 
-  formData.append(
-    "name[am]",
-    data.nameAm.trim()
-  );
+  formData.append("name[en]", data.name.trim());
+  formData.append("name[am]", data.nameAm.trim());
 
-  // Description
   formData.append(
     "description[en]",
     data.description.trim()
@@ -212,7 +182,6 @@ function buildFormData(
     data.descriptionAm.trim()
   );
 
-  // Director name
   formData.append(
     "head_name[en]",
     data.headName.trim()
@@ -223,7 +192,6 @@ function buildFormData(
     data.headNameAm.trim()
   );
 
-  // Director title
   formData.append(
     "head_title[en]",
     data.headTitle.trim()
@@ -234,77 +202,64 @@ function buildFormData(
     data.headTitleAm.trim()
   );
 
-  // Contact
   if (data.email.trim()) {
-    formData.append(
-      "email",
-      data.email.trim()
-    );
+    formData.append("email", data.email.trim());
   }
 
   if (data.phone.trim()) {
-    formData.append(
-      "phone",
-      data.phone.trim()
-    );
+    formData.append("phone", data.phone.trim());
   }
 
-  // Sort order
   formData.append(
     "sort_order",
-    String(data.sortOrder)
+    String(data.sortOrder || 0)
   );
 
-  // Photo
   if (data.photo instanceof File) {
-    formData.append(
-      "photo",
-      data.photo,
-      data.photo.name
-    );
+    formData.append("photo", data.photo);
   }
 
   return formData;
 }
 
-/**
- * Parse API response and return useful Laravel
- * validation/error messages.
- */
-async function parseResponse(response: Response) {
-  const text = await response.text();
-
-  console.log("Directorate API raw response:", text);
-
-  let data: any = null;
-
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    console.error("Response was not valid JSON:", text);
-  }
-
-  console.log("Directorate API response:", {
-    status: response.status,
-    data,
-  });
+async function parseResponse(
+  response: Response
+) {
+  const data = await response
+    .json()
+    .catch(() => null);
 
   if (!response.ok) {
-    const validationMessage =
-      data?.errors &&
-      Object.entries(data.errors)
-        .map(([field, messages]) => {
-          const messageList = Array.isArray(messages)
-            ? messages.join(", ")
-            : String(messages);
+    console.error(
+      "Directorate API error:",
+      response.status,
+      data
+    );
 
-          return `${field}: ${messageList}`;
+    if (data?.errors) {
+      const validationMessages = Object.entries(
+        data.errors
+      )
+        .flatMap(([field, messages]) => {
+          if (Array.isArray(messages)) {
+            return messages.map(
+              (message) => `${field}: ${message}`
+            );
+          }
+
+          return [`${field}: ${messages}`];
         })
-        .join(" | ");
+        .join(" ");
+
+      throw new Error(
+        validationMessages ||
+          data?.message ||
+          `Request failed with status ${response.status}.`
+      );
+    }
 
     throw new Error(
-      validationMessage ||
-        data?.message ||
+      data?.message ||
         `Request failed with status ${response.status}.`
     );
   }
@@ -312,9 +267,6 @@ async function parseResponse(response: Response) {
   return data;
 }
 
-/**
- * CREATE directorate.
- */
 export async function createDirectorate(
   data: DirectorateFormData
 ): Promise<Directorate> {
@@ -329,32 +281,21 @@ export async function createDirectorate(
 
   const json = await parseResponse(response);
 
-  if (!json?.data) {
-    throw new Error(
-      "Directorate was created but the server returned no data."
-    );
-  }
-
   return mapDirectorate(json.data);
 }
 
-/**
- * UPDATE directorate.
- *
- * Laravel receives this as POST + _method=PUT.
- * This is intentional because multipart PUT requests
- * with uploaded files can be problematic.
- */
 export async function updateDirectorate(
   id: number,
   data: DirectorateFormData
 ): Promise<Directorate> {
   const formData = buildFormData(data);
 
-  formData.append(
-    "_method",
-    "PUT"
-  );
+  /*
+   * Laravel method spoofing.
+   * This allows us to upload a photo while
+   * still executing the PUT controller method.
+   */
+  formData.append("_method", "PUT");
 
   const response = await fetch(
     `${API_BASE}/directorates/${id}`,
@@ -367,18 +308,9 @@ export async function updateDirectorate(
 
   const json = await parseResponse(response);
 
-  if (!json?.data) {
-    throw new Error(
-      "Directorate was updated but the server returned no data."
-    );
-  }
-
   return mapDirectorate(json.data);
 }
 
-/**
- * DELETE directorate.
- */
 export async function deleteDirectorate(
   id: number
 ): Promise<void> {
