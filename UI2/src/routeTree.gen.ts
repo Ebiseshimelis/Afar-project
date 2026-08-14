@@ -25,6 +25,7 @@ import { Route as AdminCityAdminsRouteImport } from './routes/admin.city-admins'
 import { Route as AdminDirectoryRouteImport } from './routes/admin.directory'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminFeedbackRouteImport } from './routes/admin.feedback'
+import { Route as AdminForgotPasswordRouteImport } from './routes/admin.forgot-password'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminMediaRouteImport } from './routes/admin.media'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
@@ -38,6 +39,7 @@ import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminTendersRouteImport } from './routes/admin.tenders'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminVacanciesRouteImport } from './routes/admin.vacancies'
+import { Route as PasswordResetTokenRouteImport } from './routes/password-reset.$token'
 import { Route as PortalMultimediaImagesRouteImport } from './routes/_portal.multimedia.images'
 import { Route as PortalMultimediaVideosRouteImport } from './routes/_portal.multimedia.videos'
 import { Route as PortalNewsIndexRouteImport } from './routes/_portal.news.index'
@@ -124,6 +126,11 @@ const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
   path: '/admin/feedback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminForgotPasswordRoute = AdminForgotPasswordRouteImport.update({
+  id: '/admin/forgot-password',
+  path: '/admin/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
@@ -189,6 +196,11 @@ const AdminVacanciesRoute = AdminVacanciesRouteImport.update({
   path: '/admin/vacancies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PasswordResetTokenRoute = PasswordResetTokenRouteImport.update({
+  id: '/password-reset/$token',
+  path: '/password-reset/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PortalMultimediaImagesRoute = PortalMultimediaImagesRouteImport.update({
   id: '/multimedia/images',
   path: '/multimedia/images',
@@ -235,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/admin/directory': typeof AdminDirectoryRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -248,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/tenders': typeof AdminTendersRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vacancies': typeof AdminVacanciesRoute
+  '/password-reset/$token': typeof PasswordResetTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/multimedia/images': typeof PortalMultimediaImagesRoute
   '/multimedia/videos': typeof PortalMultimediaVideosRoute
@@ -270,6 +284,7 @@ export interface FileRoutesByTo {
   '/admin/directory': typeof AdminDirectoryRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -283,6 +298,7 @@ export interface FileRoutesByTo {
   '/admin/tenders': typeof AdminTendersRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vacancies': typeof AdminVacanciesRoute
+  '/password-reset/$token': typeof PasswordResetTokenRoute
   '/': typeof PortalIndexRoute
   '/admin': typeof AdminIndexRoute
   '/multimedia/images': typeof PortalMultimediaImagesRoute
@@ -308,6 +324,7 @@ export interface FileRoutesById {
   '/admin/directory': typeof AdminDirectoryRoute
   '/admin/events': typeof AdminEventsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
@@ -321,6 +338,7 @@ export interface FileRoutesById {
   '/admin/tenders': typeof AdminTendersRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/vacancies': typeof AdminVacanciesRoute
+  '/password-reset/$token': typeof PasswordResetTokenRoute
   '/_portal/': typeof PortalIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/_portal/multimedia/images': typeof PortalMultimediaImagesRoute
@@ -347,6 +365,7 @@ export interface FileRouteTypes {
     | '/admin/directory'
     | '/admin/events'
     | '/admin/feedback'
+    | '/admin/forgot-password'
     | '/admin/login'
     | '/admin/media'
     | '/admin/messages'
@@ -360,6 +379,7 @@ export interface FileRouteTypes {
     | '/admin/tenders'
     | '/admin/users'
     | '/admin/vacancies'
+    | '/password-reset/$token'
     | '/admin/'
     | '/multimedia/images'
     | '/multimedia/videos'
@@ -382,6 +402,7 @@ export interface FileRouteTypes {
     | '/admin/directory'
     | '/admin/events'
     | '/admin/feedback'
+    | '/admin/forgot-password'
     | '/admin/login'
     | '/admin/media'
     | '/admin/messages'
@@ -395,6 +416,7 @@ export interface FileRouteTypes {
     | '/admin/tenders'
     | '/admin/users'
     | '/admin/vacancies'
+    | '/password-reset/$token'
     | '/'
     | '/admin'
     | '/multimedia/images'
@@ -419,6 +441,7 @@ export interface FileRouteTypes {
     | '/admin/directory'
     | '/admin/events'
     | '/admin/feedback'
+    | '/admin/forgot-password'
     | '/admin/login'
     | '/admin/media'
     | '/admin/messages'
@@ -432,6 +455,7 @@ export interface FileRouteTypes {
     | '/admin/tenders'
     | '/admin/users'
     | '/admin/vacancies'
+    | '/password-reset/$token'
     | '/_portal/'
     | '/admin/'
     | '/_portal/multimedia/images'
@@ -450,6 +474,7 @@ export interface RootRouteChildren {
   AdminDirectoryRoute: typeof AdminDirectoryRoute
   AdminEventsRoute: typeof AdminEventsRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
+  AdminForgotPasswordRoute: typeof AdminForgotPasswordRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMediaRoute: typeof AdminMediaRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
@@ -463,6 +488,7 @@ export interface RootRouteChildren {
   AdminTendersRoute: typeof AdminTendersRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminVacanciesRoute: typeof AdminVacanciesRoute
+  PasswordResetTokenRoute: typeof PasswordResetTokenRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -580,6 +606,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/forgot-password': {
+      id: '/admin/forgot-password'
+      path: '/admin/forgot-password'
+      fullPath: '/admin/forgot-password'
+      preLoaderRoute: typeof AdminForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/admin/login'
@@ -669,6 +702,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/vacancies'
       fullPath: '/admin/vacancies'
       preLoaderRoute: typeof AdminVacanciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/password-reset/$token': {
+      id: '/password-reset/$token'
+      path: '/password-reset/$token'
+      fullPath: '/password-reset/$token'
+      preLoaderRoute: typeof PasswordResetTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_portal/multimedia/images': {
@@ -761,6 +801,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDirectoryRoute: AdminDirectoryRoute,
   AdminEventsRoute: AdminEventsRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
+  AdminForgotPasswordRoute: AdminForgotPasswordRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMediaRoute: AdminMediaRoute,
   AdminMessagesRoute: AdminMessagesRoute,
@@ -774,6 +815,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminTendersRoute: AdminTendersRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminVacanciesRoute: AdminVacanciesRoute,
+  PasswordResetTokenRoute: PasswordResetTokenRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport

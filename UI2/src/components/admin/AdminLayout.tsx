@@ -66,6 +66,7 @@ const NAV_GROUPS: NavGroup[] = [
       { to: "/admin/tenders", label: "Tenders", icon: FileText },
       { to: "/admin/vacancies", label: "Vacancies", icon: Briefcase },
       { to: "/admin/publications", label: "Publications", icon: BookOpen },
+      { to: "/admin/city-admins", label: "City Administrations", icon: Building2 },
     ],
   },
   {

@@ -18,12 +18,23 @@ export const Route = createFileRoute("/admin/login")({
 function LoginPage() {
   const nav = useNavigate();
 
-  const [email, setEmail] = useState("admin@afarudcb.gov.et");
-  const [password, setPassword] = useState("demo1234");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // Basic validation
+    if (!email.trim()) {
+      toast.error("Please enter your email.");
+      return;
+    }
+
+    if (!password) {
+      toast.error("Please enter your password.");
+      return;
+    }
 
     console.log("LOGIN BUTTON WORKED");
     console.log("EMAIL:", email);
@@ -31,21 +42,45 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await login(email, password);
+      const result = await login(email.trim(), password);
 
       console.log("LOGIN SUCCESS:", result);
 
       toast.success("Welcome back");
 
       nav({ to: "/admin" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("LOGIN ERROR:", error);
 
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Invalid email or password."
-      );
+      let message = "Invalid email or password.";
+
+      if (error instanceof Error) {
+        const errorMessage = error.message.toLowerCase();
+
+        if (
+          errorMessage.includes("user") &&
+          (errorMessage.includes("not found") ||
+            errorMessage.includes("does not exist") ||
+            errorMessage.includes("invalid"))
+        ) {
+          message = "Invalid username or email.";
+        } else if (
+          errorMessage.includes("password") ||
+          errorMessage.includes("credential")
+        ) {
+          message = "Incorrect password.";
+        } else if (
+          errorMessage.includes("network") ||
+          errorMessage.includes("fetch") ||
+          errorMessage.includes("failed to fetch")
+        ) {
+          message = "Unable to connect to the server.";
+        } else if (error.message.trim()) {
+          message = error.message;
+        }
+      }
+
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -131,6 +166,8 @@ function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  autoComplete="username"
                   className="h-11 w-full rounded-full border bg-background pl-10 pr-3 text-sm outline-none ring-ring focus:ring-2"
                 />
               </div>
@@ -145,6 +182,8 @@ function LoginPage() {
 
                 <input
                   required
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -156,17 +195,16 @@ function LoginPage() {
             {/* Remember me / Forgot */}
             <div className="flex items-center justify-between text-sm">
               <label className="inline-flex items-center gap-2 text-muted-foreground">
-                <input
-                  type="checkbox"
-                  defaultChecked
-                  className="rounded border"
-                />
+                <input type="checkbox" className="rounded border" />
                 Remember me
               </label>
 
-              <a className="text-primary hover:underline" href="#">
+              <Link
+                to="/admin/forgot-password"
+                className="text-primary hover:underline"
+              >
                 Forgot?
-              </a>
+              </Link>
             </div>
 
             {/* Submit */}
