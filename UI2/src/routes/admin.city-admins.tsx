@@ -12,6 +12,11 @@ import {
 import { toast } from "sonner";
 
 import {
+  AdminLayout,
+  AdminPageHeader,
+} from "@/components/admin/AdminLayout";
+
+import {
   createCityAdmin,
   deleteCityAdmin,
   getCityAdmins,
@@ -62,7 +67,7 @@ function AdminCityAdminsPage() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to load city administrations."
+          : "Failed to load city administrations.",
       );
     } finally {
       setLoading(false);
@@ -74,7 +79,7 @@ function AdminCityAdminsPage() {
   }, []);
 
   function resetForm() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
     setEditingId(null);
     setPreview("");
     setShowForm(false);
@@ -85,10 +90,14 @@ function AdminCityAdminsPage() {
   }
 
   function openCreateForm() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm });
     setEditingId(null);
     setPreview("");
     setShowForm(true);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function openEditForm(city: CityAdmin) {
@@ -108,11 +117,15 @@ function AdminCityAdminsPage() {
 
     setPreview(city.photo || "");
     setShowForm(true);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 
   function handleChange(
     field: keyof CityAdminFormData,
-    value: string
+    value: string,
   ) {
     setForm((current) => ({
       ...current,
@@ -121,11 +134,19 @@ function AdminCityAdminsPage() {
   }
 
   function handleImageChange(
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) {
     const file = event.target.files?.[0];
 
     if (!file) {
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be smaller than 2 MB.");
+
+      event.target.value = "";
+
       return;
     }
 
@@ -135,21 +156,26 @@ function AdminCityAdminsPage() {
     }));
 
     const objectUrl = URL.createObjectURL(file);
+
     setPreview(objectUrl);
   }
 
   async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
+    event: React.FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
 
     if (!form.name.trim()) {
-      toast.error("English city administration name is required.");
+      toast.error(
+        "English city administration name is required.",
+      );
       return;
     }
 
     if (!form.nameAm.trim()) {
-      toast.error("Amharic city administration name is required.");
+      toast.error(
+        "Amharic city administration name is required.",
+      );
       return;
     }
 
@@ -159,16 +185,20 @@ function AdminCityAdminsPage() {
       if (editingId) {
         const updated = await updateCityAdmin(
           editingId,
-          form
+          form,
         );
 
         setCities((current) =>
           current.map((city) =>
-            city.id === editingId ? updated : city
-          )
+            city.id === editingId
+              ? updated
+              : city,
+          ),
         );
 
-        toast.success("City administration updated successfully.");
+        toast.success(
+          "City administration updated successfully.",
+        );
       } else {
         const created = await createCityAdmin(form);
 
@@ -177,7 +207,9 @@ function AdminCityAdminsPage() {
           created,
         ]);
 
-        toast.success("City administration created successfully.");
+        toast.success(
+          "City administration created successfully.",
+        );
       }
 
       resetForm();
@@ -187,7 +219,7 @@ function AdminCityAdminsPage() {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to save city administration."
+          : "Failed to save city administration.",
       );
     } finally {
       setSaving(false);
@@ -196,7 +228,7 @@ function AdminCityAdminsPage() {
 
   async function handleDelete(city: CityAdmin) {
     const confirmed = window.confirm(
-      `Are you sure you want to delete "${city.name}"?`
+      `Are you sure you want to delete "${city.name}"?`,
     );
 
     if (!confirmed) {
@@ -207,50 +239,45 @@ function AdminCityAdminsPage() {
       await deleteCityAdmin(city.id);
 
       setCities((current) =>
-        current.filter((item) => item.id !== city.id)
+        current.filter(
+          (item) => item.id !== city.id,
+        ),
       );
 
-      toast.success("City administration deleted successfully.");
+      toast.success(
+        "City administration deleted successfully.",
+      );
     } catch (error) {
       console.error(error);
 
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to delete city administration."
+          : "Failed to delete city administration.",
       );
     }
   }
 
   return (
-    <div className="space-y-6 p-6">
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            City Administrations
-          </h1>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage city administrations, mayors, contact details,
-            descriptions, and photos.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          Add City Administration
-        </button>
-      </div>
+    <AdminLayout>
+      <AdminPageHeader
+        title="City Administrations"
+        description="Manage city administrations, mayors, contact details, descriptions, and photos."
+        action={
+          <button
+            type="button"
+            onClick={openCreateForm}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Add City Administration
+          </button>
+        }
+      />
 
       {/* Form */}
       {showForm && (
-        <section className="rounded-xl border bg-card p-6 shadow-sm">
+        <section className="mb-6 rounded-xl border bg-card p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold">
@@ -267,7 +294,8 @@ function AdminCityAdminsPage() {
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              disabled={saving}
+              className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -287,7 +315,10 @@ function AdminCityAdminsPage() {
                 <input
                   value={form.name}
                   onChange={(e) =>
-                    handleChange("name", e.target.value)
+                    handleChange(
+                      "name",
+                      e.target.value,
+                    )
                   }
                   placeholder="Semera City Administration"
                   className="h-11 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -303,7 +334,10 @@ function AdminCityAdminsPage() {
                 <input
                   value={form.nameAm}
                   onChange={(e) =>
-                    handleChange("nameAm", e.target.value)
+                    handleChange(
+                      "nameAm",
+                      e.target.value,
+                    )
                   }
                   placeholder="የሰመራ ከተማ አስተዳደር"
                   className="h-11 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
@@ -324,7 +358,7 @@ function AdminCityAdminsPage() {
                   onChange={(e) =>
                     handleChange(
                       "description",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   rows={4}
@@ -343,7 +377,7 @@ function AdminCityAdminsPage() {
                   onChange={(e) =>
                     handleChange(
                       "descriptionAm",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   rows={4}
@@ -365,7 +399,7 @@ function AdminCityAdminsPage() {
                   onChange={(e) =>
                     handleChange(
                       "mayor_name",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   placeholder="Mayor name"
@@ -383,7 +417,7 @@ function AdminCityAdminsPage() {
                   onChange={(e) =>
                     handleChange(
                       "location",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   placeholder="Semera, Afar"
@@ -405,7 +439,7 @@ function AdminCityAdminsPage() {
                   onChange={(e) =>
                     handleChange(
                       "email",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   placeholder="info@example.gov.et"
@@ -423,7 +457,7 @@ function AdminCityAdminsPage() {
                   onChange={(e) =>
                     handleChange(
                       "phone",
-                      e.target.value
+                      e.target.value,
                     )
                   }
                   placeholder="033-666-0577"
@@ -650,6 +684,6 @@ function AdminCityAdminsPage() {
           </div>
         )}
       </section>
-    </div>
+    </AdminLayout>
   );
 }

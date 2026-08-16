@@ -1,18 +1,29 @@
-import { getAdminToken } from "./authService";
+﻿import { getAdminToken } from "./authService";
 
 export type Directorate = {
   id: number;
+
   name: string;
   nameAm: string;
+
   description: string;
   descriptionAm: string;
+
   headName: string;
   headNameAm: string;
+
   headTitle: string;
   headTitleAm: string;
+
   email: string;
   phone: string;
+
+  // Director's profile photo
   photo: string;
+
+  // Large hero/background image for the directorate
+  background: string;
+
   sortOrder: number;
 };
 
@@ -41,7 +52,11 @@ type ApiDirectorate = {
 
   email: string | null;
   phone: string | null;
+
   photo_path: string | null;
+
+  background_image: string | null;
+
   sort_order: number;
 };
 
@@ -54,11 +69,15 @@ const API_BASE =
   "http://127.0.0.1:8000/api/v1";
 
 /**
- * Convert the Laravel storage path into a browser URL.
+ * Convert a Laravel public-storage path into
+ * a browser URL.
  */
-function makePhotoUrl(path: string | null): string {
+function makeStorageUrl(
+  path: string | null,
+  fallback: string
+): string {
   if (!path) {
-    return "/land.jpg";
+    return fallback;
   }
 
   if (
@@ -74,8 +93,8 @@ function makePhotoUrl(path: string | null): string {
 }
 
 /**
- * Convert the API directorate object into the
- * format used by the React admin page.
+ * Convert the Laravel directorate object into
+ * the format used by React.
  */
 function mapDirectorate(
   d: ApiDirectorate
@@ -98,7 +117,17 @@ function mapDirectorate(
     email: d.email || "",
     phone: d.phone || "",
 
-    photo: makePhotoUrl(d.photo_path),
+    // Director photo
+    photo: makeStorageUrl(
+      d.photo_path,
+      "/land.jpg"
+    ),
+
+    // Directorate hero/background
+    background: makeStorageUrl(
+      d.background_image,
+      "/land.jpg"
+    ),
 
     sortOrder: d.sort_order ?? 0,
   };
@@ -175,22 +204,26 @@ export type DirectorateFormData = {
 
   sortOrder: number;
 
+  // Director photo
   photo?: File | null;
+
+  // Directorate hero/background
+  background?: File | null;
 };
 
 /**
  * Build Laravel-compatible multipart form data.
  *
  * IMPORTANT:
- * We do NOT manually set Content-Type.
- * The browser automatically adds the multipart boundary.
+ * Do not manually set Content-Type.
+ * The browser creates the multipart boundary.
  */
 function buildFormData(
   data: DirectorateFormData
 ): FormData {
   const formData = new FormData();
 
-  // Name
+  // Directorate name
   formData.append(
     "name[en]",
     data.name.trim()
@@ -255,12 +288,21 @@ function buildFormData(
     String(data.sortOrder)
   );
 
-  // Photo
+  // Director photo
   if (data.photo instanceof File) {
     formData.append(
       "photo",
       data.photo,
       data.photo.name
+    );
+  }
+
+  // Directorate hero/background
+  if (data.background instanceof File) {
+    formData.append(
+      "background",
+      data.background,
+      data.background.name
     );
   }
 
@@ -271,32 +313,44 @@ function buildFormData(
  * Parse API response and return useful Laravel
  * validation/error messages.
  */
-async function parseResponse(response: Response) {
+async function parseResponse(
+  response: Response
+) {
   const text = await response.text();
 
-  console.log("Directorate API raw response:", text);
+  console.log(
+    "Directorate API raw response:",
+    text
+  );
 
   let data: any = null;
 
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
-    console.error("Response was not valid JSON:", text);
+    console.error(
+      "Response was not valid JSON:",
+      text
+    );
   }
 
-  console.log("Directorate API response:", {
-    status: response.status,
-    data,
-  });
+  console.log(
+    "Directorate API response:",
+    {
+      status: response.status,
+      data,
+    }
+  );
 
   if (!response.ok) {
     const validationMessage =
       data?.errors &&
       Object.entries(data.errors)
         .map(([field, messages]) => {
-          const messageList = Array.isArray(messages)
-            ? messages.join(", ")
-            : String(messages);
+          const messageList =
+            Array.isArray(messages)
+              ? messages.join(", ")
+              : String(messages);
 
           return `${field}: ${messageList}`;
         })
@@ -341,9 +395,8 @@ export async function createDirectorate(
 /**
  * UPDATE directorate.
  *
- * Laravel receives this as POST + _method=PUT.
- * This is intentional because multipart PUT requests
- * with uploaded files can be problematic.
+ * Laravel receives this as POST + _method=PUT
+ * because multipart PUT uploads can be problematic.
  */
 export async function updateDirectorate(
   id: number,

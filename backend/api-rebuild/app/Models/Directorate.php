@@ -18,6 +18,8 @@ class Directorate extends Model
         'email',
         'phone',
         'photo_path',
+        'image_path',
+        'background_image',
         'sort_order',
     ];
 

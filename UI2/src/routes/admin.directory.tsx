@@ -50,6 +50,7 @@ const emptyForm: DirectorateFormData = {
   phone: "",
   sortOrder: 0,
   photo: null,
+  background: null,
 };
 
 function DirectoryAdmin() {
@@ -95,10 +96,12 @@ function DirectoryAdmin() {
 
   function openCreateModal() {
     setEditingDirectorate(null);
+
     setForm({
       ...emptyForm,
       sortOrder: directorates.length + 1,
     });
+
     setModalOpen(true);
   }
 
@@ -118,6 +121,7 @@ function DirectoryAdmin() {
       phone: directorate.phone,
       sortOrder: directorate.sortOrder,
       photo: null,
+      background: null,
     });
 
     setModalOpen(true);
@@ -352,7 +356,7 @@ function DirectoryAdmin() {
 
                         <div>
                           <div className="font-medium">
-                            {directorate.headName || "â€”"}
+                            {directorate.headName || "—"}
                           </div>
 
                           {directorate.headNameAm && (
@@ -387,7 +391,7 @@ function DirectoryAdmin() {
 
                       {!directorate.phone &&
                         !directorate.email &&
-                        "â€”"}
+                        "—"}
                     </td>
 
                     <td className="px-5 py-4">
@@ -603,7 +607,7 @@ function DirectoryAdmin() {
                 </div>
               </section>
 
-              {/* Photo */}
+              {/* Director Photo */}
               <section>
                 <h3 className="mb-3 font-medium">
                   Director Photo
@@ -638,6 +642,45 @@ function DirectoryAdmin() {
                 {form.photo && (
                   <p className="mt-2 text-xs text-muted-foreground">
                     Selected: {form.photo.name}
+                  </p>
+                )}
+              </section>
+
+              {/* Background Image */}
+              <section>
+                <h3 className="mb-3 font-medium">
+                  Directorate Background Image
+                </h3>
+
+                <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed p-4 hover:bg-secondary">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+
+                  <div>
+                    <div className="text-sm font-medium">
+                      Choose background image
+                    </div>
+
+                    <div className="text-xs text-muted-foreground">
+                      JPG, PNG or WebP. Maximum 5 MB.
+                    </div>
+                  </div>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file =
+                        event.target.files?.[0] || null;
+
+                      updateField("background", file);
+                    }}
+                  />
+                </label>
+
+                {form.background && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Selected: {form.background.name}
                   </p>
                 )}
               </section>

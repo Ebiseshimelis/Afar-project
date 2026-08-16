@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Api\AboutController;
 use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\EventController;
@@ -16,14 +17,13 @@ use App\Http\Controllers\Api\ContactMessageController;
 use App\Http\Controllers\Api\MultimediaController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\FeedbackController;
+use App\Http\Controllers\Api\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
 |--------------------------------------------------------------------------
-|
-| These routes come from Laravel Breeze.
-|
 */
 
 require __DIR__.'/auth.php';
@@ -36,20 +36,21 @@ require __DIR__.'/auth.php';
 
 Route::prefix('v1')->group(function () {
 
-    //Auth
+    // Auth
     Route::post('/login', [AuthController::class, 'login']);
 
     // About
     Route::get('/about', [AboutController::class, 'index']);
-    
+
     // News
     Route::get('/news', [NewsController::class, 'index']);
     Route::get('/news/{news}', [NewsController::class, 'show']);
 
     // Health check
-    // Health check (explicitly registered to ensure availability)
     Route::get('/ping', function () {
-        return response()->json(['status' => 'ok'], 200);
+        return response()->json([
+            'status' => 'ok'
+        ], 200);
     })->name('api.ping');
 
     // Events
@@ -67,10 +68,10 @@ Route::prefix('v1')->group(function () {
     // Publications
     Route::get('/publications', [PublicationController::class, 'index']);
     Route::get('/publications/{publication}', [PublicationController::class, 'show']);
-    
-    //Multimedia
-    Route::get('/multimedia',[MultimediaController::class,'index']);
-    Route::get('/multimedia/{multimedia}',[MultimediaController::class,'show']);
+
+    // Multimedia
+    Route::get('/multimedia', [MultimediaController::class, 'index']);
+    Route::get('/multimedia/{multimedia}', [MultimediaController::class, 'show']);
 
     // Announcements
     Route::get('/announcements', [AnnouncementController::class, 'index']);
@@ -89,6 +90,9 @@ Route::prefix('v1')->group(function () {
 
     // Contact Form
     Route::post('/contact', [ContactMessageController::class, 'store']);
+
+    // Public Feedback
+    Route::post('/feedback', [FeedbackController::class, 'store']);
 });
 
 /*
@@ -99,6 +103,7 @@ Route::prefix('v1')->group(function () {
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
+    // Current authenticated user
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -128,10 +133,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::put('/publications/{publication}', [PublicationController::class, 'update']);
     Route::delete('/publications/{publication}', [PublicationController::class, 'destroy']);
 
-    //Multimedia
-    Route::post('/multimedia',[MultimediaController::class,'store']);
-    Route::put('/multimedia/{multimedia}',[MultimediaController::class,'update']);
-    Route::delete('/multimedia/{multimedia}',[MultimediaController::class,'destroy']);
+    // Multimedia
+    Route::post('/multimedia', [MultimediaController::class, 'store']);
+    Route::put('/multimedia/{multimedia}', [MultimediaController::class, 'update']);
+    Route::delete('/multimedia/{multimedia}', [MultimediaController::class, 'destroy']);
 
     // Announcements
     Route::post('/announcements', [AnnouncementController::class, 'store']);
@@ -158,7 +163,22 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show']);
     Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy']);
 
+    // Feedback
+    Route::get('/feedback', [FeedbackController::class, 'index']);
+    Route::get('/feedback/{feedback}', [FeedbackController::class, 'show']);
+    Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications', [NotificationController::class, 'store']);
+
+    // IMPORTANT: read-all must come before {notification}
+    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show']);
+    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
+
     // Admin role management
     Route::post('/admin/assign-role', [AdminController::class, 'assignRole']);
-
 });

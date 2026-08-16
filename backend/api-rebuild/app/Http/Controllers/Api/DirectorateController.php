@@ -70,6 +70,7 @@ class DirectorateController extends Controller
                 'sort_order' => ['nullable', 'integer'],
 
                 'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'background' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
             $payload = [
@@ -104,6 +105,15 @@ class DirectorateController extends Controller
                     ->store('directorates', 'public');
             }
 
+            /*
+             * Save uploaded directorate background.
+             */
+            if ($request->hasFile('background')) {
+                $payload['background_image'] = $request
+                    ->file('background')
+                    ->store('directorates/backgrounds', 'public');
+            }
+
             $directorate = Directorate::create($payload);
 
             return response()->json([
@@ -119,7 +129,7 @@ class DirectorateController extends Controller
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->except(['photo']),
+                'request' => $request->except(['photo', 'background']),
             ]);
 
             return response()->json([
@@ -175,6 +185,7 @@ class DirectorateController extends Controller
                 'sort_order' => ['nullable', 'integer'],
 
                 'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+                'background' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
             ]);
 
             $payload = [];
@@ -223,6 +234,24 @@ class DirectorateController extends Controller
                 $payload['photo_path'] = $request
                     ->file('photo')
                     ->store('directorates', 'public');
+            }
+
+            /*
+             * Replace old background if a new one was uploaded.
+             */
+            if ($request->hasFile('background')) {
+                if (
+                    $directorate->background_image &&
+                    Storage::disk('public')->exists($directorate->background_image)
+                ) {
+                    Storage::disk('public')->delete(
+                        $directorate->background_image
+                    );
+                }
+
+                $payload['background_image'] = $request
+                    ->file('background')
+                    ->store('directorates/backgrounds', 'public');
             }
 
             $directorate->update($payload);
@@ -278,6 +307,19 @@ class DirectorateController extends Controller
             ) {
                 Storage::disk('public')->delete(
                     $directorate->photo_path
+                );
+            }
+
+            /*
+             * Delete the background from storage before deleting
+             * the database record.
+             */
+            if (
+                $directorate->background_image &&
+                Storage::disk('public')->exists($directorate->background_image)
+            ) {
+                Storage::disk('public')->delete(
+                    $directorate->background_image
                 );
             }
 
