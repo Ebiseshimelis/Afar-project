@@ -12,11 +12,10 @@ class Vacancy extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'category_id',
         'created_by',
         'title',
         'content',
-        'position',
-        'salary',
         'file_path',
         'deadline',
         'status',
@@ -26,13 +25,15 @@ class Vacancy extends Model
     protected $casts = [
         'title' => 'array',
         'content' => 'array',
-        'position' => 'array',
         'deadline' => 'datetime',
         'published_at' => 'datetime',
     ];
 
     public function author(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(
+            User::class,
+            'created_by'
+        );
     }
 }

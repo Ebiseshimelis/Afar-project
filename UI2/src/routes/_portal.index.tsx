@@ -1,11 +1,33 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Calendar, Briefcase, FileText, Newspaper, Phone, Mail, MapPin, Building2, ChevronRight } from "lucide-react";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  ArrowRight,
+  Calendar,
+  Briefcase,
+  FileText,
+  Newspaper,
+  Phone,
+  Mail,
+  MapPin,
+  Building2,
+  ChevronRight,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getNews, type NewsItem } from "@/services/newsService";
-import { getTenders, type Tender } from "@/services/tenderService";
-import { getVacancies, type VacancyItem } from "@/services/vacancyService";
-import { getEvents, type EventItem } from "@/services/eventService";
+import {
+  getTenders,
+  type Tender,
+} from "@/services/tenderService";
+import {
+  getVacancies,
+  type VacancyItem,
+} from "@/services/vacancyService";
+import {
+  getEvents,
+  type EventItem,
+} from "@/services/eventService";
+import { getDirectorates } from "@/services/directorateService";
+import { getCityAdmins } from "@/services/cityAdminService";
 
 import { portfolioImages } from "@/lib/mock-data";
 import afarHero from "@/assets/background.png";
@@ -26,16 +48,88 @@ export const Route = createFileRoute("/_portal/")({
   component: HomePage,
 });
 
-function HomePage() {
-  const [latestNews, setLatestNews] = useState<NewsItem[]>([]);
-  const [latestTenders, setLatestTenders] = useState<Tender[]>([]);
-  const [latestVacancies, setLatestVacancies] = useState<VacancyItem[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<EventItem[]>([]);
+type LocalizedValue =
+  | string
+  | {
+      en?: string;
+      am?: string;
+    }
+  | null
+  | undefined;
 
-  const [newsLoading, setNewsLoading] = useState(true);
-  const [tendersLoading, setTendersLoading] = useState(true);
-  const [vacanciesLoading, setVacanciesLoading] = useState(true);
-  const [eventsLoading, setEventsLoading] = useState(true);
+function getLocalizedText(
+  value: LocalizedValue,
+): string {
+  if (!value) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return value.en || value.am || "";
+}
+
+/*
+ * Tender status on the home page is determined
+ * from the closing calendar date.
+ *
+ * Future/no closing date = Open
+ * Past closing date = Closed
+ *
+ * The database "status" field is NOT used to hide
+ * a tender from the home page.
+ */
+function isTenderOpen(
+  tender: Tender,
+): boolean {
+  if (!tender.closes_at) {
+    return true;
+  }
+
+  const closeDate =
+    new Date(
+      tender.closes_at,
+    ).getTime();
+
+  if (Number.isNaN(closeDate)) {
+    return true;
+  }
+
+  return closeDate >= Date.now();
+}
+
+function HomePage() {
+  const [latestNews, setLatestNews] =
+    useState<NewsItem[]>([]);
+
+  const [latestTenders, setLatestTenders] =
+    useState<Tender[]>([]);
+
+  const [latestVacancies, setLatestVacancies] =
+    useState<VacancyItem[]>([]);
+
+  const [upcomingEvents, setUpcomingEvents] =
+    useState<EventItem[]>([]);
+
+  const [directorateCount, setDirectorateCount] =
+    useState(0);
+
+  const [cityAdminCount, setCityAdminCount] =
+    useState(0);
+
+  const [newsLoading, setNewsLoading] =
+    useState(true);
+
+  const [tendersLoading, setTendersLoading] =
+    useState(true);
+
+  const [vacanciesLoading, setVacanciesLoading] =
+    useState(true);
+
+  const [eventsLoading, setEventsLoading] =
+    useState(true);
 
   useEffect(() => {
     async function loadNews() {
@@ -45,13 +139,18 @@ function HomePage() {
         const sorted = [...data]
           .sort(
             (a, b) =>
-              new Date(b.date).getTime() - new Date(a.date).getTime()
+              new Date(b.date).getTime() -
+              new Date(a.date).getTime(),
           )
           .slice(0, 4);
 
         setLatestNews(sorted);
       } catch (error) {
-        console.error("Failed to load home page news:", error);
+        console.error(
+          "Failed to load home page news:",
+          error,
+        );
+
         setLatestNews([]);
       } finally {
         setNewsLoading(false);
@@ -64,29 +163,60 @@ function HomePage() {
   useEffect(() => {
     async function loadTenders() {
       try {
+        setTendersLoading(true);
+
+        /*
+         * This is the SAME API used by the public
+         * tender page and admin tender page.
+         *
+         * No mock tender data is used here.
+         */
         const data = await getTenders();
 
-        const openTenders = data
-          .filter(
-            (tender) =>
-              tender.status?.toLowerCase() === "open"
-          )
-          .sort((a, b) => {
-            const aDate = a.published_at
-              ? new Date(a.published_at).getTime()
-              : 0;
+        console.log(
+          "HOME TENDERS FROM DATABASE:",
+          data,
+        );
 
-            const bDate = b.published_at
-              ? new Date(b.published_at).getTime()
-              : 0;
+        /*
+         * Home page displays the latest OPEN tenders.
+         *
+         * Open/Closed is determined only by closes_at.
+         */
+        const openTenders = data
+          .filter(isTenderOpen)
+          .sort((a, b) => {
+            const aDate =
+              a.published_at
+                ? new Date(
+                    a.published_at,
+                  ).getTime()
+                : new Date(
+                    a.created_at,
+                  ).getTime();
+
+            const bDate =
+              b.published_at
+                ? new Date(
+                    b.published_at,
+                  ).getTime()
+                : new Date(
+                    b.created_at,
+                  ).getTime();
 
             return bDate - aDate;
           })
           .slice(0, 3);
 
-        setLatestTenders(openTenders);
+        setLatestTenders(
+          openTenders,
+        );
       } catch (error) {
-        console.error("Failed to load home page tenders:", error);
+        console.error(
+          "Failed to load home page tenders:",
+          error,
+        );
+
         setLatestTenders([]);
       } finally {
         setTendersLoading(false);
@@ -101,17 +231,62 @@ function HomePage() {
       try {
         const data = await getVacancies();
 
-        const sorted = [...data]
-          .sort(
-            (a, b) =>
-              new Date(b.deadline).getTime() -
-              new Date(a.deadline).getTime()
-          )
+        const now = Date.now();
+
+        const activeVacancies = data
+          .filter((vacancy) => {
+            if (
+              vacancy.status
+                ?.toLowerCase() !==
+              "published"
+            ) {
+              return false;
+            }
+
+            if (!vacancy.deadline) {
+              return true;
+            }
+
+            const deadline =
+              new Date(
+                vacancy.deadline,
+              ).getTime();
+
+            return (
+              !Number.isNaN(
+                deadline,
+              ) &&
+              deadline >= now
+            );
+          })
+          .sort((a, b) => {
+            const aDate =
+              a.published_at
+                ? new Date(
+                    a.published_at,
+                  ).getTime()
+                : 0;
+
+            const bDate =
+              b.published_at
+                ? new Date(
+                    b.published_at,
+                  ).getTime()
+                : 0;
+
+            return bDate - aDate;
+          })
           .slice(0, 3);
 
-        setLatestVacancies(sorted);
+        setLatestVacancies(
+          activeVacancies,
+        );
       } catch (error) {
-        console.error("Failed to load home page vacancies:", error);
+        console.error(
+          "Failed to load home page vacancies:",
+          error,
+        );
+
         setLatestVacancies([]);
       } finally {
         setVacanciesLoading(false);
@@ -130,20 +305,38 @@ function HomePage() {
 
         const upcoming = data
           .filter((event) => {
-            const eventDate = new Date(event.start_at);
+            const eventEndDate =
+              new Date(
+                event.end_at,
+              );
 
-            return eventDate >= now;
+            return (
+              !Number.isNaN(
+                eventEndDate.getTime(),
+              ) &&
+              eventEndDate >= now
+            );
           })
           .sort(
             (a, b) =>
-              new Date(a.start_at).getTime() -
-              new Date(b.start_at).getTime()
+              new Date(
+                a.start_at,
+              ).getTime() -
+              new Date(
+                b.start_at,
+              ).getTime(),
           )
           .slice(0, 3);
 
-        setUpcomingEvents(upcoming);
+        setUpcomingEvents(
+          upcoming,
+        );
       } catch (error) {
-        console.error("Failed to load home page events:", error);
+        console.error(
+          "Failed to load home page events:",
+          error,
+        );
+
         setUpcomingEvents([]);
       } finally {
         setEventsLoading(false);
@@ -153,9 +346,37 @@ function HomePage() {
     loadEvents();
   }, []);
 
+  useEffect(() => {
+    async function loadCounts() {
+      try {
+        const [
+          directorates,
+          cityAdmins,
+        ] = await Promise.all([
+          getDirectorates(),
+          getCityAdmins(),
+        ]);
+
+        setDirectorateCount(
+          directorates.length,
+        );
+
+        setCityAdminCount(
+          cityAdmins.length,
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load directorate/city admin counts:",
+          error,
+        );
+      }
+    }
+
+    loadCounts();
+  }, []);
+
   return (
     <div className="animate-fade-in-up">
-      {/* Hero */}
       <section className="relative overflow-hidden gradient-hero">
         <img
           src={afarHero}
@@ -185,13 +406,18 @@ function HomePage() {
 
               <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight md:text-6xl">
                 Building a modern,{" "}
-                <span className="text-gold">connected</span> Afar
+                <span className="text-gold">
+                  connected
+                </span>{" "}
+                Afar
               </h1>
 
               <p className="mt-4 max-w-xl text-lg text-primary-foreground/80">
-                The Afar Regional State Urban Development and Construction
-                Bureau delivers services, information, and opportunities to
-                citizens, contractors, and partners.
+                The Afar Regional State Urban
+                Development and Construction Bureau
+                delivers services, information, and
+                opportunities to citizens,
+                contractors, and partners.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -212,11 +438,25 @@ function HomePage() {
               </div>
 
               <div className="mt-10 grid grid-cols-3 gap-4 border-t border-primary-foreground/10 pt-6">
-                <Stat label="Directorates" value="12+" />
-                <Stat label="City Admins" value="7" />
+                <Stat
+                  label="Directorates"
+                  value={String(
+                    directorateCount,
+                  )}
+                />
+
+                <Stat
+                  label="City Admins"
+                  value={String(
+                    cityAdminCount,
+                  )}
+                />
+
                 <Stat
                   label="Active Tenders"
-                  value={String(latestTenders.length)}
+                  value={String(
+                    latestTenders.length,
+                  )}
                 />
               </div>
             </div>
@@ -224,37 +464,49 @@ function HomePage() {
             <div className="relative hidden lg:block">
               <div className="grid grid-cols-2 gap-4">
                 <QuickTile
-                  icon={<Newspaper className="h-5 w-5" />}
+                  icon={
+                    <Newspaper className="h-5 w-5" />
+                  }
                   label="News"
                   to="/news"
                 />
 
                 <QuickTile
-                  icon={<FileText className="h-5 w-5" />}
+                  icon={
+                    <FileText className="h-5 w-5" />
+                  }
                   label="Tenders"
                   to="/tenders"
                 />
 
                 <QuickTile
-                  icon={<Briefcase className="h-5 w-5" />}
+                  icon={
+                    <Briefcase className="h-5 w-5" />
+                  }
                   label="Vacancies"
                   to="/vacancies"
                 />
 
                 <QuickTile
-                  icon={<Building2 className="h-5 w-5" />}
+                  icon={
+                    <Building2 className="h-5 w-5" />
+                  }
                   label="Directory"
                   to="/directory"
                 />
 
                 <QuickTile
-                  icon={<Calendar className="h-5 w-5" />}
+                  icon={
+                    <Calendar className="h-5 w-5" />
+                  }
                   label="Events"
                   to="/events"
                 />
 
                 <QuickTile
-                  icon={<FileText className="h-5 w-5" />}
+                  icon={
+                    <FileText className="h-5 w-5" />
+                  }
                   label="Publications"
                   to="/publications"
                 />
@@ -264,7 +516,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Quick Links strip */}
       <section className="border-b bg-card lg:hidden">
         <div className="mx-auto grid max-w-7xl grid-cols-3 gap-2 px-4 py-4">
           {[
@@ -311,7 +562,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Latest News */}
       <SectionHeading
         eyebrow="Newsroom"
         title="Latest News"
@@ -325,54 +575,80 @@ function HomePage() {
           <EmptyMessage message="No news available." />
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {latestNews.map((n) => (
-              <Link
-                key={n.id}
-                to="/news/$id"
-                params={{ id: n.id }}
-                className="group overflow-hidden rounded-xl border bg-card shadow-soft transition hover:shadow-elegant"
-              >
-                <div className="aspect-[4/3] overflow-hidden bg-secondary">
-                  <img
-                    src={n.image}
-                    alt={n.title}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    onError={(event) => {
-                      event.currentTarget.src = "/News1.jpg";
-                    }}
-                  />
-                </div>
+            {latestNews.map((n) => {
+              const title =
+                getLocalizedText(
+                  n.title,
+                );
 
-                <div className="p-4">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-foreground">
-                      {n.category || "News"}
-                    </span>
+              const excerpt =
+                getLocalizedText(
+                  n.excerpt,
+                );
 
-                    <span>·</span>
+              const category =
+                getLocalizedText(
+                  n.category,
+                );
 
-                    <time>{formatDate(n.date)}</time>
+              return (
+                <Link
+                  key={n.id}
+                  to="/news/$id"
+                  params={{
+                    id: String(n.id),
+                  }}
+                  className="group overflow-hidden rounded-xl border bg-card shadow-soft transition hover:shadow-elegant"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-secondary">
+                    <img
+                      src={n.image}
+                      alt={
+                        title || "News"
+                      }
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      onError={(event) => {
+                        event.currentTarget.src =
+                          "/News1.jpg";
+                      }}
+                    />
                   </div>
 
-                  <h3 className="mt-2 line-clamp-2 font-display text-base font-semibold leading-snug text-foreground group-hover:text-primary">
-                    {n.title}
-                  </h3>
+                  <div className="p-4">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-accent-foreground">
+                        {category ||
+                          "News"}
+                      </span>
 
-                  <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                    {n.excerpt}
-                  </p>
-                </div>
-              </Link>
-            ))}
+                      <span>·</span>
+
+                      <time>
+                        {formatDate(
+                          n.date,
+                        )}
+                      </time>
+                    </div>
+
+                    <h3 className="mt-2 line-clamp-2 font-display text-base font-semibold leading-snug text-foreground group-hover:text-primary">
+                      {title ||
+                        "Untitled News"}
+                    </h3>
+
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {excerpt}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>
 
-      {/* Tenders + Vacancies */}
       <section className="border-y bg-secondary/40 py-14">
         <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-2">
-          {/* Tenders */}
           <div>
             <SectionHeading
               eyebrow="Procurement"
@@ -384,50 +660,69 @@ function HomePage() {
             <div className="mt-5 space-y-3">
               {tendersLoading ? (
                 <EmptyMessage message="Loading tenders..." />
-              ) : latestTenders.length === 0 ? (
+              ) : latestTenders.length ===
+                0 ? (
                 <EmptyMessage message="There are currently no open tenders." />
               ) : (
-                latestTenders.map((tender) => (
-                  <Link
-                    key={tender.id}
-                    to="/tenders/$id"
-                    params={{ id: String(tender.id) }}
-                    className="block rounded-xl border bg-card p-4 transition hover:shadow-soft"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="text-xs font-mono text-muted-foreground">
-                          #{tender.id}
+                latestTenders.map(
+                  (tender) => (
+                    <Link
+                      key={
+                        tender.id
+                      }
+                      to="/tenders/$id"
+                      params={{
+                        id: String(
+                          tender.id,
+                        ),
+                      }}
+                      className="block rounded-xl border bg-card p-4 transition hover:shadow-soft"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-xs font-mono text-muted-foreground">
+                            #
+                            {
+                              tender.id
+                            }
+                          </div>
+
+                          <div className="mt-1 line-clamp-2 font-medium text-foreground">
+                            {getTenderTitle(
+                              tender,
+                            )}
+                          </div>
+
+                          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1">
+                              <FileText className="h-3 w-3" />
+
+                              {tender.category_id !==
+                              null
+                                ? `Category ${tender.category_id}`
+                                : "Procurement"}
+                            </span>
+
+                            <span className="inline-flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+
+                              Closes{" "}
+                              {formatDate(
+                                tender.closes_at,
+                              )}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="mt-1 line-clamp-2 font-medium text-foreground">
-                          {getTenderTitle(tender)}
-                        </div>
-
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1">
-                            <FileText className="h-3 w-3" />
-                            {tender.category_id
-                              ? `Category ${tender.category_id}`
-                              : "Procurement"}
-                          </span>
-
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Closes {formatDate(tender.closes_at)}
-                          </span>
-                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                       </div>
-
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    </div>
-                  </Link>
-                ))
+                    </Link>
+                  ),
+                )
               )}
             </div>
           </div>
 
-          {/* Vacancies */}
           <div>
             <SectionHeading
               eyebrow="Careers"
@@ -439,54 +734,64 @@ function HomePage() {
             <div className="mt-5 space-y-3">
               {vacanciesLoading ? (
                 <EmptyMessage message="Loading vacancies..." />
-              ) : latestVacancies.length === 0 ? (
+              ) : latestVacancies.length ===
+                0 ? (
                 <EmptyMessage message="There are currently no vacancies." />
               ) : (
-                latestVacancies.map((vacancy) => (
-                  <Link
-                    key={vacancy.id}
-                    to="/vacancies"
-                    className="block rounded-xl border bg-card p-4 transition hover:shadow-soft"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {vacancy.title}
-                        </div>
+                latestVacancies.map(
+                  (vacancy) => {
+                    const title =
+                      getLocalizedText(
+                        vacancy.title,
+                      );
 
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {vacancy.department}
-                        </div>
+                    return (
+                      <Link
+                        key={
+                          vacancy.id
+                        }
+                        to="/vacancies"
+                        className="block rounded-xl border bg-card p-4 transition hover:shadow-soft"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="font-medium text-foreground">
+                              {title ||
+                                "Untitled vacancy"}
+                            </div>
 
-                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {vacancy.location}
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {vacancy.status?.toLowerCase() ===
+                              "published"
+                                ? "Published"
+                                : "Draft"}
+                            </div>
+
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              Deadline:{" "}
+                              {vacancy.deadline
+                                ? formatDate(
+                                    vacancy.deadline,
+                                  )
+                                : "No deadline"}
+                            </div>
+                          </div>
+
+                          <span className="shrink-0 rounded-full bg-accent px-2 py-1 text-[10px] font-semibold uppercase text-accent-foreground">
+                            {vacancy.status ||
+                              "unknown"}
                           </span>
-
-                          <span className="inline-flex items-center gap-1">
-                            <Briefcase className="h-3 w-3" />
-                            {vacancy.type}
-                          </span>
-
-                          <span className="inline-flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Closes {formatDate(vacancy.deadline)}
-                          </span>
                         </div>
-                      </div>
-
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    </div>
-                  </Link>
-                ))
+                      </Link>
+                    );
+                  },
+                )
               )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Portfolio / Projects gallery */}
       <SectionHeading
         eyebrow="Portfolio"
         title="Projects & Milestones"
@@ -495,34 +800,35 @@ function HomePage() {
 
       <section className="mx-auto max-w-7xl px-6 pb-14">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-3">
-          {portfolioImages.map((p, i) => (
-            <div
-              key={i}
-              className={
-                "group relative overflow-hidden rounded-xl border bg-secondary shadow-soft " +
-                (i === 0
-                  ? "col-span-2 row-span-2 aspect-square md:aspect-[4/3]"
-                  : "aspect-[4/3]")
-              }
-            >
-              <img
-                src={p.url}
-                alt={p.caption}
-                loading="lazy"
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-              />
+          {portfolioImages.map(
+            (p, i) => (
+              <div
+                key={i}
+                className={
+                  "group relative overflow-hidden rounded-xl border bg-secondary shadow-soft " +
+                  (i === 0
+                    ? "col-span-2 row-span-2 aspect-square md:aspect-[4/3]"
+                    : "aspect-[4/3]")
+                }
+              >
+                <img
+                  src={p.url}
+                  alt={p.caption}
+                  loading="lazy"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                />
 
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/80 to-transparent p-3">
-                <div className="text-xs font-medium text-primary-foreground">
-                  {p.caption}
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/80 to-transparent p-3">
+                  <div className="text-xs font-medium text-primary-foreground">
+                    {p.caption}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       </section>
 
-      {/* Events */}
       <SectionHeading
         eyebrow="Calendar"
         title="Upcoming Events"
@@ -532,55 +838,75 @@ function HomePage() {
       <section className="mx-auto max-w-7xl px-6 pb-14">
         {eventsLoading ? (
           <EmptyMessage message="Loading upcoming events..." />
-        ) : upcomingEvents.length === 0 ? (
+        ) : upcomingEvents.length ===
+          0 ? (
           <EmptyMessage message="There are currently no upcoming events." />
         ) : (
           <div className="grid gap-4 md:grid-cols-3">
-            {upcomingEvents.map((event) => (
-              <div
-                key={event.id}
-                className="overflow-hidden rounded-xl border bg-card shadow-soft"
-              >
-                {event.image_path && (
-                  <div className="aspect-[16/9] overflow-hidden bg-secondary">
-                    <img
-                      src={getEventImage(event.image_path)}
-                      alt={getEventTitle(event)}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
+            {upcomingEvents.map(
+              (event) => (
+                <div
+                  key={event.id}
+                  className="overflow-hidden rounded-xl border bg-card shadow-soft"
+                >
+                  {event.image_path && (
+                    <div className="aspect-[16/9] overflow-hidden bg-secondary">
+                      <img
+                        src={getEventImage(
+                          event.image_path,
+                        )}
+                        alt={getEventTitle(
+                          event,
+                        )}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                        onError={(
+                          imageEvent,
+                        ) => {
+                          imageEvent.currentTarget.style.display =
+                            "none";
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-5">
+                    <div className="inline-flex items-center gap-2 rounded-md bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground">
+                      <Calendar className="h-3 w-3" />
+
+                      {formatDate(
+                        event.start_at,
+                      )}
+                    </div>
+
+                    <h3 className="mt-3 font-display text-base font-semibold">
+                      {getEventTitle(
+                        event,
+                      )}
+                    </h3>
+
+                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+
+                      {getLocalizedText(
+                        event.location,
+                      ) ||
+                        "Afar Regional State"}
+                    </div>
+
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      {getEventContent(
+                        event,
+                      )}
+                    </p>
                   </div>
-                )}
-
-                <div className="p-5">
-                  <div className="inline-flex items-center gap-2 rounded-md bg-accent px-2 py-1 text-xs font-semibold text-accent-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(event.start_at)}
-                  </div>
-
-                  <h3 className="mt-3 font-display text-base font-semibold">
-                    {getEventTitle(event)}
-                  </h3>
-
-                  <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3" />
-                    {event.location || "Afar Regional State"}
-                  </div>
-
-                  <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                    {getEventContent(event)}
-                  </p>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         )}
       </section>
 
-      {/* Contact block */}
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="overflow-hidden rounded-2xl gradient-primary text-primary-foreground shadow-elegant">
           <div className="grid gap-6 p-8 md:grid-cols-3 md:p-12">
@@ -590,12 +916,14 @@ function HomePage() {
               </div>
 
               <h2 className="mt-2 font-display text-2xl font-bold md:text-3xl">
-                We're here to serve citizens, contractors, and partners.
+                We're here to serve citizens,
+                contractors, and partners.
               </h2>
 
               <p className="mt-2 max-w-xl text-primary-foreground/80">
-                Reach any directorate or city administration through the
-                contact channels below, or send us a message.
+                Reach any directorate or city
+                administration through the contact
+                channels below, or send us a message.
               </p>
 
               <Link
@@ -620,7 +948,8 @@ function HomePage() {
 
               <div className="flex items-start gap-3">
                 <MapPin className="mt-0.5 h-4 w-4 text-gold" />
-                Semera, Afar Regional State, Ethiopia
+                Semera, Afar Regional State,
+                Ethiopia
               </div>
             </div>
           </div>
@@ -735,7 +1064,11 @@ function SectionHeading({
   );
 }
 
-function EmptyMessage({ message }: { message: string }) {
+function EmptyMessage({
+  message,
+}: {
+  message: string;
+}) {
   return (
     <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
       {message}
@@ -743,48 +1076,70 @@ function EmptyMessage({ message }: { message: string }) {
   );
 }
 
-function getTenderTitle(tender: Tender): string {
+function getTenderTitle(
+  tender: Tender,
+): string {
   return (
-    tender.title?.en ||
-    tender.title?.am ||
-    "Untitled Tender"
+    getLocalizedText(
+      tender.title,
+    ) || "Untitled Tender"
   );
 }
 
-function getEventTitle(event: EventItem): string {
+function getEventTitle(
+  event: EventItem,
+): string {
   return (
-    event.title?.en ||
-    event.title?.am ||
-    "Untitled Event"
+    getLocalizedText(
+      event.title,
+    ) || "Untitled Event"
   );
 }
 
-function getEventContent(event: EventItem): string {
-  return (
-    event.content?.en ||
-    event.content?.am ||
-    ""
+function getEventContent(
+  event: EventItem,
+): string {
+  return getLocalizedText(
+    event.content,
   );
 }
 
-function getEventImage(imagePath: string): string {
-  return `/${String(imagePath).replace(/^\/+/, "")}`;
+function getEventImage(
+  imagePath: string,
+): string {
+  return `/${String(imagePath).replace(
+    /^\/+/,
+    "",
+  )}`;
 }
 
-function formatDate(date: string | null | undefined): string {
+function formatDate(
+  date:
+    | string
+    | null
+    | undefined,
+): string {
   if (!date) {
     return "—";
   }
 
-  const parsed = new Date(date);
+  const parsed =
+    new Date(date);
 
-  if (Number.isNaN(parsed.getTime())) {
+  if (
+    Number.isNaN(
+      parsed.getTime(),
+    )
+  ) {
     return "—";
   }
 
-  return parsed.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  return parsed.toLocaleDateString(
+    "en-US",
+    {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    },
+  );
 }

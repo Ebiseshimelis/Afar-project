@@ -67,7 +67,7 @@ class EventController extends Controller
 
     public function show(Event $event): JsonResponse
     {
-        return response()->json(['data' => $event->load(['category', 'author', 'media'])], 200);
+        return response()->json(['data' => $event->load(['category', 'author'])], 200);
     }
 
     public function update(UpdateEventRequest $request, Event $event): JsonResponse

@@ -1,48 +1,33 @@
 ﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
-import {
-  getTenders,
-  getTenderStatus,
-  type Tender,
-} from "@/services/tenderService";
+import { getTenders, type Tender } from "@/services/tenderService";
 import {
   Search,
   Calendar,
   FileText,
   ChevronRight,
 } from "lucide-react";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
-export const Route = createFileRoute(
-  "/_portal/tenders/",
-)({
+export const Route = createFileRoute("/_portal/tenders/")({
   head: () => ({
     meta: [
-      {
-        title: "Tenders — Afar UDCB",
-      },
+      { title: "Tenders — Afar UDCB" },
       {
         name: "description",
         content:
-          "Tenders published by the Afar UDCB.",
+          "Open and closed tenders published by the Afar UDCB.",
       },
     ],
   }),
-
   component: TendersListPage,
 });
 
-type Status = "All" | "Open" | "Closed";
+const STATUSES = ["All", "Open", "Closed"] as const;
 
-const STATUSES: Status[] = [
-  "All",
-  "Open",
-  "Closed",
-];
+type Status = (typeof STATUSES)[number];
+
+type TenderStatus = "Open" | "Closed";
 
 function getTitle(
   tender: Tender,
@@ -68,8 +53,37 @@ function getContent(
   );
 }
 
+/*
+ * Public tender status.
+ *
+ * Only published tenders are shown on the public portal.
+ *
+ * A published tender with no closing date is Open.
+ * A published tender whose closing date is in the future is Open.
+ * A published tender whose closing date has passed is Closed.
+ */
+function getTenderStatus(
+  tender: Tender,
+): TenderStatus {
+  if (!tender.closes_at) {
+    return "Open";
+  }
+
+  const closeDate = new Date(
+    tender.closes_at,
+  ).getTime();
+
+  if (Number.isNaN(closeDate)) {
+    return "Closed";
+  }
+
+  return closeDate >= Date.now()
+    ? "Open"
+    : "Closed";
+}
+
 function formatDate(
-  date: string | null | undefined,
+  date: string | null,
 ): string {
   if (!date) {
     return "—";
@@ -81,28 +95,20 @@ function formatDate(
     return "—";
   }
 
-  return parsed.toLocaleDateString(
-    "en-US",
-    {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    },
-  );
+  return parsed.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function TendersListPage() {
-  const [tenders, setTenders] =
-    useState<Tender[]>([]);
-
+  const [tenders, setTenders] = useState<Tender[]>([]);
   const [q, setQ] = useState("");
-
   const [status, setStatus] =
     useState<Status>("All");
-
   const [loading, setLoading] =
     useState(true);
-
   const [error, setError] =
     useState("");
 
@@ -117,12 +123,25 @@ function TendersListPage() {
         const data = await getTenders();
 
         console.log(
-          "PUBLIC TENDERS FROM DATABASE:",
+          "Tenders received from database:",
           data,
         );
 
         if (!cancelled) {
-          setTenders(data);
+          /*
+           * The backend endpoint is also used by admin,
+           * so it returns drafts as well.
+           *
+           * Public portal must only display published
+           * database records.
+           */
+          const publicTenders = data.filter(
+            (tender) =>
+              tender.status?.toLowerCase() ===
+              "published",
+          );
+
+          setTenders(publicTenders);
         }
       } catch (err) {
         console.error(
@@ -169,8 +188,7 @@ function TendersListPage() {
       }
 
       const title =
-        getTitle(tender)
-          .toLowerCase();
+        getTitle(tender).toLowerCase();
 
       const titleAm =
         getTitle(
@@ -179,30 +197,25 @@ function TendersListPage() {
         ).toLowerCase();
 
       const content =
-        getContent(tender)
-          .toLowerCase();
+        getContent(
+          tender,
+        ).toLowerCase();
 
       return (
         title.includes(search) ||
         titleAm.includes(search) ||
         content.includes(search) ||
-        String(tender.id).includes(
-          search,
-        )
+        String(tender.id).includes(search)
       );
     });
-  }, [
-    tenders,
-    q,
-    status,
-  ]);
+  }, [tenders, q, status]);
 
   return (
     <>
       <PageHeader
         eyebrow="Public Procurement"
         title="Tenders"
-        description="View all tenders from the Afar UDCB database."
+        description="Open and closed tenders published by the Afar UDCB."
         section="default"
       />
 
@@ -213,8 +226,8 @@ function TendersListPage() {
 
             <input
               value={q}
-              onChange={(event) =>
-                setQ(event.target.value)
+              onChange={(e) =>
+                setQ(e.target.value)
               }
               placeholder="Search tender..."
               className="h-11 w-full rounded-lg border bg-card pl-10 pr-3 text-sm outline-none ring-ring focus:ring-2"
@@ -222,21 +235,21 @@ function TendersListPage() {
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
-            {STATUSES.map((item) => (
+            {STATUSES.map((s) => (
               <button
-                key={item}
+                key={s}
                 type="button"
                 onClick={() =>
-                  setStatus(item)
+                  setStatus(s)
                 }
                 className={
                   "rounded-full border px-3 py-1.5 text-xs font-medium " +
-                  (status === item
+                  (status === s
                     ? "border-primary bg-primary text-primary-foreground"
                     : "bg-card text-foreground/70 hover:bg-secondary")
                 }
               >
-                {item}
+                {s}
               </button>
             ))}
           </div>
@@ -244,7 +257,7 @@ function TendersListPage() {
 
         {loading && (
           <div className="mt-6 rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground">
-            Loading tenders from database...
+            Loading tenders...
           </div>
         )}
 
@@ -265,7 +278,7 @@ function TendersListPage() {
               </h3>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                There are currently no tenders matching your search.
+                There are currently no published tenders matching your search.
               </p>
             </div>
           )}
@@ -278,14 +291,15 @@ function TendersListPage() {
                 const tenderStatus =
                   getTenderStatus(tender);
 
+                const title =
+                  getTitle(tender);
+
                 return (
                   <Link
                     key={tender.id}
                     to="/tenders/$id"
                     params={{
-                      id: String(
-                        tender.id,
-                      ),
+                      id: String(tender.id),
                     }}
                     className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-xl border bg-card p-5 shadow-soft transition hover:shadow-elegant"
                   >
@@ -296,52 +310,23 @@ function TendersListPage() {
                         </span>
 
                         <StatusBadge
-                          status={
-                            tenderStatus
-                          }
+                          status={tenderStatus}
                         />
 
-                        {tender.category_id !==
-                          null && (
+                        {tender.category_id && (
                           <span className="text-xs text-muted-foreground">
-                            Category{" "}
-                            {
-                              tender.category_id
-                            }
+                            Category {tender.category_id}
                           </span>
                         )}
                       </div>
 
                       <h3 className="mt-2 font-display text-base font-semibold text-foreground">
-                        {getTitle(tender)}
+                        {title}
                       </h3>
 
-                      {getTitle(
-                        tender,
-                        "am",
-                      ) && (
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {getTitle(
-                            tender,
-                            "am",
-                          )}
-                        </p>
-                      )}
-
-                      {getContent(
-                        tender,
-                      ) && (
-                        <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                          {getContent(
-                            tender,
-                          )}
-                        </p>
-                      )}
-
-                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span className="inline-flex items-center gap-1">
                           <FileText className="h-3 w-3" />
-
                           Published{" "}
                           {formatDate(
                             tender.published_at,
@@ -350,24 +335,9 @@ function TendersListPage() {
 
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-
                           Deadline{" "}
                           {formatDate(
                             tender.closes_at,
-                          )}
-                        </span>
-
-                        <span>
-                          Created{" "}
-                          {formatDate(
-                            tender.created_at,
-                          )}
-                        </span>
-
-                        <span>
-                          Updated{" "}
-                          {formatDate(
-                            tender.updated_at,
                           )}
                         </span>
                       </div>
@@ -387,16 +357,21 @@ function TendersListPage() {
 export function StatusBadge({
   status,
 }: {
-  status: "Open" | "Closed";
+  status: TenderStatus;
 }) {
-  const classes =
-    status === "Open"
-      ? "bg-success/15 text-success"
-      : "bg-muted text-muted-foreground";
+  const map: Record<
+    TenderStatus,
+    string
+  > = {
+    Open:
+      "bg-success/15 text-success",
+    Closed:
+      "bg-muted text-muted-foreground",
+  };
 
   return (
     <span
-      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${classes}`}
+      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${map[status]}`}
     >
       {status}
     </span>

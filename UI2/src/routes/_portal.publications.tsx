@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
-import { getPublications, type PublicationItem } from "@/services/publicationService";
+import {
+  getPublications,
+  type Publication,
+} from "@/services/publicationService";
 import { FileText, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -18,7 +21,7 @@ export const Route = createFileRoute("/_portal/publications")({
 });
 
 function PublicationsPage() {
-  const [publications, setPublications] = useState<PublicationItem[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -62,9 +65,11 @@ function PublicationsPage() {
         {!loading && !error && publications.length === 0 && (
           <div className="rounded-xl border bg-card px-6 py-12 text-center shadow-soft">
             <FileText className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
+
             <h2 className="text-lg font-semibold">
               No publications available
             </h2>
+
             <p className="mt-2 text-sm text-muted-foreground">
               There are currently no publications available.
             </p>
@@ -77,62 +82,79 @@ function PublicationsPage() {
               <thead className="bg-secondary text-left text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-5 py-3">Title</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3 hidden md:table-cell">
+
+                  <th className="px-5 py-3">
+                    Status
+                  </th>
+
+                  <th className="hidden px-5 py-3 md:table-cell">
                     Published
                   </th>
-                  <th className="px-5 py-3 text-right">Action</th>
+
+                  <th className="px-5 py-3 text-right">
+                    Action
+                  </th>
                 </tr>
               </thead>
 
               <tbody>
-                {publications.map((publication) => (
-                  <tr key={publication.id} className="border-t">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-accent-foreground">
-                          <FileText className="h-4 w-4" />
-                        </div>
+                {publications.map((publication) => {
+                  const title =
+                    publication.title?.en ||
+                    publication.title?.am ||
+                    "Untitled Publication";
 
-                        <div>
-                          <span className="font-medium">
-                            {publication.title}
+                  return (
+                    <tr
+                      key={publication.id}
+                      className="border-t"
+                    >
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent text-accent-foreground">
+                            <FileText className="h-4 w-4" />
+                          </div>
+
+                          <div>
+                            <span className="font-medium">
+                              {title}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 text-muted-foreground">
+                        {publication.status}
+                      </td>
+
+                      <td className="hidden px-5 py-4 text-muted-foreground md:table-cell">
+                        {publication.publishedAt
+                          ? new Date(
+                              publication.publishedAt
+                            ).toLocaleDateString()
+                          : "—"}
+                      </td>
+
+                      <td className="px-5 py-4 text-right">
+                        {publication.filePath ? (
+                          <a
+                            href={publication.filePath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Download
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            No file
                           </span>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-4 text-muted-foreground">
-                      {publication.status}
-                    </td>
-
-                    <td className="px-5 py-4 text-muted-foreground hidden md:table-cell">
-                      {publication.publishedAt
-                        ? new Date(
-                            publication.publishedAt
-                          ).toLocaleDateString()
-                        : "—"}
-                    </td>
-
-                    <td className="px-5 py-4 text-right">
-                      {publication.filePath ? (
-                        <a
-                          href={publication.filePath}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          Download
-                        </a>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          No file
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

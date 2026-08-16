@@ -6,22 +6,16 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::table('tenders', function (Blueprint $table) {
+        Schema::table('publications', function (Blueprint $table) {
             $table->string('file_path')->nullable()->change();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('tenders', function (Blueprint $table) {
+        Schema::table('publications', function (Blueprint $table) {
             $table->string('file_path')->nullable(false)->change();
         });
     }

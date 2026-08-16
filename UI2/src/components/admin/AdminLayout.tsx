@@ -45,7 +45,7 @@ type AdminPath =
   | "/admin/messages"
   | "/admin/feedback"
   | "/admin/notifications"
-  | "/admin/media"
+  | "/admin/multimedia"
   | "/admin/backgrounds"
   | "/admin/settings";
 
@@ -93,7 +93,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "System",
     items: [
-      { to: "/admin/media", label: "Media Library", icon: ImageIcon },
+      { to: "/admin/multimedia", label: "Multimedia Library", icon: ImageIcon },
       { to: "/admin/backgrounds", label: "Background Images", icon: ImageIcon },
       { to: "/admin/settings", label: "Settings", icon: Settings },
     ],
@@ -499,3 +499,4 @@ export function EmptyState({
     </div>
   );
 }
+

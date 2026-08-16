@@ -15,15 +15,17 @@ class Publication extends Model
         'category_id',
         'created_by',
         'title',
-        'content',
+        'description',
         'file_path',
+        'file_type',
+        'file_size',
         'status',
         'published_at',
     ];
 
     protected $casts = [
         'title' => 'array',
-        'content' => 'array',
+        'description' => 'array',
         'published_at' => 'datetime',
     ];
 

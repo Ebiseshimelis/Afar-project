@@ -1,19 +1,33 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getMultimedia, type MultimediaItem } from "@/services/multimediaService";
+import {
+  getMultimedia,
+  type MultimediaItem,
+} from "@/services/multimediaService";
 import { Image as ImageIcon } from "lucide-react";
 
-export const Route = createFileRoute("/_portal/multimedia/images")({
+export const Route = createFileRoute(
+  "/_portal/multimedia/images",
+)({
   head: () => ({
-    meta: [{ title: "Image Gallery — Afar UDCB" }],
+    meta: [
+      {
+        title: "Image Gallery — Afar UDCB",
+      },
+    ],
   }),
   component: ImageGalleryPage,
 });
 
 function ImageGalleryPage() {
-  const [images, setImages] = useState<MultimediaItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [images, setImages] =
+    useState<MultimediaItem[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState<string | null>(null);
 
   useEffect(() => {
     async function loadImages() {
@@ -21,12 +35,27 @@ function ImageGalleryPage() {
         setLoading(true);
         setError(null);
 
-        const data = await getMultimedia();
+        const data =
+          await getMultimedia();
 
-        setImages(data.filter((item) => item.type === "image"));
+        setImages(
+          data.filter(
+            (item) =>
+              item.type ===
+              "image" &&
+              item.status ===
+                "published",
+          ),
+        );
       } catch (err) {
-        console.error("Failed to load images:", err);
-        setError("Unable to load images.");
+        console.error(
+          "Failed to load images:",
+          err,
+        );
+
+        setError(
+          "Unable to load images.",
+        );
       } finally {
         setLoading(false);
       }
@@ -37,7 +66,9 @@ function ImageGalleryPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
-      <h1 className="font-display text-2xl font-bold">Image Gallery</h1>
+      <h1 className="font-display text-2xl font-bold">
+        Image Gallery
+      </h1>
 
       <p className="mt-2 text-sm text-muted-foreground">
         Browse photos and image collections.
@@ -55,48 +86,76 @@ function ImageGalleryPage() {
         </div>
       )}
 
-      {!loading && !error && images.length === 0 && (
-        <div className="mt-8 rounded-xl border bg-card p-10 text-center shadow-soft">
-          <ImageIcon className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
+      {!loading &&
+        !error &&
+        images.length === 0 && (
+          <div className="mt-8 rounded-xl border bg-card p-10 text-center shadow-soft">
+            <ImageIcon className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
 
-          <h2 className="text-lg font-semibold">
-            No images available
-          </h2>
+            <h2 className="text-lg font-semibold">
+              No images available
+            </h2>
 
-          <p className="mt-2 text-sm text-muted-foreground">
-            There are currently no images available in the gallery.
-          </p>
-        </div>
-      )}
+            <p className="mt-2 text-sm text-muted-foreground">
+              There are currently no images available in the gallery.
+            </p>
+          </div>
+        )}
 
-      {!loading && !error && images.length > 0 && (
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {images.map((image) => (
-            <div
-              key={image.id}
-              className="overflow-hidden rounded-xl border bg-card shadow-soft"
-            >
-              {image.filePath && (
-                <img
-                  src={image.filePath}
-                  alt={image.title}
-                  className="h-56 w-full object-cover"
-                />
-              )}
+      {!loading &&
+        !error &&
+        images.length > 0 && (
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {images.map((image) => {
+              const imageUrl =
+                image.fileUrl ||
+                image.filePath ||
+                "";
 
-              <div className="p-4">
-                <h3 className="font-semibold">{image.title}</h3>
+              return (
+                <div
+                  key={image.id}
+                  className="overflow-hidden rounded-xl border bg-card shadow-soft"
+                >
+                  <div className="h-56 w-full bg-secondary">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt={image.title}
+                        className="h-full w-full object-cover"
+                        onError={(event) => {
+                          console.error(
+                            "Failed to load image:",
+                            imageUrl,
+                          );
 
-                {image.description && (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {image.description}
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+                          event.currentTarget.style.display =
+                            "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="grid h-full place-items-center">
+                        <ImageIcon className="h-10 w-10 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4">
+                    <h3 className="font-semibold">
+                      {image.title}
+                    </h3>
+
+                    {image.description && (
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {image.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
     </div>
   );
 }

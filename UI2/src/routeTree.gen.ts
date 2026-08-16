@@ -27,7 +27,6 @@ import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminFeedbackRouteImport } from './routes/admin.feedback'
 import { Route as AdminForgotPasswordRouteImport } from './routes/admin.forgot-password'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AdminMediaRouteImport } from './routes/admin.media'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminMultimediaRouteImport } from './routes/admin.multimedia'
 import { Route as AdminNewsRouteImport } from './routes/admin.news'
@@ -134,11 +133,6 @@ const AdminForgotPasswordRoute = AdminForgotPasswordRouteImport.update({
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminMediaRoute = AdminMediaRouteImport.update({
-  id: '/admin/media',
-  path: '/admin/media',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminMessagesRoute = AdminMessagesRouteImport.update({
@@ -249,7 +243,6 @@ export interface FileRoutesByFullPath {
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/login': typeof AdminLoginRoute
-  '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/multimedia': typeof AdminMultimediaRoute
   '/admin/news': typeof AdminNewsRoute
@@ -286,7 +279,6 @@ export interface FileRoutesByTo {
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/login': typeof AdminLoginRoute
-  '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/multimedia': typeof AdminMultimediaRoute
   '/admin/news': typeof AdminNewsRoute
@@ -326,7 +318,6 @@ export interface FileRoutesById {
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
   '/admin/login': typeof AdminLoginRoute
-  '/admin/media': typeof AdminMediaRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/multimedia': typeof AdminMultimediaRoute
   '/admin/news': typeof AdminNewsRoute
@@ -367,7 +358,6 @@ export interface FileRouteTypes {
     | '/admin/feedback'
     | '/admin/forgot-password'
     | '/admin/login'
-    | '/admin/media'
     | '/admin/messages'
     | '/admin/multimedia'
     | '/admin/news'
@@ -404,7 +394,6 @@ export interface FileRouteTypes {
     | '/admin/feedback'
     | '/admin/forgot-password'
     | '/admin/login'
-    | '/admin/media'
     | '/admin/messages'
     | '/admin/multimedia'
     | '/admin/news'
@@ -443,7 +432,6 @@ export interface FileRouteTypes {
     | '/admin/feedback'
     | '/admin/forgot-password'
     | '/admin/login'
-    | '/admin/media'
     | '/admin/messages'
     | '/admin/multimedia'
     | '/admin/news'
@@ -476,7 +464,6 @@ export interface RootRouteChildren {
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   AdminForgotPasswordRoute: typeof AdminForgotPasswordRoute
   AdminLoginRoute: typeof AdminLoginRoute
-  AdminMediaRoute: typeof AdminMediaRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminMultimediaRoute: typeof AdminMultimediaRoute
   AdminNewsRoute: typeof AdminNewsRoute
@@ -618,13 +605,6 @@ declare module '@tanstack/react-router' {
       path: '/admin/login'
       fullPath: '/admin/login'
       preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/media': {
-      id: '/admin/media'
-      path: '/admin/media'
-      fullPath: '/admin/media'
-      preLoaderRoute: typeof AdminMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/messages': {
@@ -803,7 +783,6 @@ const rootRouteChildren: RootRouteChildren = {
   AdminFeedbackRoute: AdminFeedbackRoute,
   AdminForgotPasswordRoute: AdminForgotPasswordRoute,
   AdminLoginRoute: AdminLoginRoute,
-  AdminMediaRoute: AdminMediaRoute,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminMultimediaRoute: AdminMultimediaRoute,
   AdminNewsRoute: AdminNewsRoute,

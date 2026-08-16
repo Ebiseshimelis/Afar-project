@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tenders', function (Blueprint $table) {
-            $table->string('file_path')->nullable()->change();
+            //
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tenders', function (Blueprint $table) {
-            $table->string('file_path')->nullable(false)->change();
+            //
         });
     }
 };
