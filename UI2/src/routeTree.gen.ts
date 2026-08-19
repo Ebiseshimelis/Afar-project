@@ -19,6 +19,7 @@ import { Route as PortalEventsRouteImport } from './routes/_portal.events'
 import { Route as PortalPublicationsRouteImport } from './routes/_portal.publications'
 import { Route as PortalVacanciesRouteImport } from './routes/_portal.vacancies'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAccountsRouteImport } from './routes/admin.accounts'
 import { Route as AdminActivityRouteImport } from './routes/admin.activity'
 import { Route as AdminBackgroundsRouteImport } from './routes/admin.backgrounds'
 import { Route as AdminCityAdminsRouteImport } from './routes/admin.city-admins'
@@ -93,6 +94,11 @@ const PortalVacanciesRoute = PortalVacanciesRouteImport.update({
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAccountsRoute = AdminAccountsRouteImport.update({
+  id: '/admin/accounts',
+  path: '/admin/accounts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminActivityRoute = AdminActivityRouteImport.update({
@@ -235,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof PortalEventsRoute
   '/publications': typeof PortalPublicationsRoute
   '/vacancies': typeof PortalVacanciesRoute
+  '/admin/accounts': typeof AdminAccountsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/backgrounds': typeof AdminBackgroundsRoute
   '/admin/city-admins': typeof AdminCityAdminsRoute
@@ -271,6 +278,7 @@ export interface FileRoutesByTo {
   '/events': typeof PortalEventsRoute
   '/publications': typeof PortalPublicationsRoute
   '/vacancies': typeof PortalVacanciesRoute
+  '/admin/accounts': typeof AdminAccountsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/backgrounds': typeof AdminBackgroundsRoute
   '/admin/city-admins': typeof AdminCityAdminsRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/_portal/events': typeof PortalEventsRoute
   '/_portal/publications': typeof PortalPublicationsRoute
   '/_portal/vacancies': typeof PortalVacanciesRoute
+  '/admin/accounts': typeof AdminAccountsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/backgrounds': typeof AdminBackgroundsRoute
   '/admin/city-admins': typeof AdminCityAdminsRoute
@@ -350,6 +359,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/publications'
     | '/vacancies'
+    | '/admin/accounts'
     | '/admin/activity'
     | '/admin/backgrounds'
     | '/admin/city-admins'
@@ -386,6 +396,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/publications'
     | '/vacancies'
+    | '/admin/accounts'
     | '/admin/activity'
     | '/admin/backgrounds'
     | '/admin/city-admins'
@@ -424,6 +435,7 @@ export interface FileRouteTypes {
     | '/_portal/events'
     | '/_portal/publications'
     | '/_portal/vacancies'
+    | '/admin/accounts'
     | '/admin/activity'
     | '/admin/backgrounds'
     | '/admin/city-admins'
@@ -456,6 +468,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   PortalRoute: typeof PortalRouteWithChildren
+  AdminAccountsRoute: typeof AdminAccountsRoute
   AdminActivityRoute: typeof AdminActivityRoute
   AdminBackgroundsRoute: typeof AdminBackgroundsRoute
   AdminCityAdminsRoute: typeof AdminCityAdminsRoute
@@ -549,6 +562,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/accounts': {
+      id: '/admin/accounts'
+      path: '/admin/accounts'
+      fullPath: '/admin/accounts'
+      preLoaderRoute: typeof AdminAccountsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/activity': {
@@ -775,6 +795,7 @@ const PortalRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   PortalRoute: PortalRouteWithChildren,
+  AdminAccountsRoute: AdminAccountsRoute,
   AdminActivityRoute: AdminActivityRoute,
   AdminBackgroundsRoute: AdminBackgroundsRoute,
   AdminCityAdminsRoute: AdminCityAdminsRoute,

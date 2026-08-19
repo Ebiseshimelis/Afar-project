@@ -37,6 +37,7 @@ type AdminPath =
   | "/admin/tenders"
   | "/admin/vacancies"
   | "/admin/publications"
+  | "/admin/city-admins"
   | "/admin/directory"
   | "/admin/users"
   | "/admin/roles"
@@ -102,7 +103,7 @@ const NAV_GROUPS: NavGroup[] = [
 
 const ALL_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 
-export function AdminLayout({ children }: { children: ReactNode }) {
+export function AdminLayout({ children, permission }: { children: ReactNode; permission?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [openMobile, setOpenMobile] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -499,4 +500,10 @@ export function EmptyState({
     </div>
   );
 }
+
+
+
+
+
+
 

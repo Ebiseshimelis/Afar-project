@@ -1,4 +1,6 @@
 import type { NewsItem } from "@/lib/mock-data";
+
+export type { NewsItem };
 import { getAdminToken } from "@/services/authService";
 
 const NEWS_API_URL = "http://127.0.0.1:8000/api/v1/news";
@@ -523,3 +525,4 @@ export async function deleteNews(
 
   return true;
 }
+

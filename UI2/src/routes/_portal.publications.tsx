@@ -128,17 +128,17 @@ function PublicationsPage() {
                       </td>
 
                       <td className="hidden px-5 py-4 text-muted-foreground md:table-cell">
-                        {publication.publishedAt
+                        {publication.published_at
                           ? new Date(
-                              publication.publishedAt
+                              publication.published_at
                             ).toLocaleDateString()
                           : "—"}
                       </td>
 
                       <td className="px-5 py-4 text-right">
-                        {publication.filePath ? (
+                        {publication.file_path ? (
                           <a
-                            href={publication.filePath}
+                            href={publication.file_path}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"

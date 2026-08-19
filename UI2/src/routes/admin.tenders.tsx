@@ -86,10 +86,10 @@ type FormState = {
   contentEn: string;
   contentAm: string;
   categoryId: string;
-  status: string;
+  status: "draft" | "published";
   opensAt: string;
   closesAt: string;
-  publishedAt: string;
+  publishedAt: string;
 };
 
 const emptyForm: FormState = {
@@ -216,7 +216,7 @@ function TendersAdmin() {
           tender.category_id != null
             ? String(tender.category_id)
             : "",
-        status: tender.status || "draft",
+        status: (tender.status === "published" ? "published" : "draft"),
         opensAt: toDateTimeLocal(tender.opens_at),
         closesAt: toDateTimeLocal(tender.closes_at),
         publishedAt: toDateTimeLocal(tender.published_at),
@@ -694,7 +694,7 @@ function TendersAdmin() {
                     onChange={(e) =>
                       setForm({
                         ...form,
-                        status: e.target.value,
+                        status: e.target.value as "draft" | "published",
                       })
                     }
                     className="h-10 w-full rounded-lg border bg-background px-3 text-sm"
@@ -946,3 +946,8 @@ function TendersAdmin() {
     </AdminLayout>
   );
 }
+
+
+
+
+

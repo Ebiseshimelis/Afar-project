@@ -1,7 +1,11 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
-import { getTender, type Tender } from "@/services/tenderService";
-import { Calendar, FileText, Download, ArrowLeft } from "lucide-react";
+import {
+  getTender,
+  getTenderStatus,
+  type Tender,
+} from "@/services/tenderService";
+import { Calendar, Download, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/_portal/tenders/$id")({
   loader: async ({ params }) => {
@@ -94,21 +98,16 @@ function formatDate(date: string | null): string {
   return parsed.toLocaleDateString();
 }
 
-function normalizeStatus(status: string): "Open" | "Closed" | "Awarded" {
-  const normalized = status.toLowerCase();
-
-  if (normalized === "open") return "Open";
-  if (normalized === "awarded") return "Awarded";
-
-  return "Closed";
-}
-
 function TenderDetailPage() {
   const { item } = Route.useLoaderData();
 
   const title = getTitle(item);
   const content = getContent(item);
-  const status = normalizeStatus(item.status);
+
+  const status =
+    item.status === "published"
+      ? getTenderStatus(item)
+      : "Closed";
 
   return (
     <>
@@ -223,12 +222,11 @@ function TenderDetailPage() {
 function StatusBadge({
   status,
 }: {
-  status: "Open" | "Closed" | "Awarded";
+  status: "Open" | "Closed";
 }) {
   const map = {
     Open: "bg-success/15 text-success",
     Closed: "bg-muted text-muted-foreground",
-    Awarded: "bg-warning/15 text-warning",
   } as const;
 
   return (

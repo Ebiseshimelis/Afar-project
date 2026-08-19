@@ -1,14 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Lock, Mail, LogIn } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, LogIn, ShieldCheck, UserCog } from "lucide-react";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { login } from "@/services/authService";
+import { useAuth } from "@/lib/auth";
+import type { StaffRole } from "@/lib/permissions";
 
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
     meta: [
-      { title: "Admin Login — Afar UDCB" },
+      { title: "Staff Login — Afar UDCB" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -17,15 +18,17 @@ export const Route = createFileRoute("/admin/login")({
 
 function LoginPage() {
   const nav = useNavigate();
+  const { signIn } = useAuth();
 
+  const [loginType, setLoginType] = useState<StaffRole>("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-    // Basic validation
     if (!email.trim()) {
       toast.error("Please enter your email.");
       return;
@@ -36,17 +39,16 @@ function LoginPage() {
       return;
     }
 
-    console.log("LOGIN BUTTON WORKED");
-    console.log("EMAIL:", email);
-
     setLoading(true);
 
     try {
-      const result = await login(email.trim(), password);
+      const user = await signIn(
+        email.trim(),
+        password,
+        loginType,
+      );
 
-      console.log("LOGIN SUCCESS:", result);
-
-      toast.success("Welcome back");
+      toast.success(`Welcome back, ${user.name}`);
 
       nav({ to: "/admin" });
     } catch (error: unknown) {
@@ -55,29 +57,7 @@ function LoginPage() {
       let message = "Invalid email or password.";
 
       if (error instanceof Error) {
-        const errorMessage = error.message.toLowerCase();
-
-        if (
-          errorMessage.includes("user") &&
-          (errorMessage.includes("not found") ||
-            errorMessage.includes("does not exist") ||
-            errorMessage.includes("invalid"))
-        ) {
-          message = "Invalid username or email.";
-        } else if (
-          errorMessage.includes("password") ||
-          errorMessage.includes("credential")
-        ) {
-          message = "Incorrect password.";
-        } else if (
-          errorMessage.includes("network") ||
-          errorMessage.includes("fetch") ||
-          errorMessage.includes("failed to fetch")
-        ) {
-          message = "Unable to connect to the server.";
-        } else if (error.message.trim()) {
-          message = error.message;
-        }
+        message = error.message || message;
       }
 
       toast.error(message);
@@ -109,9 +89,12 @@ function LoginPage() {
             </div>
 
             <div>
-              <div className="font-display font-semibold">Afar UDCB</div>
+              <div className="font-display font-semibold">
+                Afar UDCB
+              </div>
+
               <div className="text-xs text-primary-foreground/70">
-                Admin Portal
+                Staff Portal
               </div>
             </div>
           </div>
@@ -122,8 +105,8 @@ function LoginPage() {
             </h1>
 
             <p className="mt-3 max-w-md text-primary-foreground/80">
-              Publish news, manage tenders, and coordinate directorate
-              communications from one place.
+              Publish news, manage tenders, coordinate directorate
+              communications, and manage Bureau content from one place.
             </p>
           </div>
 
@@ -147,16 +130,57 @@ function LoginPage() {
             </div>
           </div>
 
-          <h2 className="font-display text-2xl font-bold">Sign in</h2>
+          <h2 className="font-display text-2xl font-bold">
+            Staff Sign in
+          </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Access the admin portal
+            Select your account type and sign in to the admin portal.
           </p>
 
-          <form onSubmit={onSubmit} className="mt-8 space-y-4">
+          {/* Account type */}
+          <div className="mt-6">
+            <label className="block text-sm font-medium">
+              Account type
+            </label>
+
+            <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border bg-muted/30 p-1">
+              <button
+                type="button"
+                onClick={() => setLoginType("admin")}
+                disabled={loading}
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                  loginType === "admin"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <UserCog className="h-4 w-4" />
+                Admin
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setLoginType("super_admin")}
+                disabled={loading}
+                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                  loginType === "super_admin"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Super Admin
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={onSubmit} className="mt-6 space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium">Email</label>
+              <label className="block text-sm font-medium">
+                Email
+              </label>
 
               <div className="relative mt-1">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -168,14 +192,17 @@ function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   autoComplete="username"
-                  className="h-11 w-full rounded-full border bg-background pl-10 pr-3 text-sm outline-none ring-ring focus:ring-2"
+                  disabled={loading}
+                  className="h-11 w-full rounded-full border bg-background pl-10 pr-3 text-sm outline-none ring-ring focus:ring-2 disabled:opacity-60"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium">Password</label>
+              <label className="block text-sm font-medium">
+                Password
+              </label>
 
               <div className="relative mt-1">
                 <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -184,18 +211,41 @@ function LoginPage() {
                   required
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 w-full rounded-full border bg-background pl-10 pr-3 text-sm outline-none ring-ring focus:ring-2"
+                  disabled={loading}
+                  className="h-11 w-full rounded-full border bg-background pl-10 pr-11 text-sm outline-none ring-ring focus:ring-2 disabled:opacity-60"
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  disabled={loading}
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Remember me / Forgot */}
+            {/* Remember / Forgot */}
             <div className="flex items-center justify-between text-sm">
               <label className="inline-flex items-center gap-2 text-muted-foreground">
-                <input type="checkbox" className="rounded border" />
+                <input
+                  type="checkbox"
+                  className="rounded border"
+                  disabled={loading}
+                />
                 Remember me
               </label>
 
@@ -226,7 +276,10 @@ function LoginPage() {
 
           {/* Back to portal */}
           <div className="mt-6 text-center text-xs text-muted-foreground">
-            <Link to="/" className="hover:text-primary">
+            <Link
+              to="/"
+              className="hover:text-primary"
+            >
               ← Back to public portal
             </Link>
           </div>
