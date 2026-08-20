@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
+use App\Support\ActivityNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -36,6 +37,8 @@ class ContactMessageController extends Controller
 
         try {
             $msg = ContactMessage::create($validated);
+
+            ActivityNotifier::message($msg->full_name);
 
             return response()->json([
                 'message' => 'Thank you. Your message has been received.'

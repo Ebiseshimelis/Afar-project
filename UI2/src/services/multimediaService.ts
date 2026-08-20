@@ -1,4 +1,5 @@
-﻿export type MultimediaItem = {
+import { getToken } from "@/services/authService";
+export type MultimediaItem = {
   id: number;
   title: string;
   description: string | null;
@@ -47,7 +48,7 @@ export const BACKEND_BASE_URL =
 export const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 
 function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem("admin_token");
+  const token = getToken();
 
   return {
     Accept: "application/json",

@@ -1,10 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
 import {
   getPublications,
   type Publication,
 } from "@/services/publicationService";
-import { FileText, Download } from "lucide-react";
+import { FileText, Eye, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/_portal/publications")({
@@ -20,10 +20,146 @@ export const Route = createFileRoute("/_portal/publications")({
   component: PublicationsPage,
 });
 
+function getFileUrl(filePath: string): string {
+  if (
+    filePath.startsWith("http://") ||
+    filePath.startsWith("https://")
+  ) {
+    return filePath;
+  }
+
+  if (filePath.startsWith("/")) {
+    return `http://127.0.0.1:8000${filePath}`;
+  }
+
+  return `http://127.0.0.1:8000/storage/${filePath}`;
+}
+
+function getFileExtension(filePath: string): string {
+  const cleanPath = filePath.split("?")[0].split("#")[0];
+  const parts = cleanPath.split(".");
+  return parts.length > 1
+    ? parts[parts.length - 1].toLowerCase()
+    : "";
+}
+
+function isImageFile(filePath: string): boolean {
+  return [
+    "jpg",
+    "jpeg",
+    "png",
+    "gif",
+    "webp",
+    "svg",
+  ].includes(getFileExtension(filePath));
+}
+
+function isPdfFile(filePath: string): boolean {
+  return getFileExtension(filePath) === "pdf";
+}
+
+function PublicationViewer({
+  publication,
+  onClose,
+}: {
+  publication: Publication;
+  onClose: () => void;
+}) {
+  if (!publication.file_path) {
+    return null;
+  }
+
+  const fileUrl = getFileUrl(publication.file_path);
+  const title =
+    publication.title?.en ||
+    publication.title?.am ||
+    "Publication";
+
+  const isImage = isImageFile(publication.file_path);
+  const isPdf = isPdfFile(publication.file_path);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`View ${title}`}
+      onClick={onClose}
+    >
+      <div
+        className="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-background shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="min-w-0">
+            <h2 className="truncate font-semibold">
+              {title}
+            </h2>
+
+            <p className="text-xs text-muted-foreground">
+              Publication document
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="ml-4 grid h-9 w-9 shrink-0 place-items-center rounded-lg hover:bg-secondary"
+            aria-label="Close viewer"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto bg-muted/30">
+          {isPdf ? (
+            <iframe
+              src={fileUrl}
+              title={title}
+              className="h-full min-h-[600px] w-full border-0"
+            />
+          ) : isImage ? (
+            <div className="flex min-h-full items-center justify-center p-6">
+              <img
+                src={fileUrl}
+                alt={title}
+                className="max-h-full max-w-full rounded-lg object-contain shadow-lg"
+              />
+            </div>
+          ) : (
+            <div className="flex min-h-full items-center justify-center p-8 text-center">
+              <div className="max-w-md">
+                <FileText className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+
+                <h3 className="text-lg font-semibold">
+                  This document cannot be previewed in the browser
+                </h3>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  The publication is attached, but this file type does not
+                  support direct browser viewing.
+                </p>
+
+                <p className="mt-3 text-xs text-muted-foreground">
+                  File type:{" "}
+                  {getFileExtension(publication.file_path).toUpperCase() ||
+                    "Unknown"}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PublicationsPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedPublication, setSelectedPublication] =
+    useState<Publication | null>(null);
 
   useEffect(() => {
     async function loadPublications() {
@@ -130,22 +266,23 @@ function PublicationsPage() {
                       <td className="hidden px-5 py-4 text-muted-foreground md:table-cell">
                         {publication.published_at
                           ? new Date(
-                              publication.published_at
+                              publication.published_at,
                             ).toLocaleDateString()
                           : "—"}
                       </td>
 
                       <td className="px-5 py-4 text-right">
                         {publication.file_path ? (
-                          <a
-                            href={publication.file_path}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSelectedPublication(publication)
+                            }
                             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
                           >
-                            <Download className="h-3.5 w-3.5" />
-                            Download
-                          </a>
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </button>
                         ) : (
                           <span className="text-xs text-muted-foreground">
                             No file
@@ -160,6 +297,13 @@ function PublicationsPage() {
           </div>
         )}
       </section>
+
+      {selectedPublication && (
+        <PublicationViewer
+          publication={selectedPublication}
+          onClose={() => setSelectedPublication(null)}
+        />
+      )}
     </>
   );
 }

@@ -28,14 +28,12 @@ export const Route = createFileRoute("/admin/permissions")({
         ? search.user
         : undefined,
   }),
-
   head: () => ({
     meta: [
       { title: "Permissions" },
       { name: "robots", content: "noindex" },
     ],
   }),
-
   component: PermissionsAdmin,
 });
 
@@ -45,8 +43,7 @@ function PermissionsAdmin() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [permissions, setPermissions] = useState<BackendPermission[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
-  const [selectedPermissions, setSelectedPermissions] =
-    useState<string[]>([]);
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -66,41 +63,21 @@ function PermissionsAdmin() {
       setUsers(loadedUsers);
 
       /*
-       * These permission modules remain available in the backend.
-       * They are hidden ONLY from the frontend Permissions page.
-       *
-       * Backend permissions are NOT deleted or modified.
-       *
-       * Hidden from this page:
-       * - Feedback
-       * - Activity
-       * - Media Library
-       * - Admin Accounts
-       * - Announcement
-       * - Announcements
-       *
-       * Multimedia is intentionally NOT hidden.
+       * Feedback and Activity remain available in the codebase/backend,
+       * but they are intentionally hidden from the current admin UI.
        */
-      const HIDDEN_PERMISSION_MODULES = new Set([
-        "feedback",
-        "activity",
-        "media",
-        "admin_accounts",
-        "announcement",
-        "announcements",
-      ]);
-
       const visiblePermissions = loadedPermissions.filter(
         (permission) =>
-          !HIDDEN_PERMISSION_MODULES.has(
-            permission.module.trim().toLowerCase(),
-          ),
+          permission.key !== "feedback" &&
+          permission.key !== "activity",
       );
 
       setPermissions(visiblePermissions);
 
       /*
-       * Select requested user when supplied in the URL.
+       * Explicitly type this as AdminUser | undefined.
+       * This avoids TypeScript inferring "" | AdminUser
+       * from the "search.user && ..." expression.
        */
       const requestedUser: AdminUser | undefined = search.user
         ? loadedUsers.find(
@@ -108,9 +85,6 @@ function PermissionsAdmin() {
           )
         : undefined;
 
-      /*
-       * Otherwise select the first Admin account.
-       */
       const firstAdmin: AdminUser | undefined =
         requestedUser?.role === "admin"
           ? requestedUser
@@ -118,9 +92,6 @@ function PermissionsAdmin() {
               (user) => user.role === "admin",
             );
 
-      /*
-       * Keep the currently selected account if possible.
-       */
       const userToSelect: AdminUser | undefined =
         requestedUser ??
         (selectedUserId
@@ -181,9 +152,7 @@ function PermissionsAdmin() {
     >();
 
     for (const permission of permissions) {
-      const existing =
-        groups.get(permission.module) ?? [];
-
+      const existing = groups.get(permission.module) ?? [];
       existing.push(permission);
       groups.set(permission.module, existing);
     }
@@ -258,9 +227,7 @@ function PermissionsAdmin() {
       setSaving(true);
 
       /*
-       * Save permissions using the existing frontend service.
-       *
-       * The backend permission definitions are not changed.
+       * The actual service function is setAdminPermissions.
        */
       await setAdminPermissions(
         selectedUser.id,
@@ -294,9 +261,7 @@ function PermissionsAdmin() {
 
   function selectUser(user: AdminUser) {
     setSelectedUserId(user.id);
-    setSelectedPermissions(
-      user.permissions ?? [],
-    );
+    setSelectedPermissions(user.permissions ?? []);
     setSuccess("");
     setError("");
   }
@@ -456,9 +421,7 @@ function PermissionsAdmin() {
                   {selectedUser.role === "admin" && (
                     <button
                       type="button"
-                      onClick={() =>
-                        void savePermissions()
-                      }
+                      onClick={() => void savePermissions()}
                       disabled={saving}
                       className="inline-flex h-9 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
                     >
@@ -524,10 +487,7 @@ function PermissionsAdmin() {
                         visibleKeys.length;
 
                     return (
-                      <div
-                        key={module}
-                        className="p-5"
-                      >
+                      <div key={module} className="p-5">
                         <div className="mb-3 flex items-center justify-between">
                           <div>
                             <h3 className="font-semibold capitalize">

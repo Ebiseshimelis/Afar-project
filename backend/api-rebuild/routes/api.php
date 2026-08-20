@@ -84,10 +84,23 @@ Route::prefix('v1')->group(function () {
 
     Route::get('/categories', [CategoryController::class, 'index']);
 
+    /*
+    |--------------------------------------------------------------------------
+    | Public Contact Message
+    |--------------------------------------------------------------------------
+    */
+
     Route::post('/contact', [ContactMessageController::class, 'store']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public Feedback
+    |--------------------------------------------------------------------------
+    */
 
     Route::post('/feedback', [FeedbackController::class, 'store']);
 });
+
 
 /*
 |--------------------------------------------------------------------------
@@ -95,11 +108,14 @@ Route::prefix('v1')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
+Route::prefix('v1')
+    ->middleware('auth:sanctum')
+    ->group(function () {
 
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
 
     /*
     |--------------------------------------------------------------------------
@@ -116,6 +132,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/news/{news}', [NewsController::class, 'destroy'])
         ->middleware('permission:news.delete');
 
+
     /*
     |--------------------------------------------------------------------------
     | Events
@@ -130,6 +147,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/events/{event}', [EventController::class, 'destroy'])
         ->middleware('permission:events.delete');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -146,6 +164,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/tenders/{tender}', [TenderController::class, 'destroy'])
         ->middleware('permission:tenders.delete');
 
+
     /*
     |--------------------------------------------------------------------------
     | Vacancies
@@ -160,6 +179,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/vacancies/{vacancy}', [VacancyController::class, 'destroy'])
         ->middleware('permission:vacancies.delete');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -176,6 +196,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/publications/{publication}', [PublicationController::class, 'destroy'])
         ->middleware('permission:publications.delete');
 
+
     /*
     |--------------------------------------------------------------------------
     | Multimedia
@@ -190,6 +211,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/multimedia/{multimedia}', [MultimediaController::class, 'destroy'])
         ->middleware('permission:multimedia.delete');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -206,6 +228,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])
         ->middleware('permission:announcements.delete');
 
+
     /*
     |--------------------------------------------------------------------------
     | Directorates
@@ -220,6 +243,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/directorates/{directorate}', [DirectorateController::class, 'destroy'])
         ->middleware('permission:directorates.delete');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -236,6 +260,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/city-admins/{cityAdmin}', [CityAdminController::class, 'destroy'])
         ->middleware('permission:city_admins.delete');
 
+
     /*
     |--------------------------------------------------------------------------
     | Categories
@@ -250,6 +275,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
         ->middleware('permission:categories.delete');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -266,6 +292,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])
         ->middleware('permission:messages.delete');
 
+
     /*
     |--------------------------------------------------------------------------
     | Feedback
@@ -281,6 +308,7 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy'])
         ->middleware('permission:feedback.delete');
 
+
     /*
     |--------------------------------------------------------------------------
     | Notifications
@@ -293,6 +321,10 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     Route::post('/notifications', [NotificationController::class, 'store'])
         ->middleware('permission:notifications.create');
 
+    /*
+     * IMPORTANT:
+     * This route must come BEFORE /notifications/{notification}.
+     */
     Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
         ->middleware('permission:notifications.update');
 
@@ -304,12 +336,6 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
         ->middleware('permission:notifications.delete');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Role Assignment
-    |--------------------------------------------------------------------------
-    */
 
 
     /*
@@ -332,6 +358,14 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/admin/accounts/{user}', [AdminAccountController::class, 'destroy'])
         ->middleware('permission:admin_accounts.delete');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Users / Roles / Permissions
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/admin/users', [AdminController::class, 'users']);
 
     Route::get('/admin/permissions', [PermissionController::class, 'index']);
@@ -344,5 +378,3 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
 
     Route::delete('/admin/users/{user}', [AdminController::class, 'destroy']);
 });
-
-

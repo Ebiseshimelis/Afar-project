@@ -78,6 +78,27 @@ function NewsAdmin() {
   const [loadingEdit, setLoadingEdit] =
     useState(false);
 
+  /*
+  |--------------------------------------------------------------------------
+  | View News Details
+  |--------------------------------------------------------------------------
+  */
+
+  const [showView, setShowView] =
+    useState(false);
+
+  const [viewingNews, setViewingNews] =
+    useState<any | null>(null);
+
+  const [loadingView, setLoadingView] =
+    useState(false);
+
+  /*
+  |--------------------------------------------------------------------------
+  | Form State
+  |--------------------------------------------------------------------------
+  */
+
   const [titleEn, setTitleEn] =
     useState("");
 
@@ -171,7 +192,59 @@ function NewsAdmin() {
 
   /*
   |--------------------------------------------------------------------------
-  | Reset
+  | View News Details
+  |--------------------------------------------------------------------------
+  */
+
+  async function openViewNews(
+    id: string
+  ) {
+    try {
+      setLoadingView(true);
+      setShowView(true);
+      setViewingNews(null);
+
+      const item =
+        await getAdminNewsById(id);
+
+      setViewingNews(item);
+    } catch (error) {
+      console.error(
+        "Failed to load news details:",
+        error
+      );
+
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to load news details."
+      );
+
+      setShowView(false);
+      setViewingNews(null);
+    } finally {
+      setLoadingView(false);
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Close News Details
+  |--------------------------------------------------------------------------
+  */
+
+  function closeViewNews() {
+    if (loadingView) {
+      return;
+    }
+
+    setShowView(false);
+    setViewingNews(null);
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Reset Form
   |--------------------------------------------------------------------------
   */
 
@@ -302,23 +375,6 @@ function NewsAdmin() {
       setStatus(
         item.status || "published"
       );
-
-      /*
-      |--------------------------------------------------------------------------
-      | Date
-      |--------------------------------------------------------------------------
-      |
-      | Convert Laravel:
-      |
-      | 2026-08-14T09:00:00.000000Z
-      |
-      | into:
-      |
-      | 2026-08-14T12:00
-      |
-      | for datetime-local.
-      |
-      */
 
       if (item.publishedAt) {
         const date =
@@ -567,6 +623,12 @@ function NewsAdmin() {
       );
     }, [news, q]);
 
+  /*
+  |--------------------------------------------------------------------------
+  | Render
+  |--------------------------------------------------------------------------
+  */
+
   return (
     <AdminLayout>
       <AdminPageHeader
@@ -585,6 +647,232 @@ function NewsAdmin() {
           </button>
         }
       />
+
+      {/* ================================================================== */}
+      {/* VIEW NEWS DETAILS MODAL                                           */}
+      {/* ================================================================== */}
+
+      {showView && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+          onMouseDown={(event) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              closeViewNews();
+            }
+          }}
+        >
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-xl bg-background shadow-xl">
+            {/* Header */}
+
+            <div className="flex items-center justify-between border-b p-5">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  News Details
+                </h2>
+
+                <p className="text-sm text-muted-foreground">
+                  View the complete news article.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  closeViewNews
+                }
+                disabled={loadingView}
+                aria-label="Close"
+                className="rounded-md p-2 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Content */}
+
+            {loadingView ? (
+              <div className="p-10 text-center text-sm text-muted-foreground">
+                Loading article details...
+              </div>
+            ) : viewingNews ? (
+              <div className="max-h-[calc(90vh-90px)] overflow-y-auto p-5">
+                <div className="space-y-6">
+
+                  {/* Image */}
+
+                  {viewingNews.imagePath && (
+                    <div className="overflow-hidden rounded-xl border bg-secondary">
+                      <img
+                        src={
+                          String(
+                            viewingNews.imagePath
+                          ).startsWith(
+                            "news/"
+                          )
+                            ? `http://127.0.0.1:8000/storage/${String(
+                                viewingNews.imagePath
+                              )}`
+                            : `/${String(
+                                viewingNews.imagePath
+                              ).replace(
+                                /^\/+/,
+                                ""
+                              )}`
+                        }
+                        alt={
+                          viewingNews.titleEn ||
+                          "News image"
+                        }
+                        className="max-h-[360px] w-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* English title */}
+
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      English Title
+                    </p>
+
+                    <h3 className="text-2xl font-bold leading-tight">
+                      {viewingNews.titleEn ||
+                        "Untitled News"}
+                    </h3>
+                  </div>
+
+                  {/* Amharic title */}
+
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Amharic Title
+                    </p>
+
+                    <h3 className="text-xl font-semibold leading-relaxed">
+                      {viewingNews.titleAm ||
+                        "—"}
+                    </h3>
+                  </div>
+
+                  {/* Metadata */}
+
+                  <div className="grid gap-4 rounded-xl border bg-secondary/40 p-4 sm:grid-cols-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Category
+                      </p>
+
+                      <p className="mt-1 text-sm font-medium">
+                        {categories.find(
+                          (category) =>
+                            String(
+                              category.id
+                            ) ===
+                            String(
+                              viewingNews.categoryId
+                            )
+                        )?.name?.en ||
+                          "Uncategorized"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Status
+                      </p>
+
+                      <p className="mt-1 text-sm font-medium capitalize">
+                        {viewingNews.status ||
+                          "—"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Published
+                      </p>
+
+                      <p className="mt-1 text-sm font-medium">
+                        {viewingNews.publishedAt
+                          ? new Date(
+                              viewingNews.publishedAt
+                            ).toLocaleString()
+                          : "—"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Article ID
+                      </p>
+
+                      <p className="mt-1 text-sm font-medium">
+                        {viewingNews.id ||
+                          "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* English content */}
+
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      English Content
+                    </p>
+
+                    <div className="rounded-xl border bg-background p-4">
+                      <p className="whitespace-pre-wrap text-sm leading-7">
+                        {viewingNews.contentEn ||
+                          "No English content available."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Amharic content */}
+
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Amharic Content
+                    </p>
+
+                    <div className="rounded-xl border bg-background p-4">
+                      <p className="whitespace-pre-wrap text-sm leading-8">
+                        {viewingNews.contentAm ||
+                          "ምንም የአማርኛ ይዘት የለም።"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+
+                  <div className="flex justify-end border-t pt-5">
+                    <button
+                      type="button"
+                      onClick={
+                        closeViewNews
+                      }
+                      className="rounded-lg border px-4 py-2 text-sm hover:bg-secondary"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-10 text-center text-sm text-muted-foreground">
+                Unable to load this article.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================== */}
+      {/* CREATE / EDIT FORM                                                */}
+      {/* ================================================================== */}
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -897,7 +1185,9 @@ function NewsAdmin() {
         </div>
       )}
 
-      {/* News table */}
+      {/* ================================================================== */}
+      {/* NEWS TABLE                                                        */}
+      {/* ================================================================== */}
 
       <div className="rounded-xl border bg-card shadow-soft">
 
@@ -1038,12 +1328,19 @@ function NewsAdmin() {
 
                         <div className="inline-flex items-center gap-1">
 
+                          {/* ================================================= */}
+                          {/* VIEW BUTTON                                       */}
+                          {/* ================================================= */}
+
                           <button
                             type="button"
-                            aria-label="View"
+                            aria-label="View news"
+                            title="View news details"
                             onClick={() =>
-                              toast.info(
-                                `News #${n.id}`
+                              openViewNews(
+                                String(
+                                  n.id
+                                )
                               )
                             }
                             className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
@@ -1051,9 +1348,12 @@ function NewsAdmin() {
                             <Eye className="h-4 w-4" />
                           </button>
 
+                          {/* Edit */}
+
                           <button
                             type="button"
                             aria-label="Edit"
+                            title="Edit news"
                             onClick={() =>
                               openEditForm(
                                 String(
@@ -1066,9 +1366,12 @@ function NewsAdmin() {
                             <Pencil className="h-4 w-4" />
                           </button>
 
+                          {/* Delete */}
+
                           <button
                             type="button"
                             aria-label="Delete"
+                            title="Delete news"
                             onClick={() =>
                               handleDelete(
                                 String(

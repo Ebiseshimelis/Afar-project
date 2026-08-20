@@ -1,3 +1,4 @@
+import { getToken } from "@/services/authService";
 export type VacancyItem = {
   id: number;
 
@@ -56,7 +57,7 @@ const API_BASE_URL =
 
 function getAuthHeaders(): HeadersInit {
   const token =
-    localStorage.getItem("admin_token");
+    getToken();
 
   return {
     Accept: "application/json",

@@ -1,3 +1,4 @@
+import { getToken } from "@/services/authService";
 export type CityAdmin = {
   id: string;
   name: string;
@@ -24,10 +25,6 @@ export type CityAdminFormData = {
 };
 
 const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
-
-function getToken(): string | null {
-  return localStorage.getItem("admin_token");
-}
 
 function mapCityAdmin(item: any): CityAdmin {
   return {

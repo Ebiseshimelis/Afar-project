@@ -1,3 +1,5 @@
+import { getToken } from "@/services/authService";
+
 export type ContactMessage = {
   id: number;
   full_name: string;
@@ -23,7 +25,7 @@ type MessagesResponse = {
 const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
 
 function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem("admin_token");
+  const token = getToken();
 
   return {
     Accept: "application/json",
@@ -84,9 +86,12 @@ export async function getMessages(
     },
   );
 
-  const result = await parseResponse(response);
+  const result: MessagesResponse =
+    await parseResponse(response);
 
-  return Array.isArray(result?.data) ? result.data : [];
+  return Array.isArray(result?.data)
+    ? result.data
+    : [];
 }
 
 /* =========================

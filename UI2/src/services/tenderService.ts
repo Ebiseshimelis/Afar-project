@@ -1,3 +1,4 @@
+import { getToken } from "@/services/authService";
 export type Tender = {
   id: number;
   category_id: number | null;
@@ -52,7 +53,7 @@ const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
 /* -------------------------------------------------------------------------- */
 
 function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem("admin_token");
+  const token = getToken();
 
   return {
     Accept: "application/json",

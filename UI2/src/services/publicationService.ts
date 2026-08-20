@@ -1,3 +1,4 @@
+import { getToken } from "@/services/authService";
 export type Publication = {
   id: number;
   category_id: number | null;
@@ -50,7 +51,7 @@ const API_BASE_URL =
 
 function getAuthHeaders(): HeadersInit {
   const token =
-    localStorage.getItem("admin_token");
+    getToken();
 
   return {
     Accept: "application/json",

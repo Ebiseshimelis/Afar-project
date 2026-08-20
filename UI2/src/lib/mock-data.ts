@@ -16,6 +16,16 @@ export type NewsItem = {
   date: string;
   image: string;
   author: string;
+
+  /** Backend/admin fields */
+  status?: string;
+  published_at?: string | null;
+  created_at?: string | null;
+
+  /** Optional localized backend title fields */
+  title_en?: string;
+  title_am?: string;
+
   /** Populated by the backend; used for the "Most read" ranking. */
   views?: number;
 };
