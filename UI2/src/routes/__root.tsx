@@ -137,7 +137,7 @@ export const Route = createRootRouteWithContext<{
       },
       {
         rel: "icon",
-        href: "/favicon.ico",
+        href: "/favicon.png",
         type: "image/x-icon",
       },
       {
@@ -193,3 +193,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+

@@ -81,6 +81,8 @@ class AdminController extends Controller
 
         if ($validated['role'] === 'super_admin') {
             $user->permissions = null;
+            $user->account_status = 'approved';
+            $user->is_active = true;
         } elseif ($user->permissions === null) {
             $user->permissions = [];
         }
@@ -98,26 +100,94 @@ class AdminController extends Controller
         $this->ensureSuperAdmin($request);
 
         $validated = $request->validate([
-            'is_active' => ['required', 'boolean'],
+            'is_active' => ['sometimes', 'boolean'],
+            'account_status' => [
+                'sometimes',
+                'string',
+                'in:pending,approved,rejected',
+            ],
         ]);
 
-        if ($user->id === $request->user()->id && !$validated['is_active']) {
+        if (
+            $user->id === $request->user()->id &&
+            array_key_exists('is_active', $validated) &&
+            !$validated['is_active']
+        ) {
             return response()->json([
                 'message' => 'You cannot disable your own account.',
             ], 422);
         }
 
-        $user->is_active = $validated['is_active'];
-        $user->save();
+        if (
+            $user->role === 'super_admin' &&
+            isset($validated['account_status']) &&
+            $validated['account_status'] !== 'approved'
+        ) {
+            return response()->json([
+                'message' => 'A Super Admin account must remain approved.',
+            ], 422);
+        }
 
-        if (!$user->is_active) {
+        if (
+            isset($validated['account_status']) &&
+            $validated['account_status'] === 'approved'
+        ) {
+            $user->account_status = 'approved';
+            $user->is_active = true;
+        }
+
+        if (
+            isset($validated['account_status']) &&
+            $validated['account_status'] === 'rejected'
+        ) {
+            $user->account_status = 'rejected';
+            $user->is_active = false;
             $user->tokens()->delete();
         }
 
+        if (
+            isset($validated['account_status']) &&
+            $validated['account_status'] === 'pending'
+        ) {
+            $user->account_status = 'pending';
+            $user->is_active = false;
+            $user->tokens()->delete();
+        }
+
+        if (array_key_exists('is_active', $validated)) {
+            $user->is_active = $validated['is_active'];
+
+            if (!$user->is_active) {
+                $user->tokens()->delete();
+            }
+
+            if (
+                $user->role === 'admin' &&
+                $user->is_active &&
+                $user->account_status !== 'approved'
+            ) {
+                $user->is_active = false;
+
+                return response()->json([
+                    'message' => 'The Admin must be approved before the account can be enabled.',
+                    'data' => $this->userPayload($user->fresh()),
+                ], 422);
+            }
+        }
+
+        $user->save();
+
         return response()->json([
-            'message' => $user->is_active
-                ? 'Account enabled successfully.'
-                : 'Account disabled successfully.',
+            'message' => match ($user->account_status) {
+                'approved' => $user->is_active
+                    ? 'Account approved and enabled successfully.'
+                    : 'Account approved but currently disabled.',
+                'rejected' => 'Account rejected successfully.',
+                'pending' => 'Account returned to pending status.',
+                default => $user->is_active
+                    ? 'Account enabled successfully.'
+                    : 'Account disabled successfully.',
+            },
             'data' => $this->userPayload($user->fresh()),
         ]);
     }
@@ -166,6 +236,7 @@ class AdminController extends Controller
             'email' => $user->email,
             'role' => $user->role,
             'is_active' => (bool) $user->is_active,
+            'account_status' => $user->account_status,
             'permissions' => $user->isSuperAdmin()
                 ? ['*']
                 : ($user->permissions ?? []),

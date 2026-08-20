@@ -34,11 +34,13 @@ import { Route as AdminNewsRouteImport } from './routes/admin.news'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
 import { Route as AdminPublicationsRouteImport } from './routes/admin.publications'
+import { Route as AdminRegisterRouteImport } from './routes/admin.register'
 import { Route as AdminRolesRouteImport } from './routes/admin.roles'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminTendersRouteImport } from './routes/admin.tenders'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminVacanciesRouteImport } from './routes/admin.vacancies'
+import { Route as PasswordResetRouteImport } from './routes/password-reset.'
 import { Route as PasswordResetTokenRouteImport } from './routes/password-reset.$token'
 import { Route as PortalMultimediaImagesRouteImport } from './routes/_portal.multimedia.images'
 import { Route as PortalMultimediaVideosRouteImport } from './routes/_portal.multimedia.videos'
@@ -171,6 +173,11 @@ const AdminPublicationsRoute = AdminPublicationsRouteImport.update({
   path: '/admin/publications',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRegisterRoute = AdminRegisterRouteImport.update({
+  id: '/admin/register',
+  path: '/admin/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRolesRoute = AdminRolesRouteImport.update({
   id: '/admin/roles',
   path: '/admin/roles',
@@ -194,6 +201,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
 const AdminVacanciesRoute = AdminVacanciesRouteImport.update({
   id: '/admin/vacancies',
   path: '/admin/vacancies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PasswordResetRoute = PasswordResetRouteImport.update({
+  id: '/password-reset/',
+  path: '/password-reset/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PasswordResetTokenRoute = PasswordResetTokenRouteImport.update({
@@ -234,6 +246,7 @@ const PortalTendersIdRoute = PortalTendersIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof PortalIndexRoute
+  '/password-reset/': typeof PasswordResetRoute
   '/about': typeof PortalAboutRoute
   '/city-admins': typeof PortalCityAdminsRoute
   '/contact': typeof PortalContactRoute
@@ -256,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/publications': typeof AdminPublicationsRoute
+  '/admin/register': typeof AdminRegisterRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tenders': typeof AdminTendersRoute
@@ -271,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/tenders/': typeof PortalTendersIndexRoute
 }
 export interface FileRoutesByTo {
+  '/password-reset': typeof PasswordResetRoute
   '/about': typeof PortalAboutRoute
   '/city-admins': typeof PortalCityAdminsRoute
   '/contact': typeof PortalContactRoute
@@ -293,6 +308,7 @@ export interface FileRoutesByTo {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/publications': typeof AdminPublicationsRoute
+  '/admin/register': typeof AdminRegisterRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tenders': typeof AdminTendersRoute
@@ -311,6 +327,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_portal': typeof PortalRouteWithChildren
+  '/password-reset/': typeof PasswordResetRoute
   '/_portal/about': typeof PortalAboutRoute
   '/_portal/city-admins': typeof PortalCityAdminsRoute
   '/_portal/contact': typeof PortalContactRoute
@@ -333,6 +350,7 @@ export interface FileRoutesById {
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
   '/admin/publications': typeof AdminPublicationsRoute
+  '/admin/register': typeof AdminRegisterRoute
   '/admin/roles': typeof AdminRolesRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tenders': typeof AdminTendersRoute
@@ -352,6 +370,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/password-reset/'
     | '/about'
     | '/city-admins'
     | '/contact'
@@ -374,6 +393,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/permissions'
     | '/admin/publications'
+    | '/admin/register'
     | '/admin/roles'
     | '/admin/settings'
     | '/admin/tenders'
@@ -389,6 +409,7 @@ export interface FileRouteTypes {
     | '/tenders/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/password-reset'
     | '/about'
     | '/city-admins'
     | '/contact'
@@ -411,6 +432,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/permissions'
     | '/admin/publications'
+    | '/admin/register'
     | '/admin/roles'
     | '/admin/settings'
     | '/admin/tenders'
@@ -428,6 +450,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_portal'
+    | '/password-reset/'
     | '/_portal/about'
     | '/_portal/city-admins'
     | '/_portal/contact'
@@ -450,6 +473,7 @@ export interface FileRouteTypes {
     | '/admin/notifications'
     | '/admin/permissions'
     | '/admin/publications'
+    | '/admin/register'
     | '/admin/roles'
     | '/admin/settings'
     | '/admin/tenders'
@@ -468,6 +492,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   PortalRoute: typeof PortalRouteWithChildren
+  PasswordResetRoute: typeof PasswordResetRoute
   AdminAccountsRoute: typeof AdminAccountsRoute
   AdminActivityRoute: typeof AdminActivityRoute
   AdminBackgroundsRoute: typeof AdminBackgroundsRoute
@@ -483,6 +508,7 @@ export interface RootRouteChildren {
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
   AdminPublicationsRoute: typeof AdminPublicationsRoute
+  AdminRegisterRoute: typeof AdminRegisterRoute
   AdminRolesRoute: typeof AdminRolesRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTendersRoute: typeof AdminTendersRoute
@@ -669,6 +695,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPublicationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/register': {
+      id: '/admin/register'
+      path: '/admin/register'
+      fullPath: '/admin/register'
+      preLoaderRoute: typeof AdminRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/roles': {
       id: '/admin/roles'
       path: '/admin/roles'
@@ -702,6 +735,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/vacancies'
       fullPath: '/admin/vacancies'
       preLoaderRoute: typeof AdminVacanciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/password-reset/': {
+      id: '/password-reset/'
+      path: '/password-reset'
+      fullPath: '/password-reset/'
+      preLoaderRoute: typeof PasswordResetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/password-reset/$token': {
@@ -795,6 +835,7 @@ const PortalRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   PortalRoute: PortalRouteWithChildren,
+  PasswordResetRoute: PasswordResetRoute,
   AdminAccountsRoute: AdminAccountsRoute,
   AdminActivityRoute: AdminActivityRoute,
   AdminBackgroundsRoute: AdminBackgroundsRoute,
@@ -810,6 +851,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
   AdminPublicationsRoute: AdminPublicationsRoute,
+  AdminRegisterRoute: AdminRegisterRoute,
   AdminRolesRoute: AdminRolesRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTendersRoute: AdminTendersRoute,

@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Activity,
   ArrowRight,
   Bell,
   CalendarDays,
@@ -1113,12 +1112,6 @@ function Dashboard() {
               href="/admin/permissions"
               label="Permissions"
               icon={LockKeyhole}
-            />
-
-            <AdminQuickLink
-              href="/admin/activity"
-              label="Activity"
-              icon={Activity}
             />
           </div>
         </div>

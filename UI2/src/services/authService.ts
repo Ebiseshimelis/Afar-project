@@ -210,7 +210,7 @@ export async function forgotPassword(email: string): Promise<void> {
   let res: Response;
 
   try {
-    res = await fetch(`${API_BASE}/auth/forgot-password`, {
+    res = await fetch("http://127.0.0.1:8000/api/forgot-password", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -246,7 +246,7 @@ export async function resetPassword(
   let res: Response;
 
   try {
-    res = await fetch(`${API_BASE}/auth/reset-password`, {
+    res = await fetch("http://127.0.0.1:8000/api/reset-password", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -417,3 +417,4 @@ export const DEMO_MODULE_HINT =
   ASSIGNABLE_MODULES.map(
     (m) => m.key,
   );
+

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -21,10 +21,72 @@ use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AdminAccountController;
 use App\Http\Controllers\Api\PermissionController;
+use App\Http\Controllers\Api\SystemSettingController;
+use App\Http\Controllers\Api\StaffSetupController;
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
+
+
+/*
+|--------------------------------------------------------------------------
+| Public API
+|--------------------------------------------------------------------------
+*/
 
 Route::prefix('v1')->group(function () {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Staff Registration / Initial Setup
+    |--------------------------------------------------------------------------
+    |
+    | These endpoints are intentionally public.
+    |
+    | 1. GET  /staff-setup/status
+    |    Checks whether the first Super Admin still needs to be created.
+    |
+    | 2. POST /staff-setup/super-admin
+    |    Creates the first Super Admin.
+    |
+    | 3. POST /staff-setup/admin
+    |    Allows a person to request an Admin account.
+    |
+    | Admin registration creates:
+    |
+    |   role           = admin
+    |   account_status = pending
+    |   is_active      = false
+    |   permissions    = []
+    |
+    | A Super Admin must approve the account before the Admin can
+    | access the administrative panel.
+    |
+    */
+
+    Route::prefix('staff-setup')->group(function () {
+
+        /*
+        | First Super Admin setup
+        */
+        Route::get(
+            '/status',
+            [StaffSetupController::class, 'status']
+        );
+
+        Route::post(
+            '/super-admin',
+            [StaffSetupController::class, 'createSuperAdmin']
+        );
+
+        /*
+        | Admin account registration request
+        */
+        Route::post(
+            '/admin',
+            [StaffSetupController::class, 'registerAdmin']
+        );
+    });
+
 
     /*
     |--------------------------------------------------------------------------
@@ -33,24 +95,53 @@ Route::prefix('v1')->group(function () {
     */
 
     Route::prefix('auth')->group(function () {
-        Route::post('/login', [AuthController::class, 'login']);
 
+        /*
+        | Admin / Super Admin login
+        */
+        Route::post(
+            '/login',
+            [AuthController::class, 'login']
+        );
+
+        /*
+        | Authenticated staff
+        */
         Route::middleware('auth:sanctum')->group(function () {
-            Route::get('/me', [AuthController::class, 'me']);
-            Route::post('/logout', [AuthController::class, 'logout']);
+
+            Route::get(
+                '/me',
+                [AuthController::class, 'me']
+            );
+
+            Route::post(
+                '/logout',
+                [AuthController::class, 'logout']
+            );
         });
     });
 
+
     /*
     |--------------------------------------------------------------------------
-    | Public Routes
+    | Public Content
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/about', [AboutController::class, 'index']);
+    Route::get(
+        '/about',
+        [AboutController::class, 'index']
+    );
 
-    Route::get('/news', [NewsController::class, 'index']);
-    Route::get('/news/{news}', [NewsController::class, 'show']);
+    Route::get(
+        '/news',
+        [NewsController::class, 'index']
+    );
+
+    Route::get(
+        '/news/{news}',
+        [NewsController::class, 'show']
+    );
 
     Route::get('/ping', function () {
         return response()->json([
@@ -58,31 +149,91 @@ Route::prefix('v1')->group(function () {
         ], 200);
     })->name('api.ping');
 
-    Route::get('/events', [EventController::class, 'index']);
-    Route::get('/events/{event}', [EventController::class, 'show']);
+    Route::get(
+        '/events',
+        [EventController::class, 'index']
+    );
 
-    Route::get('/tenders', [TenderController::class, 'index']);
-    Route::get('/tenders/{tender}', [TenderController::class, 'show']);
+    Route::get(
+        '/events/{event}',
+        [EventController::class, 'show']
+    );
 
-    Route::get('/vacancies', [VacancyController::class, 'index']);
-    Route::get('/vacancies/{vacancy}', [VacancyController::class, 'show']);
+    Route::get(
+        '/tenders',
+        [TenderController::class, 'index']
+    );
 
-    Route::get('/publications', [PublicationController::class, 'index']);
-    Route::get('/publications/{publication}', [PublicationController::class, 'show']);
+    Route::get(
+        '/tenders/{tender}',
+        [TenderController::class, 'show']
+    );
 
-    Route::get('/multimedia', [MultimediaController::class, 'index']);
-    Route::get('/multimedia/{multimedia}', [MultimediaController::class, 'show']);
+    Route::get(
+        '/vacancies',
+        [VacancyController::class, 'index']
+    );
 
-    Route::get('/announcements', [AnnouncementController::class, 'index']);
-    Route::get('/announcements/{announcement}', [AnnouncementController::class, 'show']);
+    Route::get(
+        '/vacancies/{vacancy}',
+        [VacancyController::class, 'show']
+    );
 
-    Route::get('/directorates', [DirectorateController::class, 'index']);
-    Route::get('/directorates/{directorate}', [DirectorateController::class, 'show']);
+    Route::get(
+        '/publications',
+        [PublicationController::class, 'index']
+    );
 
-    Route::get('/city-admins', [CityAdminController::class, 'index']);
-    Route::get('/city-admins/{cityAdmin}', [CityAdminController::class, 'show']);
+    Route::get(
+        '/publications/{publication}',
+        [PublicationController::class, 'show']
+    );
 
-    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get(
+        '/multimedia',
+        [MultimediaController::class, 'index']
+    );
+
+    Route::get(
+        '/multimedia/{multimedia}',
+        [MultimediaController::class, 'show']
+    );
+
+    Route::get(
+        '/announcements',
+        [AnnouncementController::class, 'index']
+    );
+
+    Route::get(
+        '/announcements/{announcement}',
+        [AnnouncementController::class, 'show']
+    );
+
+    Route::get(
+        '/directorates',
+        [DirectorateController::class, 'index']
+    );
+
+    Route::get(
+        '/directorates/{directorate}',
+        [DirectorateController::class, 'show']
+    );
+
+    Route::get(
+        '/city-admins',
+        [CityAdminController::class, 'index']
+    );
+
+    Route::get(
+        '/city-admins/{cityAdmin}',
+        [CityAdminController::class, 'show']
+    );
+
+    Route::get(
+        '/categories',
+        [CategoryController::class, 'index']
+    );
+
 
     /*
     |--------------------------------------------------------------------------
@@ -90,7 +241,11 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/contact', [ContactMessageController::class, 'store']);
+    Route::post(
+        '/contact',
+        [ContactMessageController::class, 'store']
+    );
+
 
     /*
     |--------------------------------------------------------------------------
@@ -98,7 +253,10 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/feedback', [FeedbackController::class, 'store']);
+    Route::post(
+        '/feedback',
+        [FeedbackController::class, 'store']
+    );
 });
 
 
@@ -112,6 +270,12 @@ Route::prefix('v1')
     ->middleware('auth:sanctum')
     ->group(function () {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Current User
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -123,14 +287,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/news', [NewsController::class, 'store'])
-        ->middleware('permission:news.create');
+    Route::post(
+        '/news',
+        [NewsController::class, 'store']
+    )->middleware('permission:news.create');
 
-    Route::put('/news/{news}', [NewsController::class, 'update'])
-        ->middleware('permission:news.update');
+    Route::put(
+        '/news/{news}',
+        [NewsController::class, 'update']
+    )->middleware('permission:news.update');
 
-    Route::delete('/news/{news}', [NewsController::class, 'destroy'])
-        ->middleware('permission:news.delete');
+    Route::delete(
+        '/news/{news}',
+        [NewsController::class, 'destroy']
+    )->middleware('permission:news.delete');
 
 
     /*
@@ -139,14 +309,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/events', [EventController::class, 'store'])
-        ->middleware('permission:events.create');
+    Route::post(
+        '/events',
+        [EventController::class, 'store']
+    )->middleware('permission:events.create');
 
-    Route::put('/events/{event}', [EventController::class, 'update'])
-        ->middleware('permission:events.update');
+    Route::put(
+        '/events/{event}',
+        [EventController::class, 'update']
+    )->middleware('permission:events.update');
 
-    Route::delete('/events/{event}', [EventController::class, 'destroy'])
-        ->middleware('permission:events.delete');
+    Route::delete(
+        '/events/{event}',
+        [EventController::class, 'destroy']
+    )->middleware('permission:events.delete');
 
 
     /*
@@ -155,14 +331,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/tenders', [TenderController::class, 'store'])
-        ->middleware('permission:tenders.create');
+    Route::post(
+        '/tenders',
+        [TenderController::class, 'store']
+    )->middleware('permission:tenders.create');
 
-    Route::put('/tenders/{tender}', [TenderController::class, 'update'])
-        ->middleware('permission:tenders.update');
+    Route::put(
+        '/tenders/{tender}',
+        [TenderController::class, 'update']
+    )->middleware('permission:tenders.update');
 
-    Route::delete('/tenders/{tender}', [TenderController::class, 'destroy'])
-        ->middleware('permission:tenders.delete');
+    Route::delete(
+        '/tenders/{tender}',
+        [TenderController::class, 'destroy']
+    )->middleware('permission:tenders.delete');
 
 
     /*
@@ -171,14 +353,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/vacancies', [VacancyController::class, 'store'])
-        ->middleware('permission:vacancies.create');
+    Route::post(
+        '/vacancies',
+        [VacancyController::class, 'store']
+    )->middleware('permission:vacancies.create');
 
-    Route::put('/vacancies/{vacancy}', [VacancyController::class, 'update'])
-        ->middleware('permission:vacancies.update');
+    Route::put(
+        '/vacancies/{vacancy}',
+        [VacancyController::class, 'update']
+    )->middleware('permission:vacancies.update');
 
-    Route::delete('/vacancies/{vacancy}', [VacancyController::class, 'destroy'])
-        ->middleware('permission:vacancies.delete');
+    Route::delete(
+        '/vacancies/{vacancy}',
+        [VacancyController::class, 'destroy']
+    )->middleware('permission:vacancies.delete');
 
 
     /*
@@ -187,14 +375,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/publications', [PublicationController::class, 'store'])
-        ->middleware('permission:publications.create');
+    Route::post(
+        '/publications',
+        [PublicationController::class, 'store']
+    )->middleware('permission:publications.create');
 
-    Route::put('/publications/{publication}', [PublicationController::class, 'update'])
-        ->middleware('permission:publications.update');
+    Route::put(
+        '/publications/{publication}',
+        [PublicationController::class, 'update']
+    )->middleware('permission:publications.update');
 
-    Route::delete('/publications/{publication}', [PublicationController::class, 'destroy'])
-        ->middleware('permission:publications.delete');
+    Route::delete(
+        '/publications/{publication}',
+        [PublicationController::class, 'destroy']
+    )->middleware('permission:publications.delete');
 
 
     /*
@@ -203,14 +397,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/multimedia', [MultimediaController::class, 'store'])
-        ->middleware('permission:multimedia.create');
+    Route::post(
+        '/multimedia',
+        [MultimediaController::class, 'store']
+    )->middleware('permission:multimedia.create');
 
-    Route::put('/multimedia/{multimedia}', [MultimediaController::class, 'update'])
-        ->middleware('permission:multimedia.update');
+    Route::put(
+        '/multimedia/{multimedia}',
+        [MultimediaController::class, 'update']
+    )->middleware('permission:multimedia.update');
 
-    Route::delete('/multimedia/{multimedia}', [MultimediaController::class, 'destroy'])
-        ->middleware('permission:multimedia.delete');
+    Route::delete(
+        '/multimedia/{multimedia}',
+        [MultimediaController::class, 'destroy']
+    )->middleware('permission:multimedia.delete');
 
 
     /*
@@ -219,14 +419,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/announcements', [AnnouncementController::class, 'store'])
-        ->middleware('permission:announcements.create');
+    Route::post(
+        '/announcements',
+        [AnnouncementController::class, 'store']
+    )->middleware('permission:announcements.create');
 
-    Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])
-        ->middleware('permission:announcements.update');
+    Route::put(
+        '/announcements/{announcement}',
+        [AnnouncementController::class, 'update']
+    )->middleware('permission:announcements.update');
 
-    Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])
-        ->middleware('permission:announcements.delete');
+    Route::delete(
+        '/announcements/{announcement}',
+        [AnnouncementController::class, 'destroy']
+    )->middleware('permission:announcements.delete');
 
 
     /*
@@ -235,14 +441,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/directorates', [DirectorateController::class, 'store'])
-        ->middleware('permission:directorates.create');
+    Route::post(
+        '/directorates',
+        [DirectorateController::class, 'store']
+    )->middleware('permission:directorates.create');
 
-    Route::put('/directorates/{directorate}', [DirectorateController::class, 'update'])
-        ->middleware('permission:directorates.update');
+    Route::put(
+        '/directorates/{directorate}',
+        [DirectorateController::class, 'update']
+    )->middleware('permission:directorates.update');
 
-    Route::delete('/directorates/{directorate}', [DirectorateController::class, 'destroy'])
-        ->middleware('permission:directorates.delete');
+    Route::delete(
+        '/directorates/{directorate}',
+        [DirectorateController::class, 'destroy']
+    )->middleware('permission:directorates.delete');
 
 
     /*
@@ -251,14 +463,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/city-admins', [CityAdminController::class, 'store'])
-        ->middleware('permission:city_admins.create');
+    Route::post(
+        '/city-admins',
+        [CityAdminController::class, 'store']
+    )->middleware('permission:city_admins.create');
 
-    Route::put('/city-admins/{cityAdmin}', [CityAdminController::class, 'update'])
-        ->middleware('permission:city_admins.update');
+    Route::put(
+        '/city-admins/{cityAdmin}',
+        [CityAdminController::class, 'update']
+    )->middleware('permission:city_admins.update');
 
-    Route::delete('/city-admins/{cityAdmin}', [CityAdminController::class, 'destroy'])
-        ->middleware('permission:city_admins.delete');
+    Route::delete(
+        '/city-admins/{cityAdmin}',
+        [CityAdminController::class, 'destroy']
+    )->middleware('permission:city_admins.delete');
 
 
     /*
@@ -267,14 +485,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/categories', [CategoryController::class, 'store'])
-        ->middleware('permission:categories.create');
+    Route::post(
+        '/categories',
+        [CategoryController::class, 'store']
+    )->middleware('permission:categories.create');
 
-    Route::put('/categories/{category}', [CategoryController::class, 'update'])
-        ->middleware('permission:categories.update');
+    Route::put(
+        '/categories/{category}',
+        [CategoryController::class, 'update']
+    )->middleware('permission:categories.update');
 
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])
-        ->middleware('permission:categories.delete');
+    Route::delete(
+        '/categories/{category}',
+        [CategoryController::class, 'destroy']
+    )->middleware('permission:categories.delete');
 
 
     /*
@@ -283,14 +507,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/contact-messages', [ContactMessageController::class, 'index'])
-        ->middleware('permission:messages.view');
+    Route::get(
+        '/contact-messages',
+        [ContactMessageController::class, 'index']
+    )->middleware('permission:messages.view');
 
-    Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])
-        ->middleware('permission:messages.view');
+    Route::get(
+        '/contact-messages/{contactMessage}',
+        [ContactMessageController::class, 'show']
+    )->middleware('permission:messages.view');
 
-    Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])
-        ->middleware('permission:messages.delete');
+    Route::delete(
+        '/contact-messages/{contactMessage}',
+        [ContactMessageController::class, 'destroy']
+    )->middleware('permission:messages.delete');
 
 
     /*
@@ -299,14 +529,20 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/feedback', [FeedbackController::class, 'index'])
-        ->middleware('permission:feedback.view');
+    Route::get(
+        '/feedback',
+        [FeedbackController::class, 'index']
+    )->middleware('permission:feedback.view');
 
-    Route::get('/feedback/{feedback}', [FeedbackController::class, 'show'])
-        ->middleware('permission:feedback.view');
+    Route::get(
+        '/feedback/{feedback}',
+        [FeedbackController::class, 'show']
+    )->middleware('permission:feedback.view');
 
-    Route::delete('/feedback/{feedback}', [FeedbackController::class, 'destroy'])
-        ->middleware('permission:feedback.delete');
+    Route::delete(
+        '/feedback/{feedback}',
+        [FeedbackController::class, 'destroy']
+    )->middleware('permission:feedback.delete');
 
 
     /*
@@ -315,66 +551,132 @@ Route::prefix('v1')
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/notifications', [NotificationController::class, 'index'])
-        ->middleware('permission:notifications.view');
+    Route::get(
+        '/notifications',
+        [NotificationController::class, 'index']
+    )->middleware('permission:notifications.view');
 
-    Route::post('/notifications', [NotificationController::class, 'store'])
-        ->middleware('permission:notifications.create');
+    Route::post(
+        '/notifications',
+        [NotificationController::class, 'store']
+    )->middleware('permission:notifications.create');
 
     /*
      * IMPORTANT:
-     * This route must come BEFORE /notifications/{notification}.
+     * read-all must come before /notifications/{notification}.
      */
-    Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
-        ->middleware('permission:notifications.update');
+    Route::patch(
+        '/notifications/read-all',
+        [NotificationController::class, 'markAllAsRead']
+    )->middleware('permission:notifications.update');
 
-    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])
-        ->middleware('permission:notifications.view');
+    Route::get(
+        '/notifications/{notification}',
+        [NotificationController::class, 'show']
+    )->middleware('permission:notifications.view');
 
-    Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])
-        ->middleware('permission:notifications.update');
+    Route::patch(
+        '/notifications/{notification}/read',
+        [NotificationController::class, 'markAsRead']
+    )->middleware('permission:notifications.update');
 
-    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])
-        ->middleware('permission:notifications.delete');
+    Route::delete(
+        '/notifications/{notification}',
+        [NotificationController::class, 'destroy']
+    )->middleware('permission:notifications.delete');
 
 
     /*
     |--------------------------------------------------------------------------
     | Admin Account Management
     |--------------------------------------------------------------------------
+    |
+    | These routes are authenticated.
+    |
+    | The permission middleware makes these Super-Admin-only because
+    | admin_accounts.* permissions are not granted to normal Admins.
+    |
     */
 
-    Route::get('/admin/accounts', [AdminAccountController::class, 'index'])
-        ->middleware('permission:admin_accounts.view');
+    Route::get(
+        '/admin/accounts',
+        [AdminAccountController::class, 'index']
+    )->middleware('permission:admin_accounts.view');
 
-    Route::post('/admin/accounts', [AdminAccountController::class, 'store'])
-        ->middleware('permission:admin_accounts.create');
+    Route::post(
+        '/admin/accounts',
+        [AdminAccountController::class, 'store']
+    )->middleware('permission:admin_accounts.create');
 
-    Route::put('/admin/accounts/{user}', [AdminAccountController::class, 'update'])
-        ->middleware('permission:admin_accounts.update');
+    Route::put(
+        '/admin/accounts/{user}',
+        [AdminAccountController::class, 'update']
+    )->middleware('permission:admin_accounts.update');
 
-    Route::put('/admin/accounts/{user}/permissions', [AdminAccountController::class, 'permissions'])
-        ->middleware('permission:admin_accounts.update');
+    Route::put(
+        '/admin/accounts/{user}/permissions',
+        [AdminAccountController::class, 'permissions']
+    )->middleware('permission:admin_accounts.update');
 
-    Route::delete('/admin/accounts/{user}', [AdminAccountController::class, 'destroy'])
-        ->middleware('permission:admin_accounts.delete');
+    Route::delete(
+        '/admin/accounts/{user}',
+        [AdminAccountController::class, 'destroy']
+    )->middleware('permission:admin_accounts.delete');
 
 
     /*
     |--------------------------------------------------------------------------
     | Admin Users / Roles / Permissions
     |--------------------------------------------------------------------------
+    |
+    | AdminController itself performs the Super Admin check.
+    |
     */
 
-    Route::get('/admin/users', [AdminController::class, 'users']);
+    Route::get(
+        '/admin/users',
+        [AdminController::class, 'users']
+    );
 
-    Route::get('/admin/permissions', [PermissionController::class, 'index']);
+    Route::get(
+        '/admin/permissions',
+        [PermissionController::class, 'index']
+    );
 
-    Route::get('/admin/roles', [AdminController::class, 'roles']);
+    Route::get(
+        '/admin/roles',
+        [AdminController::class, 'roles']
+    );
 
-    Route::put('/admin/users/{user}/role', [AdminController::class, 'assignRole']);
+    Route::put(
+        '/admin/users/{user}/role',
+        [AdminController::class, 'assignRole']
+    );
 
-    Route::patch('/admin/users/{user}/status', [AdminController::class, 'status']);
+    Route::patch(
+        '/admin/users/{user}/status',
+        [AdminController::class, 'status']
+    );
 
-    Route::delete('/admin/users/{user}', [AdminController::class, 'destroy']);
+    Route::delete(
+        '/admin/users/{user}',
+        [AdminController::class, 'destroy']
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | System Settings
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/admin/settings',
+        [SystemSettingController::class, 'index']
+    )->middleware('permission:settings.view');
+
+    Route::put(
+        '/admin/settings',
+        [SystemSettingController::class, 'update']
+    )->middleware('permission:settings.update');
 });

@@ -10,7 +10,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role', 'permissions', 'is_active'])]
+#[Fillable([
+    'name',
+    'email',
+    'password',
+    'role',
+    'permissions',
+    'is_active',
+    'account_status',
+])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -24,6 +32,7 @@ class User extends Authenticatable
         'role',
         'permissions',
         'is_active',
+        'account_status',
     ];
 
     protected $hidden = [
@@ -58,6 +67,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Determine whether the account has been approved.
+     */
+    public function isApproved(): bool
+    {
+        return $this->account_status === 'approved';
+    }
+
+    /**
+     * Determine whether the account is waiting for approval.
+     */
+    public function isPending(): bool
+    {
+        return $this->account_status === 'pending';
+    }
+
+    /**
+     * Determine whether the account has been rejected.
+     */
+    public function isRejected(): bool
+    {
+        return $this->account_status === 'rejected';
+    }
+
+    /**
      * Determine whether the user has a specific permission.
      *
      * Super Admins automatically have every permission.
@@ -68,7 +101,11 @@ class User extends Authenticatable
             return true;
         }
 
-        if (!$this->isAdmin() || !$this->is_active) {
+        if (
+            !$this->isAdmin() ||
+            !$this->is_active ||
+            !$this->isApproved()
+        ) {
             return false;
         }
 

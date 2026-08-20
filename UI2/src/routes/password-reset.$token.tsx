@@ -57,12 +57,7 @@ function ResetPasswordPage() {
     try {
       setLoading(true);
 
-      await resetPassword(
-        search.email,
-        password,
-        passwordConfirmation,
-        token
-      );
+      await resetPassword(token, search.email, password, passwordConfirmation);
 
       toast.success("Password reset successfully.");
 

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, LogIn, ShieldCheck, UserCog } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import type { StaffRole } from "@/lib/permissions";
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
     meta: [
-      { title: "Staff Login — Afar UDCB" },
+      { title: "Staff Login â€” Afar UDCB" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -111,7 +111,7 @@ function LoginPage() {
           </div>
 
           <div className="text-xs text-primary-foreground/60">
-            © {new Date().getFullYear()} Afar Regional State
+            Â© {new Date().getFullYear()} Afar Regional State
           </div>
         </div>
       </div>
@@ -131,11 +131,11 @@ function LoginPage() {
           </div>
 
           <h2 className="font-display text-2xl font-bold">
-            Staff Sign in
+            Staff Login
           </h2>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Select your account type and sign in to the admin portal.
+            Select your account type and login to the admin portal.
           </p>
 
           {/* Account type */}
@@ -255,6 +255,13 @@ function LoginPage() {
               >
                 Forgot?
               </Link>
+
+              <Link
+                to="/admin/register"
+                className="text-primary hover:underline"
+              >
+                Create account
+              </Link>
             </div>
 
             {/* Submit */}
@@ -264,23 +271,23 @@ function LoginPage() {
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
             >
               {loading ? (
-                "Signing in…"
+                "Logging in..."
               ) : (
                 <>
-                  Sign in
+                  Login
                   <LogIn className="h-4 w-4" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Back to portal */}
+          {/* Back to public portal */}
           <div className="mt-6 text-center text-xs text-muted-foreground">
             <Link
               to="/"
               className="hover:text-primary"
             >
-              ← Back to public portal
+              Back to public portal
             </Link>
           </div>
         </div>
@@ -288,3 +295,8 @@ function LoginPage() {
     </div>
   );
 }
+
+
+
+
+
