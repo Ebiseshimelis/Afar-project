@@ -39,6 +39,7 @@ const emptyForm: AdminAccountInput = {
   email: "",
   password: "",
   is_active: true,
+  account_status: "pending",
   permissions: [],
 };
 
@@ -75,6 +76,16 @@ function AdminAccountsPage() {
       void load();
     } catch (e: any) {
       toast.error(e?.message ?? "Update failed.");
+    }
+  };
+
+  const setApprovalStatus = async (a: AdminAccount, status: "pending" | "approved" | "rejected") => {
+    try {
+      await svc.updateAdmin(a.id, { account_status: status });
+      toast.success("Account ");
+      void load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Approval update failed.");
     }
   };
 
@@ -115,7 +126,8 @@ function AdminAccountsPage() {
               <tr>
                 <th className="px-5 py-3">Name</th>
                 <th className="px-5 py-3">Email</th>
-                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Active</th>
+                <th className="px-5 py-3">Approval</th>
                 <th className="px-5 py-3">Permissions</th>
                 <th className="px-5 py-3 text-right">Actions</th>
               </tr>
@@ -173,6 +185,29 @@ function AdminAccountsPage() {
                       }
                     >
                       {a.is_active ? "Active" : "Disabled"}
+                    </button>
+                  </td>
+
+                  <td className="px-5 py-3">
+                    <button
+                      onClick={() =>
+                        setApprovalStatus(
+                          a,
+                          a.account_status === "approved"
+                            ? "pending"
+                            : "approved",
+                        )
+                      }
+                      className={
+                        "rounded-full px-2.5 py-1 text-xs font-semibold " +
+                        (a.account_status === "approved"
+                          ? "bg-success/15 text-success"
+                          : a.account_status === "rejected"
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-warning/15 text-warning")
+                      }
+                    >
+                      {a.account_status.charAt(0).toUpperCase() + a.account_status.slice(1)}
                     </button>
                   </td>
 
@@ -248,6 +283,7 @@ function AccountDialog({
           email: account.email,
           password: "",
           is_active: account.is_active,
+          account_status: account.account_status,
           permissions: account.permissions,
         }
       : emptyForm,
@@ -552,4 +588,13 @@ function AccountDialog({
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
 

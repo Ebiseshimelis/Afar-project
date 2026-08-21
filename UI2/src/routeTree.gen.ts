@@ -33,6 +33,7 @@ import { Route as AdminMultimediaRouteImport } from './routes/admin.multimedia'
 import { Route as AdminNewsRouteImport } from './routes/admin.news'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminPublicationsRouteImport } from './routes/admin.publications'
 import { Route as AdminRegisterRouteImport } from './routes/admin.register'
 import { Route as AdminRolesRouteImport } from './routes/admin.roles'
@@ -167,6 +168,11 @@ const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   path: '/admin/permissions',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProfileRoute = AdminProfileRouteImport.update({
+  id: '/admin/profile',
+  path: '/admin/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPublicationsRoute = AdminPublicationsRouteImport.update({
   id: '/admin/publications',
   path: '/admin/publications',
@@ -261,6 +267,7 @@ export interface FileRoutesByFullPath {
   '/admin/news': typeof AdminNewsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/publications': typeof AdminPublicationsRoute
   '/admin/register': typeof AdminRegisterRoute
   '/admin/roles': typeof AdminRolesRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/admin/news': typeof AdminNewsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/publications': typeof AdminPublicationsRoute
   '/admin/register': typeof AdminRegisterRoute
   '/admin/roles': typeof AdminRolesRoute
@@ -340,6 +348,7 @@ export interface FileRoutesById {
   '/admin/news': typeof AdminNewsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/profile': typeof AdminProfileRoute
   '/admin/publications': typeof AdminPublicationsRoute
   '/admin/register': typeof AdminRegisterRoute
   '/admin/roles': typeof AdminRolesRoute
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/admin/news'
     | '/admin/notifications'
     | '/admin/permissions'
+    | '/admin/profile'
     | '/admin/publications'
     | '/admin/register'
     | '/admin/roles'
@@ -420,6 +430,7 @@ export interface FileRouteTypes {
     | '/admin/news'
     | '/admin/notifications'
     | '/admin/permissions'
+    | '/admin/profile'
     | '/admin/publications'
     | '/admin/register'
     | '/admin/roles'
@@ -460,6 +471,7 @@ export interface FileRouteTypes {
     | '/admin/news'
     | '/admin/notifications'
     | '/admin/permissions'
+    | '/admin/profile'
     | '/admin/publications'
     | '/admin/register'
     | '/admin/roles'
@@ -494,6 +506,7 @@ export interface RootRouteChildren {
   AdminNewsRoute: typeof AdminNewsRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
+  AdminProfileRoute: typeof AdminProfileRoute
   AdminPublicationsRoute: typeof AdminPublicationsRoute
   AdminRegisterRoute: typeof AdminRegisterRoute
   AdminRolesRoute: typeof AdminRolesRoute
@@ -675,6 +688,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPermissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/profile': {
+      id: '/admin/profile'
+      path: '/admin/profile'
+      fullPath: '/admin/profile'
+      preLoaderRoute: typeof AdminProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/publications': {
       id: '/admin/publications'
       path: '/admin/publications'
@@ -829,6 +849,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminNewsRoute: AdminNewsRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
+  AdminProfileRoute: AdminProfileRoute,
   AdminPublicationsRoute: AdminPublicationsRoute,
   AdminRegisterRoute: AdminRegisterRoute,
   AdminRolesRoute: AdminRolesRoute,

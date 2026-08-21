@@ -118,6 +118,10 @@ Route::prefix('v1')->group(function () {
                 '/logout',
                 [AuthController::class, 'logout']
             );
+            Route::post(
+                '/change-password',
+                [AuthController::class, 'changePassword']
+            );
         });
     });
 

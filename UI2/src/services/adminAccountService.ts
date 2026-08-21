@@ -1,4 +1,4 @@
-﻿import { authFetch } from "@/services/authService";
+import { authFetch } from "@/services/authService";
 import {
   ASSIGNABLE_MODULES,
   PERMISSION_ACTIONS,
@@ -10,6 +10,7 @@ export type AdminAccount = {
   email: string;
   role: "admin";
   is_active: boolean;
+  account_status: "pending" | "approved" | "rejected";
   permissions: string[];
 };
 
@@ -18,6 +19,7 @@ export type AdminAccountInput = {
   email: string;
   password?: string;
   is_active: boolean;
+  account_status: "pending" | "approved" | "rejected";
   permissions: string[];
 };
 
@@ -30,6 +32,7 @@ const DEMO_ACCOUNTS: AdminAccount[] = [
     email: "admin@afarudcb.gov.et",
     role: "admin",
     is_active: true,
+    account_status: "approved",
     permissions: [
       "news.view",
       "news.create",
@@ -42,6 +45,7 @@ const DEMO_ACCOUNTS: AdminAccount[] = [
   },
   {
     id: "3",
+    account_status: "approved",
     name: "Hassan Osman",
     email: "disabled@afarudcb.gov.et",
     role: "admin",
@@ -84,6 +88,12 @@ function normalizeAccount(raw: any): AdminAccount {
     email: String(raw?.email ?? ""),
     role: "admin",
     is_active: raw?.is_active !== false,
+    account_status:
+      raw?.account_status === "approved"
+        ? "approved"
+        : raw?.account_status === "rejected"
+          ? "rejected"
+          : "pending",
     permissions: Array.isArray(raw?.permissions)
       ? raw.permissions.map(String)
       : [],
@@ -188,6 +198,7 @@ export async function createAdmin(
         email: input.email,
         role: "admin",
         is_active: input.is_active,
+        account_status: input.account_status,
         permissions: input.permissions,
       };
 
@@ -346,3 +357,9 @@ export const ALL_ADMIN_PERMISSIONS =
         (action) => `${module.key}.${action}`,
       ),
   );
+
+
+
+
+
+

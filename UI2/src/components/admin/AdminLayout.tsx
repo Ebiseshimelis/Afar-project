@@ -538,6 +538,7 @@ export function AdminLayout({
                 displayName={displayName}
                 displayEmail={displayEmail}
                 displayRole={displayRole}
+                isSuperAdmin={isSuperAdmin}
                 onSignOut={handleSignOut}
                 signingOut={signingOut}
               />
@@ -1184,6 +1185,7 @@ function ProfileMenu({
   displayName,
   displayEmail,
   displayRole,
+  isSuperAdmin,
   onSignOut,
   signingOut,
 }: {
@@ -1192,6 +1194,7 @@ function ProfileMenu({
   displayName: string;
   displayEmail: string;
   displayRole: string;
+  isSuperAdmin: boolean;
   onSignOut: () => Promise<void>;
   signingOut: boolean;
 }) {
@@ -1248,7 +1251,7 @@ function ProfileMenu({
           <ul className="py-1 text-sm">
             <li>
               <Link
-                to="/admin/users"
+                to="/admin/profile"
                 onClick={() =>
                   onOpenChange(false)
                 }
@@ -1259,18 +1262,20 @@ function ProfileMenu({
               </Link>
             </li>
 
-            <li>
-              <Link
-                to="/admin/settings"
-                onClick={() =>
-                  onOpenChange(false)
-                }
-                className="flex items-center gap-2 px-4 py-2 hover:bg-secondary"
-              >
-                <Settings className="h-4 w-4" />
-                Settings
-              </Link>
-            </li>
+            {isSuperAdmin && (
+              <li>
+                <Link
+                  to="/admin/settings"
+                  onClick={() =>
+                    onOpenChange(false)
+                  }
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-secondary"
+                >
+                  <Settings className="h-4 w-4" />
+                  Settings
+                </Link>
+              </li>
+            )}
 
             <li>
               <a
@@ -1526,3 +1531,10 @@ export function EmptyState({
     </div>
   );
 }
+
+
+
+
+
+
+
