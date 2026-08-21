@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/portal/PortalLayout";
 import {
@@ -14,7 +14,7 @@ import {
 export const Route = createFileRoute("/_portal/vacancies")({
   head: () => ({
     meta: [
-      { title: "Vacancies — Afar UDCB" },
+      { title: "Vacancies â€” Afar UDCB" },
       {
         name: "description",
         content:
@@ -29,6 +29,7 @@ function VacanciesPage() {
   const [vacancies, setVacancies] = useState<VacancyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedVacancy, setSelectedVacancy] = useState<VacancyItem | null>(null);
 
   useEffect(() => {
     async function loadVacancies() {
@@ -142,13 +143,6 @@ function VacanciesPage() {
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-                  >
-                    Apply
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
                 </div>
               ))}
             </div>
@@ -157,3 +151,7 @@ function VacanciesPage() {
     </>
   );
 }
+
+
+
+

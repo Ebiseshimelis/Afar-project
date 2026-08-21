@@ -217,7 +217,7 @@ class PublicationController extends Controller
         }
     }
 
-    public function destroy(Publication $publication): JsonResponse
+    public function destroy(Request $request, Publication $publication): JsonResponse
     {
         if (!$request->user()?->isAdmin()) {
             return response()->json([
@@ -251,3 +251,4 @@ class PublicationController extends Controller
         }
     }
 }
+

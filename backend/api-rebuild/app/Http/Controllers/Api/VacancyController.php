@@ -252,7 +252,7 @@ class VacancyController extends Controller
         }
     }
 
-    public function destroy(Vacancy $vacancy): JsonResponse
+    public function destroy(Request $request, Vacancy $vacancy): JsonResponse
     {
         if (!$request->user()?->isAdmin()) {
             return response()->json([
