@@ -184,6 +184,37 @@ export async function getDirectorates(): Promise<
 }
 
 /**
+ * GET one directorate by ID.
+ */
+export async function getDirectorate(
+  id: number
+): Promise<Directorate> {
+  const response = await fetch(
+    `${API_BASE}/directorates/${id}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    }
+  );
+
+  const json = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      json?.message ||
+        `Failed to fetch directorate: ${response.status}`
+    );
+  }
+
+  if (!json?.data) {
+    throw new Error("Directorate not found.");
+  }
+
+  return mapDirectorate(json.data as ApiDirectorate);
+}
+/**
  * Data used by the create/edit form.
  */
 export type DirectorateFormData = {
@@ -445,3 +476,4 @@ export async function deleteDirectorate(
 
   await parseResponse(response);
 }
+

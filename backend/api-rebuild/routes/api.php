@@ -66,16 +66,14 @@ Route::prefix('v1')->group(function () {
     Route::prefix('staff-setup')->group(function () {
 
         /*
-        | First Super Admin setup
+        | Admin registration status
+        |
+        | Super Admin setup is intentionally not exposed here.
+        | The system has exactly one permanent Super Admin.
         */
         Route::get(
             '/status',
             [StaffSetupController::class, 'status']
-        );
-
-        Route::post(
-            '/super-admin',
-            [StaffSetupController::class, 'createSuperAdmin']
         );
 
         /*
@@ -684,3 +682,4 @@ Route::prefix('v1')
         [SystemSettingController::class, 'update']
     )->middleware('permission:settings.update');
 });
+

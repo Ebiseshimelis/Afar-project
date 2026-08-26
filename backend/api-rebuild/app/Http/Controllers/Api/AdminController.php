@@ -61,19 +61,30 @@ class AdminController extends Controller
 
         $actor = $request->user();
 
-        if ($user->id === $actor->id && $validated['role'] !== 'super_admin') {
+        /*
+         * Super Admin roles are permanently protected.
+         *
+         * A Super Admin can NEVER be downgraded to Admin,
+         * even when multiple Super Admin accounts exist.
+         */
+        if (
+            $user->role === 'super_admin' &&
+            $validated['role'] !== 'super_admin'
+        ) {
             return response()->json([
-                'message' => 'You cannot remove your own Super Admin role.',
+                'message' => 'A Super Admin role cannot be removed or downgraded.',
             ], 422);
         }
 
+        /*
+         * Nobody can remove their own Super Admin role.
+         */
         if (
-            $user->role === 'super_admin' &&
-            $validated['role'] === 'admin' &&
-            User::where('role', 'super_admin')->count() <= 1
+            $user->id === $actor->id &&
+            $validated['role'] !== 'super_admin'
         ) {
             return response()->json([
-                'message' => 'At least one Super Admin account must remain.',
+                'message' => 'You cannot remove your own Super Admin role.',
             ], 422);
         }
 
@@ -107,6 +118,35 @@ class AdminController extends Controller
                 'in:pending,approved,rejected',
             ],
         ]);
+
+        /*
+         * Super Admin accounts are permanently protected.
+         *
+         * They cannot be:
+         * - disabled
+         * - rejected
+         * - put into pending status
+         * - modified through the normal staff status endpoint
+         */
+        if ($user->role === 'super_admin') {
+            if (
+                array_key_exists('is_active', $validated) &&
+                $validated['is_active'] === false
+            ) {
+                return response()->json([
+                    'message' => 'A Super Admin account cannot be disabled.',
+                ], 422);
+            }
+
+            if (
+                isset($validated['account_status']) &&
+                $validated['account_status'] !== 'approved'
+            ) {
+                return response()->json([
+                    'message' => 'A Super Admin account must remain approved and active.',
+                ], 422);
+            }
+        }
 
         if (
             $user->id === $request->user()->id &&
@@ -196,21 +236,30 @@ class AdminController extends Controller
     {
         $this->ensureSuperAdmin($request);
 
+        /*
+         * Super Admin accounts can NEVER be deleted.
+         *
+         * This applies even when there is more than one
+         * Super Admin account.
+         */
+        if ($user->role === 'super_admin') {
+            return response()->json([
+                'message' => 'Super Admin accounts cannot be deleted.',
+            ], 422);
+        }
+
+        /*
+         * A Super Admin cannot delete their own account.
+         */
         if ($user->id === $request->user()->id) {
             return response()->json([
                 'message' => 'You cannot delete your own account.',
             ], 422);
         }
 
-        if (
-            $user->role === 'super_admin' &&
-            User::where('role', 'super_admin')->count() <= 1
-        ) {
-            return response()->json([
-                'message' => 'At least one Super Admin account must remain.',
-            ], 422);
-        }
-
+        /*
+         * Normal Admin accounts may be deleted by a Super Admin.
+         */
         $user->tokens()->delete();
         $user->delete();
 
@@ -244,3 +293,6 @@ class AdminController extends Controller
         ];
     }
 }
+
+
+

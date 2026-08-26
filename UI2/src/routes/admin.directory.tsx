@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -356,7 +356,7 @@ function DirectoryAdmin() {
 
                         <div>
                           <div className="font-medium">
-                            {directorate.headName || "—"}
+                            {directorate.headName || "â€”"}
                           </div>
 
                           {directorate.headNameAm && (
@@ -391,7 +391,7 @@ function DirectoryAdmin() {
 
                       {!directorate.phone &&
                         !directorate.email &&
-                        "—"}
+                        "â€”"}
                     </td>
 
                     <td className="px-5 py-4">
@@ -773,3 +773,4 @@ function FormTextarea({
     </label>
   );
 }
+

@@ -282,14 +282,10 @@ class DirectorateController extends Controller
     /**
      * Delete a directorate.
      */
-    public function destroy(Directorate $directorate): JsonResponse
-    {
-        if (!$request = request()) {
-            return response()->json([
-                'message' => 'Unauthorized.',
-            ], 403);
-        }
-
+    public function destroy(
+        Request $request,
+        Directorate $directorate
+    ): JsonResponse {
         if (!$request->user()?->isAdmin()) {
             return response()->json([
                 'message' => 'Unauthorized.',
@@ -344,3 +340,4 @@ class DirectorateController extends Controller
         }
     }
 }
+

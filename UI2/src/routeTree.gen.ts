@@ -48,6 +48,7 @@ import { Route as PortalNewsIndexRouteImport } from './routes/_portal.news.index
 import { Route as PortalNewsIdRouteImport } from './routes/_portal.news.$id'
 import { Route as PortalTendersIndexRouteImport } from './routes/_portal.tenders.index'
 import { Route as PortalTendersIdRouteImport } from './routes/_portal.tenders.$id'
+import { Route as PortalVacanciesVacancyIdRouteImport } from './routes/_portal.vacancies.$vacancyId'
 
 const PortalRoute = PortalRouteImport.update({
   id: '/_portal',
@@ -243,6 +244,12 @@ const PortalTendersIdRoute = PortalTendersIdRouteImport.update({
   path: '/tenders/$id',
   getParentRoute: () => PortalRoute,
 } as any)
+const PortalVacanciesVacancyIdRoute =
+  PortalVacanciesVacancyIdRouteImport.update({
+    id: '/$vacancyId',
+    path: '/$vacancyId',
+    getParentRoute: () => PortalVacanciesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PortalIndexRoute
@@ -252,7 +259,7 @@ export interface FileRoutesByFullPath {
   '/directory': typeof PortalDirectoryRoute
   '/events': typeof PortalEventsRoute
   '/publications': typeof PortalPublicationsRoute
-  '/vacancies': typeof PortalVacanciesRoute
+  '/vacancies': typeof PortalVacanciesRouteWithChildren
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/backgrounds': typeof AdminBackgroundsRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/news/$id': typeof PortalNewsIdRoute
   '/tenders/$id': typeof PortalTendersIdRoute
+  '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRoute
   '/news/': typeof PortalNewsIndexRoute
   '/tenders/': typeof PortalTendersIndexRoute
 }
@@ -291,7 +299,7 @@ export interface FileRoutesByTo {
   '/directory': typeof PortalDirectoryRoute
   '/events': typeof PortalEventsRoute
   '/publications': typeof PortalPublicationsRoute
-  '/vacancies': typeof PortalVacanciesRoute
+  '/vacancies': typeof PortalVacanciesRouteWithChildren
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/backgrounds': typeof AdminBackgroundsRoute
@@ -321,6 +329,7 @@ export interface FileRoutesByTo {
   '/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/news/$id': typeof PortalNewsIdRoute
   '/tenders/$id': typeof PortalTendersIdRoute
+  '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRoute
   '/news': typeof PortalNewsIndexRoute
   '/tenders': typeof PortalTendersIndexRoute
 }
@@ -333,7 +342,7 @@ export interface FileRoutesById {
   '/_portal/directory': typeof PortalDirectoryRoute
   '/_portal/events': typeof PortalEventsRoute
   '/_portal/publications': typeof PortalPublicationsRoute
-  '/_portal/vacancies': typeof PortalVacanciesRoute
+  '/_portal/vacancies': typeof PortalVacanciesRouteWithChildren
   '/admin/accounts': typeof AdminAccountsRoute
   '/admin/activity': typeof AdminActivityRoute
   '/admin/backgrounds': typeof AdminBackgroundsRoute
@@ -363,6 +372,7 @@ export interface FileRoutesById {
   '/_portal/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/_portal/news/$id': typeof PortalNewsIdRoute
   '/_portal/tenders/$id': typeof PortalTendersIdRoute
+  '/_portal/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRoute
   '/_portal/news/': typeof PortalNewsIndexRoute
   '/_portal/tenders/': typeof PortalTendersIndexRoute
 }
@@ -405,6 +415,7 @@ export interface FileRouteTypes {
     | '/multimedia/videos'
     | '/news/$id'
     | '/tenders/$id'
+    | '/vacancies/$vacancyId'
     | '/news/'
     | '/tenders/'
   fileRoutesByTo: FileRoutesByTo
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/multimedia/videos'
     | '/news/$id'
     | '/tenders/$id'
+    | '/vacancies/$vacancyId'
     | '/news'
     | '/tenders'
   id:
@@ -486,6 +498,7 @@ export interface FileRouteTypes {
     | '/_portal/multimedia/videos'
     | '/_portal/news/$id'
     | '/_portal/tenders/$id'
+    | '/_portal/vacancies/$vacancyId'
     | '/_portal/news/'
     | '/_portal/tenders/'
   fileRoutesById: FileRoutesById
@@ -793,8 +806,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalTendersIdRouteImport
       parentRoute: typeof PortalRoute
     }
+    '/_portal/vacancies/$vacancyId': {
+      id: '/_portal/vacancies/$vacancyId'
+      path: '/$vacancyId'
+      fullPath: '/vacancies/$vacancyId'
+      preLoaderRoute: typeof PortalVacanciesVacancyIdRouteImport
+      parentRoute: typeof PortalVacanciesRoute
+    }
   }
 }
+
+interface PortalVacanciesRouteChildren {
+  PortalVacanciesVacancyIdRoute: typeof PortalVacanciesVacancyIdRoute
+}
+
+const PortalVacanciesRouteChildren: PortalVacanciesRouteChildren = {
+  PortalVacanciesVacancyIdRoute: PortalVacanciesVacancyIdRoute,
+}
+
+const PortalVacanciesRouteWithChildren = PortalVacanciesRoute._addFileChildren(
+  PortalVacanciesRouteChildren,
+)
 
 interface PortalRouteChildren {
   PortalAboutRoute: typeof PortalAboutRoute
@@ -803,7 +835,7 @@ interface PortalRouteChildren {
   PortalDirectoryRoute: typeof PortalDirectoryRoute
   PortalEventsRoute: typeof PortalEventsRoute
   PortalPublicationsRoute: typeof PortalPublicationsRoute
-  PortalVacanciesRoute: typeof PortalVacanciesRoute
+  PortalVacanciesRoute: typeof PortalVacanciesRouteWithChildren
   PortalIndexRoute: typeof PortalIndexRoute
   PortalMultimediaImagesRoute: typeof PortalMultimediaImagesRoute
   PortalMultimediaVideosRoute: typeof PortalMultimediaVideosRoute
@@ -820,7 +852,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalDirectoryRoute: PortalDirectoryRoute,
   PortalEventsRoute: PortalEventsRoute,
   PortalPublicationsRoute: PortalPublicationsRoute,
-  PortalVacanciesRoute: PortalVacanciesRoute,
+  PortalVacanciesRoute: PortalVacanciesRouteWithChildren,
   PortalIndexRoute: PortalIndexRoute,
   PortalMultimediaImagesRoute: PortalMultimediaImagesRoute,
   PortalMultimediaVideosRoute: PortalMultimediaVideosRoute,

@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -23,77 +22,6 @@ class StaffSetupController extends Controller
         return response()->json([
             'setup_required' => !$superAdminExists,
         ]);
-    }
-
-    /**
-     * Create the first Super Admin account.
-     *
-     * This endpoint is intentionally public because it is needed
-     * before the first Super Admin exists.
-     *
-     * It can only succeed while there are zero Super Admin accounts.
-     */
-    public function createSuperAdmin(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-            ],
-            'email' => [
-                'required',
-                'email',
-                'max:255',
-                Rule::unique('users', 'email'),
-            ],
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                'confirmed',
-            ],
-        ]);
-
-        $user = DB::transaction(function () use ($validated) {
-            /*
-             * Critical security check:
-             * Only allow this operation while no Super Admin exists.
-             */
-            if (
-                User::where('role', 'super_admin')
-                    ->lockForUpdate()
-                    ->exists()
-            ) {
-                abort(
-                    403,
-                    'Super Admin setup has already been completed.'
-                );
-            }
-
-            return User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'role' => 'super_admin',
-                'is_active' => true,
-                'account_status' => 'approved',
-                'permissions' => ['*'],
-            ]);
-        });
-
-        return response()->json([
-            'message' => 'Super Admin account created successfully.',
-            'setup_required' => false,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'is_active' => (bool) $user->is_active,
-                'account_status' => $user->account_status,
-            ],
-        ], 201);
     }
 
     /**
@@ -209,3 +137,6 @@ class StaffSetupController extends Controller
         ], 201);
     }
 }
+
+
+

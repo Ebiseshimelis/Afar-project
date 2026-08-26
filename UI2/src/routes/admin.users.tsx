@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   AdminLayout,
@@ -217,7 +217,7 @@ function UsersRolesAdmin() {
                             </Link>
                           )}
 
-                          {isSuperAdmin && (
+                          {isSuperAdmin && !isSuperAdminUser && (
                             <>
                               <button
                                 onClick={() =>
