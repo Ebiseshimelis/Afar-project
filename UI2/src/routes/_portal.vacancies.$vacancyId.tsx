@@ -1,4 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useLocation,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/portal/PortalLayout";
 import {
@@ -7,16 +12,21 @@ import {
 } from "@/services/vacancyService";
 import {
   ArrowLeft,
+  ArrowRight,
   Briefcase,
   Calendar,
+  Download,
   FileText,
   Loader2,
+  Eye,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_portal/vacancies/$vacancyId")({
   head: () => ({
     meta: [
-      { title: "Vacancy Details — Afar UDCB" },
+      {
+        title: "Vacancy Details - Afar UDCB",
+      },
       {
         name: "description",
         content:
@@ -27,35 +37,95 @@ export const Route = createFileRoute("/_portal/vacancies/$vacancyId")({
   component: VacancyDetailPage,
 });
 
+function formatDate(value: string | null) {
+  if (!value) return "Not specified";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not specified";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function getFileUrl(filePath: string) {
+  if (!filePath) return "";
+
+  if (
+    filePath.startsWith("http://") ||
+    filePath.startsWith("https://")
+  ) {
+    return filePath;
+  }
+
+  const cleanPath = filePath.replace(/^\/+/, "");
+
+  return `http://127.0.0.1:8000/storage/${cleanPath}`;
+}
+
+function getFileName(filePath: string) {
+  if (!filePath) return "Official Vacancy Document";
+
+  const cleanPath = filePath.split("?")[0];
+  const parts = cleanPath.split("/");
+
+  return parts[parts.length - 1] || "Official Vacancy Document";
+}
+
 function VacancyDetailPage() {
   const { vacancyId } = Route.useParams();
+  const location = useLocation();
+
+  const isApplyPage = location.pathname.endsWith("/apply");
+
+  if (isApplyPage) {
+    return <Outlet />;
+  }
 
   const [vacancy, setVacancy] = useState<VacancyItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadVacancy() {
       try {
         setLoading(true);
         setError(null);
 
         const data = await getVacancy(vacancyId);
-        setVacancy(data);
+
+        if (!cancelled) {
+          setVacancy(data);
+        }
       } catch (err) {
         console.error("Failed to load vacancy:", err);
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Unable to load vacancy details.",
-        );
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Unable to load vacancy details.",
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     loadVacancy();
+
+    return () => {
+      cancelled = true;
+    };
   }, [vacancyId]);
 
   if (loading) {
@@ -67,9 +137,14 @@ function VacancyDetailPage() {
           description="Loading vacancy information..."
         />
 
-        <div className="mx-auto flex max-w-5xl items-center justify-center px-6 py-16">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
+        <section className="mx-auto max-w-6xl px-6 py-12">
+          <div className="flex min-h-56 items-center justify-center rounded-3xl border bg-card shadow-sm">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              Loading vacancy...
+            </div>
+          </div>
+        </section>
       </>
     );
   }
@@ -80,18 +155,25 @@ function VacancyDetailPage() {
         <PageHeader
           eyebrow="Careers"
           title="Vacancy Not Found"
-          description="The requested vacancy could not be loaded."
+          description="The requested vacancy could not be found."
         />
 
-        <section className="mx-auto max-w-5xl px-6 py-10">
-          <div className="rounded-xl border bg-card p-8 text-center">
-            <p className="text-sm text-destructive">
-              {error || "This vacancy does not exist."}
+        <section className="mx-auto max-w-5xl px-6 py-12">
+          <div className="rounded-3xl border bg-card p-10 text-center shadow-sm">
+            <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
+
+            <h2 className="mt-5 font-display text-xl font-bold">
+              Vacancy unavailable
+            </h2>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              {error ||
+                "This vacancy does not exist or is no longer available."}
             </p>
 
             <Link
               to="/vacancies"
-              className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+              className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
             >
               <ArrowLeft className="h-4 w-4" />
               Back to Vacancies
@@ -102,124 +184,242 @@ function VacancyDetailPage() {
     );
   }
 
-  const title =
-    vacancy.title?.en ||
-    vacancy.title?.am ||
-    "Untitled vacancy";
+  const englishTitle =
+    vacancy.title?.en || "Untitled vacancy";
 
   const amharicTitle =
-    vacancy.title?.am && vacancy.title?.en
-      ? vacancy.title.am
-      : null;
+    vacancy.title?.am || "";
+
+  const englishContent =
+    vacancy.content?.en || "";
+
+  const amharicContent =
+    vacancy.content?.am || "";
+
+  const fileUrl = vacancy.file_path
+    ? getFileUrl(vacancy.file_path)
+    : "";
+
+  const fileName = vacancy.file_path
+    ? getFileName(vacancy.file_path)
+    : "";
 
   return (
     <>
       <PageHeader
         eyebrow="Careers"
-        title={title}
-        description="Review the vacancy information and application requirements."
+        title="Vacancy Details"
+        description="Review the position, requirements, deadline, and application information."
       />
 
-      <section className="mx-auto max-w-5xl px-6 py-10">
+      <section className="mx-auto max-w-6xl px-6 py-8 sm:py-10">
         <Link
           to="/vacancies"
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:gap-3"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Vacancies
         </Link>
 
-        <div className="overflow-hidden rounded-2xl border bg-card shadow-soft">
-          <div className="border-b p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h1 className="font-display text-2xl font-bold">
-                  {title}
-                </h1>
+        <article className="overflow-hidden rounded-3xl border bg-card shadow-sm">
 
-                {amharicTitle && (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {amharicTitle}
-                  </p>
-                )}
+          {/* Vacancy header */}
+          <div className="relative overflow-hidden border-b bg-gradient-to-br from-primary/10 via-background to-background p-6 sm:p-10">
+            <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
+
+            <div className="relative">
+              <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-4xl">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-primary">
+                    <Briefcase className="h-4 w-4" />
+                    Employment Opportunity
+                  </div>
+
+                  <h1 className="mt-4 font-display text-lg font-bold tracking-tight sm:text-xl lg:text-2xl">
+                    {englishTitle}
+                  </h1>
+
+                  {amharicTitle && (
+                    <p className="mt-4 text-base leading-7 text-muted-foreground">
+                      {amharicTitle}
+                    </p>
+                  )}
+                </div>
+
+                <span className="inline-flex w-fit shrink-0 items-center rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm">
+                  {vacancy.status === "published"
+                    ? "Open"
+                    : vacancy.status}
+                </span>
               </div>
 
-              <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
-                <Briefcase className="h-3.5 w-3.5" />
-                Published
-              </span>
-            </div>
+              {/* Important information */}
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border bg-background/80 p-5 backdrop-blur-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
 
-            <div className="mt-5 flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        Published
+                      </p>
 
-                {vacancy.deadline
-                  ? `Application deadline: ${new Date(
-                      vacancy.deadline,
-                    ).toLocaleDateString()}`
-                  : "No application deadline specified"}
-              </span>
+                      <p className="mt-1 font-semibold">
+                        {formatDate(vacancy.published_at)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border bg-background/80 p-5 backdrop-blur-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        Application Deadline
+                      </p>
+
+                      <p className="mt-1 font-semibold">
+                        {formatDate(vacancy.deadline)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="p-6">
-            <h2 className="font-display text-lg font-semibold">
-              Job Description
-            </h2>
+          {/* Main content */}
+          <div className="p-6 sm:p-10">
+            <div className="max-w-4xl">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-1 rounded-full bg-primary" />
 
-            <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
-              {vacancy.content?.en ||
-                vacancy.content?.am ||
-                "No description has been provided for this vacancy."}
+                <h2 className="font-display text-xl font-bold">
+                  Job Description
+                </h2>
+              </div>
+
+              {englishContent ? (
+                <div className="mt-6 whitespace-pre-wrap text-[15px] leading-8 text-muted-foreground">
+                  {englishContent}
+                </div>
+              ) : (
+                <p className="mt-6 text-sm text-muted-foreground">
+                  No English description has been provided.
+                </p>
+              )}
+
+              {amharicContent && (
+                <div className="mt-10 border-t pt-8">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-1 rounded-full bg-primary" />
+
+                    <h3 className="font-display text-lg font-bold">
+  የሥራ መግለጫ
+</h3>
+                  </div>
+
+                  <div className="mt-5 whitespace-pre-wrap text-[15px] leading-8 text-muted-foreground">
+                    {amharicContent}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {vacancy.file_path && (
-            <div className="border-t p-6">
-              <h2 className="font-display text-lg font-semibold">
-                Vacancy Document
-              </h2>
+          {/* Official document */}
+          {fileUrl && (
+            <div className="border-t bg-muted/20 px-6 py-8 sm:px-10">
+              <div className="mb-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-primary">
+                  Official Document
+                </p>
 
-              <p className="mt-2 text-sm text-muted-foreground">
-                Additional information is available in the official vacancy
-                document.
-              </p>
+                <h2 className="mt-1 font-display text-lg font-bold">
+                  Vacancy Attachment
+                </h2>
+              </div>
 
-              <a
-                href={vacancy.file_path}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-              >
-                <FileText className="h-4 w-4" />
-                View Vacancy Document
-              </a>
+              <div className="flex flex-col gap-5 rounded-2xl border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h3 className="font-semibold">
+                      Official Vacancy Document
+                    </h3>
+
+                    <p
+                      className="mt-1 truncate text-sm text-muted-foreground"
+                      title={fileName}
+                    >
+                      {fileName}
+                    </p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Open the document or save a copy for later.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap gap-3">
+                  <a
+                    href={fileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-semibold transition hover:bg-muted"
+                  >
+                    <Eye className="h-4 w-4" />
+                    View
+                  </a>
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="border-t bg-muted/20 p-6">
+          {/* Compact Application CTA */}
+          <div className="border-t bg-primary/[0.04] px-6 py-5 sm:px-10">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="font-semibold">
-                  Interested in this position?
-                </h2>
+                <p className="text-sm font-semibold">
+                  Ready to apply?
+                </p>
 
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Submit your application through the official application form.
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Review the vacancy details before submitting your application.
                 </p>
               </div>
 
-              <a
-  href={`/vacancies/${String(vacancy.id)}/apply`}
-  className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90"
->
-  Apply Now
-</a>
+              <Link
+                to="/vacancies/$vacancyId/apply"
+                params={{
+                  vacancyId: String(vacancy.id),
+                }}
+                className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-bold text-primary-foreground shadow-sm transition hover:opacity-90"
+              >
+                Apply Now
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
-        </div>
+        </article>
       </section>
     </>
   );
 }
+
+
+
+
+
+
+
+

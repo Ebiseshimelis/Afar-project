@@ -28,8 +28,8 @@ import {
 } from "@/services/eventService";
 import { getDirectorates } from "@/services/directorateService";
 import { getCityAdmins } from "@/services/cityAdminService";
-
-import { portfolioImages } from "@/lib/mock-data";
+import { getPortfolios, type PortfolioItem } from "@/services/portfolioService";
+import { useSectionBackground } from "@/lib/site-images";
 import afarHero from "@/assets/background.png";
 
 export const Route = createFileRoute("/_portal/")({
@@ -101,6 +101,7 @@ function isTenderOpen(
 }
 
 function HomePage() {
+  const homeBackground = useSectionBackground("home");
   const [latestNews, setLatestNews] =
     useState<NewsItem[]>([]);
 
@@ -112,6 +113,10 @@ function HomePage() {
 
   const [upcomingEvents, setUpcomingEvents] =
     useState<EventItem[]>([]);
+
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+  const [portfolioLoading, setPortfolioLoading] = useState(true);
+  const [portfolioError, setPortfolioError] = useState<string | null>(null);
 
   const [directorateCount, setDirectorateCount] =
     useState(0);
@@ -375,11 +380,29 @@ function HomePage() {
     loadCounts();
   }, []);
 
+  useEffect(() => {
+    async function loadPortfolio() {
+      try {
+        setPortfolioLoading(true);
+        setPortfolioError(null);
+        setPortfolioItems(await getPortfolios());
+      } catch (error) {
+        console.error("Failed to load home page portfolio:", error);
+        setPortfolioItems([]);
+        setPortfolioError("Unable to load portfolio items.");
+      } finally {
+        setPortfolioLoading(false);
+      }
+    }
+
+    void loadPortfolio();
+  }, []);
+
   return (
     <div className="animate-fade-in-up">
       <section className="relative overflow-hidden gradient-hero">
         <img
-          src={afarHero}
+          src={homeBackground || afarHero}
           alt="Afar regional landscape at golden hour with government building"
           className="absolute inset-0 h-full w-full object-cover opacity-55"
           width={1920}
@@ -800,7 +823,13 @@ function HomePage() {
 
       <section className="mx-auto max-w-7xl px-6 pb-14">
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-3">
-          {portfolioImages.map(
+          {portfolioLoading ? (
+            <div className="col-span-full py-8 text-center text-sm text-muted-foreground">Loading portfolio...</div>
+          ) : portfolioError ? (
+            <div className="col-span-full py-8 text-center text-sm text-destructive">{portfolioError}</div>
+          ) : portfolioItems.length === 0 ? (
+            <div className="col-span-full py-8 text-center text-sm text-muted-foreground">There are currently no portfolio items.</div>
+          ) : portfolioItems.map(
             (p, i) => (
               <div
                 key={i}
@@ -812,15 +841,21 @@ function HomePage() {
                 }
               >
                 <img
-                  src={p.url}
-                  alt={p.caption}
+                  src={p.imageUrl}
+                  alt={p.title}
                   loading="lazy"
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                  }}
                 />
 
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/80 to-transparent p-3">
                   <div className="text-xs font-medium text-primary-foreground">
-                    {p.caption}
+                    {p.title}
+                  </div>
+                  <div className="mt-0.5 line-clamp-2 text-[11px] text-primary-foreground/85">
+                    {p.content}
                   </div>
                 </div>
               </div>

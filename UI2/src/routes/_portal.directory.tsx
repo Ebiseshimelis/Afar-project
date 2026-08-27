@@ -202,8 +202,7 @@ function DirectoryPage() {
         {!loading && !error && (
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filtered.map((d) => (
-              <div
-                key={d.id}
+              <div key={d.id}
                 
                 
                 className="block rounded-xl border bg-card p-5 shadow-soft transition hover:-translate-y-0.5 hover:shadow-elegant"
@@ -242,7 +241,10 @@ function DirectoryPage() {
                 <div className="mt-4 space-y-1.5 border-t pt-3 text-sm">
                   {d.phone && (
                     <span
-                      onClick={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                       className="flex items-center gap-2 text-muted-foreground"
                     >
                       <Phone className="h-3.5 w-3.5 shrink-0" />
@@ -252,14 +254,17 @@ function DirectoryPage() {
 
                   {d.email && (
                     <span
-                      onClick={(e) => e.preventDefault()}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
                       className="flex items-center gap-2 text-muted-foreground"
                     >
                       <Mail className="h-3.5 w-3.5 shrink-0" />
                       <span className="truncate">{d.email}</span>
                     </span>
                   )}
-                </div>
+                                </div>
               </div>
             ))}
           </div>
@@ -274,4 +279,5 @@ function DirectoryPage() {
     </>
   );
 }
+
 

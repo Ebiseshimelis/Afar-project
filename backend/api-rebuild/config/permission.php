@@ -18,6 +18,7 @@ return [
         'tenders',
         'vacancies',
         'publications',
+        'portfolios',
         'multimedia',
         'announcements',
         'directorates',
@@ -80,6 +81,11 @@ return [
         'publications.create',
         'publications.update',
         'publications.delete',
+
+        'portfolios.view',
+        'portfolios.create',
+        'portfolios.update',
+        'portfolios.delete',
 
         'multimedia.view',
         'multimedia.create',

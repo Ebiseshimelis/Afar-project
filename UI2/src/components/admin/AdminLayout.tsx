@@ -45,6 +45,7 @@ type AdminPath =
   | "/admin/events"
   | "/admin/tenders"
   | "/admin/vacancies"
+  | "/admin/job-applications"
   | "/admin/publications"
   | "/admin/city-admins"
   | "/admin/directory"
@@ -54,6 +55,7 @@ type AdminPath =
   | "/admin/notifications"
   | "/admin/multimedia"
   | "/admin/backgrounds"
+  | "/admin/portfolio"
   | "/admin/settings";
 
 type Permission =
@@ -62,6 +64,7 @@ type Permission =
   | "events.view"
   | "tenders.view"
   | "vacancies.view"
+  | "job_applications.view"
   | "publications.view"
   | "city_admins.view"
   | "directory.view"
@@ -71,6 +74,7 @@ type Permission =
   | "notifications.view"
   | "multimedia.view"
   | "backgrounds.view"
+  | "portfolios.view"
   | "settings.view";
 
 type NavLeaf = {
@@ -137,6 +141,13 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Vacancies",
         icon: Briefcase,
         permission: "vacancies.view",
+      },
+      {
+        to: "/admin/job-applications",
+        label: "Job Applications",
+        icon: FileText,
+        permission: "job_applications.view",
+        superAdminOnly: true,
       },
       {
         to: "/admin/publications",
@@ -215,17 +226,28 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "multimedia.view",
       },
       {
-        to: "/admin/backgrounds",
-        label: "Background Images",
-        icon: ImageIcon,
-        permission: "backgrounds.view",
-      },
-      {
         to: "/admin/settings",
         label: "Settings",
         icon: Settings,
         permission: "settings.view",
         superAdminOnly: true,
+      },
+    ],
+  },
+  {
+    label: "Background Image & Portfolio",
+    items: [
+      {
+        to: "/admin/backgrounds",
+        label: "Background Image",
+        icon: ImageIcon,
+        permission: "backgrounds.view",
+      },
+      {
+        to: "/admin/portfolio",
+        label: "Portfolio",
+        icon: ImageIcon,
+        permission: "portfolios.view",
       },
     ],
   },
@@ -1531,10 +1553,4 @@ export function EmptyState({
     </div>
   );
 }
-
-
-
-
-
-
 

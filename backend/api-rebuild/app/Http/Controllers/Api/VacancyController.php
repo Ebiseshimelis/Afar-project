@@ -18,12 +18,12 @@ class VacancyController extends Controller
                 ->orderBy('deadline', 'asc');
 
             // Public portal: only published and non-expired vacancies.
-            // Admin: return all vacancies.
+            // Admin portal: all vacancies.
             if (!$request->boolean('admin')) {
                 $query->where('status', 'published')
                     ->where(function ($q) {
                         $q->whereNull('deadline')
-                          ->orWhere('deadline', '>=', now());
+                            ->orWhere('deadline', '>=', now());
                     });
             }
 
@@ -42,12 +42,6 @@ class VacancyController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        if (!$request->user()?->isAdmin()) {
-            return response()->json([
-                'message' => 'Unauthorized.'
-            ], 403);
-        }
-
         $validated = $request->validate([
             'category_id' => [
                 'required',
@@ -142,7 +136,7 @@ class VacancyController extends Controller
     public function show(Vacancy $vacancy): JsonResponse
     {
         return response()->json([
-            'data' => $vacancy->load('author')
+            'data' => $vacancy->load('author'),
         ], 200);
     }
 
@@ -150,12 +144,6 @@ class VacancyController extends Controller
         Request $request,
         Vacancy $vacancy
     ): JsonResponse {
-        if (!$request->user()?->isAdmin()) {
-            return response()->json([
-                'message' => 'Unauthorized.'
-            ], 403);
-        }
-
         $validated = $request->validate([
             'category_id' => [
                 'sometimes',
@@ -252,14 +240,10 @@ class VacancyController extends Controller
         }
     }
 
-    public function destroy(Request $request, Vacancy $vacancy): JsonResponse
-    {
-        if (!$request->user()?->isAdmin()) {
-            return response()->json([
-                'message' => 'Unauthorized.'
-            ], 403);
-        }
-
+    public function destroy(
+        Request $request,
+        Vacancy $vacancy
+    ): JsonResponse {
         try {
             if (
                 $vacancy->file_path &&
@@ -275,7 +259,7 @@ class VacancyController extends Controller
             $vacancy->delete();
 
             return response()->json([
-                'message' => 'Vacancy deleted successfully.'
+                'message' => 'Vacancy deleted successfully.',
             ], 200);
         } catch (Throwable $e) {
             return response()->json([

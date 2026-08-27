@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminLayout, AdminPageHeader } from "@/components/admin/AdminLayout";
 import { useEffect, useState } from "react";
-import { Upload, RotateCcw } from "lucide-react";
+import { Loader2, Upload, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
+import { getBackgrounds, resetBackground, saveBackground } from "@/services/backgroundService";
 import {
   DEFAULT_SECTION_BACKGROUNDS,
   SECTION_LABELS,
-  loadSectionBackgrounds,
-  saveSectionBackgrounds,
   resolveSectionBackground,
   type SectionBackgrounds,
   type SectionKey,
@@ -22,23 +22,49 @@ const SECTIONS = Object.keys(DEFAULT_SECTION_BACKGROUNDS) as SectionKey[];
 function BackgroundsAdmin() {
   const [overrides, setOverrides] = useState<SectionBackgrounds>({});
 
-  useEffect(() => setOverrides(loadSectionBackgrounds()), []);
+  const [savingKey, setSavingKey] = useState<SectionKey | null>(null);
 
-  const update = (next: SectionBackgrounds) => {
-    setOverrides(next);
-    saveSectionBackgrounds(next);
+  useEffect(() => {
+    void getBackgrounds()
+      .then((data) => setOverrides(data as SectionBackgrounds))
+      .catch((error) => toast.error(error instanceof Error ? error.message : "Failed to load backgrounds."));
+  }, []);
+
+  const onFile = async (key: SectionKey, file: File) => {
+    try {
+      setSavingKey(key);
+      setOverrides(await saveBackground(key, file) as SectionBackgrounds);
+      toast.success("Background image saved.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save background image.");
+    } finally {
+      setSavingKey(null);
+    }
   };
 
-  const onFile = (key: SectionKey, file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => update({ ...overrides, [key]: String(reader.result) });
-    reader.readAsDataURL(file);
+  const saveUrl = async (key: SectionKey, value: string) => {
+    if (!value.trim()) return;
+    try {
+      setSavingKey(key);
+      setOverrides(await saveBackground(key, null, value) as SectionBackgrounds);
+      toast.success("Background image saved.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save background image.");
+    } finally {
+      setSavingKey(null);
+    }
   };
 
-  const reset = (key: SectionKey) => {
-    const next = { ...overrides };
-    delete next[key];
-    update(next);
+  const reset = async (key: SectionKey) => {
+    try {
+      setSavingKey(key);
+      setOverrides(await resetBackground(key) as SectionBackgrounds);
+      toast.success("Background reset to default.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to reset background image.");
+    } finally {
+      setSavingKey(null);
+    }
   };
 
   return (
@@ -66,30 +92,30 @@ function BackgroundsAdmin() {
                 </div>
 
                 <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed px-3 py-2 text-xs font-medium text-muted-foreground hover:border-primary/40 hover:text-primary">
-                  <Upload className="h-3.5 w-3.5" /> Upload image
+                  {savingKey === key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} Upload image
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
+                    disabled={savingKey === key}
                     onChange={(e) => {
                       const f = e.target.files?.[0];
-                      if (f) onFile(key, f);
+                      if (f) void onFile(key, f);
+                      e.currentTarget.value = "";
                     }}
                   />
                 </label>
 
                 <input
-                  value={overrides[key]?.startsWith("data:") ? "" : overrides[key] ?? ""}
+                  defaultValue=""
                   placeholder="…or paste an image URL"
-                  onChange={(e) =>
-                    update({ ...overrides, [key]: e.target.value || undefined } as SectionBackgrounds)
-                  }
+                  onBlur={(e) => void saveUrl(key, e.target.value)}
                   className="h-9 w-full rounded-lg border bg-background px-3 text-xs outline-none ring-ring focus:ring-2"
                 />
 
                 <button
-                  onClick={() => reset(key)}
-                  disabled={!isCustom}
+                  onClick={() => void reset(key)}
+                  disabled={!isCustom || savingKey === key}
                   className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary disabled:opacity-40"
                 >
                   <RotateCcw className="h-3.5 w-3.5" /> Reset to default

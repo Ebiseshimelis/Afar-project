@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,5 +34,10 @@ class Vacancy extends Model
             User::class,
             'created_by'
         );
+    }
+
+    public function applications()
+    {
+        return $this->hasMany(JobApplication::class);
     }
 }

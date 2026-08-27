@@ -1,4 +1,9 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useLocation,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/portal/PortalLayout";
 import {
@@ -14,10 +19,13 @@ import {
 export const Route = createFileRoute("/_portal/vacancies")({
   head: () => ({
     meta: [
-      { title: "Vacancies â€” Afar UDCB" },
+      {
+        title: "Vacancies - Afar UDCB",
+      },
       {
         name: "description",
-        content: "Current employment opportunities at Afar UDCB.",
+        content:
+          "Current employment opportunities at Afar UDCB.",
       },
     ],
   }),
@@ -25,7 +33,9 @@ export const Route = createFileRoute("/_portal/vacancies")({
 });
 
 function formatDate(value: string | null) {
-  if (!value) return "Not specified";
+  if (!value) {
+    return "Not specified";
+  }
 
   const date = new Date(value);
 
@@ -41,12 +51,20 @@ function formatDate(value: string | null) {
 }
 
 function VacanciesPage() {
-  const navigate = useNavigate();
+  const location = useLocation();
+
   const [vacancies, setVacancies] = useState<VacancyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isVacancyDetail =
+    location.pathname !== "/vacancies";
+
   useEffect(() => {
+    if (isVacancyDetail) {
+      return;
+    }
+
     async function loadVacancies() {
       try {
         setLoading(true);
@@ -68,7 +86,11 @@ function VacanciesPage() {
     }
 
     loadVacancies();
-  }, []);
+  }, [isVacancyDetail]);
+
+  if (isVacancyDetail) {
+    return <Outlet />;
+  }
 
   return (
     <>
@@ -110,10 +132,12 @@ function VacanciesPage() {
             {vacancies.map((v) => {
               const title =
                 v.title?.en ||
+                v.title?.am ||
                 "Untitled vacancy";
 
               const content =
                 v.content?.en ||
+                v.content?.am ||
                 "No vacancy description has been provided.";
 
               return (
@@ -133,24 +157,28 @@ function VacanciesPage() {
                     <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
                       <span className="inline-flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        Published: {formatDate(v.published_at)}
+                        Published:{" "}
+                        {formatDate(v.published_at)}
                       </span>
 
                       <span className="inline-flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
-                        Closing: {formatDate(v.deadline)}
+                        Closing:{" "}
+                        {formatDate(v.deadline)}
                       </span>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => navigate({ to: "/vacancies/$vacancyId", params: { vacancyId: String(v.id) } })}
+                  <Link
+                    to="/vacancies/$vacancyId"
+                    params={{
+                      vacancyId: String(v.id),
+                    }}
                     className="absolute right-6 top-6 z-50 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
                   >
                     View Details
                     <ArrowRight className="h-4 w-4" />
-                  </button>
+                  </Link>
                 </article>
               );
             })}
@@ -160,15 +188,3 @@ function VacanciesPage() {
     </>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-

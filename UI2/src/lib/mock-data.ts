@@ -1,11 +1,4 @@
 // Mock data for the Afar Regional Government Portal
-export const portfolioImages: { url: string; caption: string }[] = [
-  { url: "/portfolio1.png", caption: "Urban development project" },
-  { url: "/portfolio2.png", caption: "Construction milestone" },
-  { url: "/portfolio3.png", caption: "City infrastructure" },
-  { url: "/portfolio4.png", caption: "Housing delivery" },
-];
-
 // FIX: Using images from Unsplash CDN
 export type NewsItem = {
   id: string;

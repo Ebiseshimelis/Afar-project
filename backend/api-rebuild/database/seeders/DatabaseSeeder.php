@@ -123,6 +123,10 @@ class DatabaseSeeder extends Seeder
         */
         // $this->call([
         //     MultimediaSeeder::class,]);
+
+        $this->call([
+            PortfolioSeeder::class,
+        ]);
         ;
     }
 }

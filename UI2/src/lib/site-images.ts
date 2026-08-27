@@ -3,14 +3,14 @@
  *
  * Backgrounds are no longer hardcoded inside components. Each page asks for its
  * background by section key, and this module resolves it in this order:
- *   1. a value provided by the backend / admin dashboard (see `loadSectionBackgrounds`)
+ *   1. a value provided by the Laravel backend
  *   2. the bundled default image (current design, used as placeholder)
  *
- * When the Laravel API is ready, replace the body of `loadSectionBackgrounds`
- * with a fetch to e.g. `GET /api/settings/backgrounds` — no component changes needed.
+ * Saved values are shared by every browser and persist independently of local storage.
  */
 import { useEffect, useState } from "react";
 import defaultBackground from "@/assets/background.png";
+import { getBackgrounds } from "@/services/backgroundService";
 
 export type SectionKey =
   | "default"
@@ -47,30 +47,6 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
 
 export type SectionBackgrounds = Partial<Record<SectionKey, string>>;
 
-const STORAGE_KEY = "afar-section-backgrounds";
-
-/** Reads admin-managed overrides. Swap for an API call when the backend is live. */
-export function loadSectionBackgrounds(): SectionBackgrounds {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as SectionBackgrounds) : {};
-  } catch {
-    return {};
-  }
-}
-
-/** Persists admin-managed overrides. Swap for an API call when the backend is live. */
-export function saveSectionBackgrounds(next: SectionBackgrounds) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    /* ignore quota errors */
-  }
-  window.dispatchEvent(new Event("afar-backgrounds-changed"));
-}
-
 export function resolveSectionBackground(
   key: SectionKey,
   overrides: SectionBackgrounds,
@@ -86,14 +62,11 @@ export function useSectionBackground(key: SectionKey = "default"): string {
   const [overrides, setOverrides] = useState<SectionBackgrounds>({});
 
   useEffect(() => {
-    const sync = () => setOverrides(loadSectionBackgrounds());
-    sync();
-    window.addEventListener("afar-backgrounds-changed", sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener("afar-backgrounds-changed", sync);
-      window.removeEventListener("storage", sync);
-    };
+    let active = true;
+    void getBackgrounds()
+      .then((backgrounds) => { if (active) setOverrides(backgrounds as SectionBackgrounds); })
+      .catch(() => { /* Retain bundled defaults when the API is unavailable. */ });
+    return () => { active = false; };
   }, []);
 
   return resolveSectionBackground(key, overrides);

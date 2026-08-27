@@ -18,6 +18,7 @@ export const PERMISSION_MODULES: PermissionModule[] = [
   { key: "tenders", label: "Tenders", group: "Content" },
   { key: "vacancies", label: "Vacancies", group: "Content" },
   { key: "publications", label: "Publications", group: "Content" },
+  { key: "portfolios", label: "Portfolio", group: "Content" },
   { key: "multimedia", label: "Multimedia", group: "Content" },
 
   // Directory

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\NewsController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\TenderController;
 use App\Http\Controllers\Api\VacancyController;
+use App\Http\Controllers\Api\JobApplicationController;
 use App\Http\Controllers\Api\PublicationController;
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\DirectorateController;
@@ -23,6 +24,8 @@ use App\Http\Controllers\Api\AdminAccountController;
 use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\SystemSettingController;
 use App\Http\Controllers\Api\StaffSetupController;
+use App\Http\Controllers\Api\PortfolioController;
+use App\Http\Controllers\Api\BackgroundController;
 
 require __DIR__ . '/auth.php';
 
@@ -181,6 +184,20 @@ Route::prefix('v1')->group(function () {
         [VacancyController::class, 'show']
     );
 
+    /*
+    |--------------------------------------------------------------------------
+    | Job Applications
+    |--------------------------------------------------------------------------
+    |
+    | Public users submit applications for published vacancies.
+    |
+    */
+
+    Route::post(
+        '/vacancies/{vacancy}/applications',
+        [JobApplicationController::class, 'store']
+    );
+
     Route::get(
         '/publications',
         [PublicationController::class, 'index']
@@ -235,6 +252,9 @@ Route::prefix('v1')->group(function () {
         '/categories',
         [CategoryController::class, 'index']
     );
+
+    Route::get('/portfolios', [PortfolioController::class, 'index']);
+    Route::get('/backgrounds', [BackgroundController::class, 'index']);
 
 
     /*
@@ -373,6 +393,36 @@ Route::prefix('v1')
 
     /*
     |--------------------------------------------------------------------------
+    | Job Applications
+    |--------------------------------------------------------------------------
+    |
+    | Admin / Super Admin application management.
+    |
+    */
+
+    Route::get(
+        '/job-applications',
+        [JobApplicationController::class, 'index']
+    )->middleware('permission:vacancies.view');
+
+    Route::get(
+        '/job-applications/{jobApplication}',
+        [JobApplicationController::class, 'show']
+    )->middleware('permission:vacancies.view');
+
+    Route::put(
+        '/job-applications/{jobApplication}',
+        [JobApplicationController::class, 'update']
+    )->middleware('permission:vacancies.update');
+
+    Route::delete(
+        '/job-applications/{jobApplication}',
+        [JobApplicationController::class, 'destroy']
+    )->middleware('permission:vacancies.delete');
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Publications
     |--------------------------------------------------------------------------
     */
@@ -413,6 +463,24 @@ Route::prefix('v1')
         '/multimedia/{multimedia}',
         [MultimediaController::class, 'destroy']
     )->middleware('permission:multimedia.delete');
+
+    Route::get('/portfolios/{portfolio}', [PortfolioController::class, 'show'])
+        ->middleware('permission:portfolios.view');
+
+    Route::post('/portfolios', [PortfolioController::class, 'store'])
+        ->middleware('permission:portfolios.create');
+
+    Route::match(['put', 'patch'], '/portfolios/{portfolio}', [PortfolioController::class, 'update'])
+        ->middleware('permission:portfolios.update');
+
+    Route::delete('/portfolios/{portfolio}', [PortfolioController::class, 'destroy'])
+        ->middleware('permission:portfolios.delete');
+
+    Route::post('/backgrounds/{section}', [BackgroundController::class, 'update'])
+        ->middleware('permission:backgrounds.update');
+
+    Route::delete('/backgrounds/{section}', [BackgroundController::class, 'destroy'])
+        ->middleware('permission:backgrounds.update');
 
 
     /*
@@ -682,4 +750,3 @@ Route::prefix('v1')
         [SystemSettingController::class, 'update']
     )->middleware('permission:settings.update');
 });
-

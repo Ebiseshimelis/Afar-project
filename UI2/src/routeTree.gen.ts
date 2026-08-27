@@ -27,12 +27,14 @@ import { Route as AdminDirectoryRouteImport } from './routes/admin.directory'
 import { Route as AdminEventsRouteImport } from './routes/admin.events'
 import { Route as AdminFeedbackRouteImport } from './routes/admin.feedback'
 import { Route as AdminForgotPasswordRouteImport } from './routes/admin.forgot-password'
+import { Route as AdminJobApplicationsRouteImport } from './routes/admin.job-applications'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminMessagesRouteImport } from './routes/admin.messages'
 import { Route as AdminMultimediaRouteImport } from './routes/admin.multimedia'
 import { Route as AdminNewsRouteImport } from './routes/admin.news'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminPermissionsRouteImport } from './routes/admin.permissions'
+import { Route as AdminPortfolioRouteImport } from './routes/admin.portfolio'
 import { Route as AdminProfileRouteImport } from './routes/admin.profile'
 import { Route as AdminPublicationsRouteImport } from './routes/admin.publications'
 import { Route as AdminRegisterRouteImport } from './routes/admin.register'
@@ -49,6 +51,7 @@ import { Route as PortalNewsIdRouteImport } from './routes/_portal.news.$id'
 import { Route as PortalTendersIndexRouteImport } from './routes/_portal.tenders.index'
 import { Route as PortalTendersIdRouteImport } from './routes/_portal.tenders.$id'
 import { Route as PortalVacanciesVacancyIdRouteImport } from './routes/_portal.vacancies.$vacancyId'
+import { Route as PortalVacanciesVacancyIdApplyRouteImport } from './routes/_portal.vacancies.$vacancyId.apply'
 
 const PortalRoute = PortalRouteImport.update({
   id: '/_portal',
@@ -139,6 +142,11 @@ const AdminForgotPasswordRoute = AdminForgotPasswordRouteImport.update({
   path: '/admin/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminJobApplicationsRoute = AdminJobApplicationsRouteImport.update({
+  id: '/admin/job-applications',
+  path: '/admin/job-applications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin/login',
   path: '/admin/login',
@@ -167,6 +175,11 @@ const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
 const AdminPermissionsRoute = AdminPermissionsRouteImport.update({
   id: '/admin/permissions',
   path: '/admin/permissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPortfolioRoute = AdminPortfolioRouteImport.update({
+  id: '/admin/portfolio',
+  path: '/admin/portfolio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminProfileRoute = AdminProfileRouteImport.update({
@@ -250,6 +263,12 @@ const PortalVacanciesVacancyIdRoute =
     path: '/$vacancyId',
     getParentRoute: () => PortalVacanciesRoute,
   } as any)
+const PortalVacanciesVacancyIdApplyRoute =
+  PortalVacanciesVacancyIdApplyRouteImport.update({
+    id: '/apply',
+    path: '/apply',
+    getParentRoute: () => PortalVacanciesVacancyIdRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PortalIndexRoute
@@ -268,12 +287,14 @@ export interface FileRoutesByFullPath {
   '/admin/events': typeof AdminEventsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/job-applications': typeof AdminJobApplicationsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/multimedia': typeof AdminMultimediaRoute
   '/admin/news': typeof AdminNewsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/portfolio': typeof AdminPortfolioRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/publications': typeof AdminPublicationsRoute
   '/admin/register': typeof AdminRegisterRoute
@@ -288,9 +309,10 @@ export interface FileRoutesByFullPath {
   '/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/news/$id': typeof PortalNewsIdRoute
   '/tenders/$id': typeof PortalTendersIdRoute
-  '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRoute
+  '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRouteWithChildren
   '/news/': typeof PortalNewsIndexRoute
   '/tenders/': typeof PortalTendersIndexRoute
+  '/vacancies/$vacancyId/apply': typeof PortalVacanciesVacancyIdApplyRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof PortalAboutRoute
@@ -308,12 +330,14 @@ export interface FileRoutesByTo {
   '/admin/events': typeof AdminEventsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/job-applications': typeof AdminJobApplicationsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/multimedia': typeof AdminMultimediaRoute
   '/admin/news': typeof AdminNewsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/portfolio': typeof AdminPortfolioRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/publications': typeof AdminPublicationsRoute
   '/admin/register': typeof AdminRegisterRoute
@@ -329,9 +353,10 @@ export interface FileRoutesByTo {
   '/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/news/$id': typeof PortalNewsIdRoute
   '/tenders/$id': typeof PortalTendersIdRoute
-  '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRoute
+  '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRouteWithChildren
   '/news': typeof PortalNewsIndexRoute
   '/tenders': typeof PortalTendersIndexRoute
+  '/vacancies/$vacancyId/apply': typeof PortalVacanciesVacancyIdApplyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -351,12 +376,14 @@ export interface FileRoutesById {
   '/admin/events': typeof AdminEventsRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/forgot-password': typeof AdminForgotPasswordRoute
+  '/admin/job-applications': typeof AdminJobApplicationsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/messages': typeof AdminMessagesRoute
   '/admin/multimedia': typeof AdminMultimediaRoute
   '/admin/news': typeof AdminNewsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/permissions': typeof AdminPermissionsRoute
+  '/admin/portfolio': typeof AdminPortfolioRoute
   '/admin/profile': typeof AdminProfileRoute
   '/admin/publications': typeof AdminPublicationsRoute
   '/admin/register': typeof AdminRegisterRoute
@@ -372,9 +399,10 @@ export interface FileRoutesById {
   '/_portal/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/_portal/news/$id': typeof PortalNewsIdRoute
   '/_portal/tenders/$id': typeof PortalTendersIdRoute
-  '/_portal/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRoute
+  '/_portal/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRouteWithChildren
   '/_portal/news/': typeof PortalNewsIndexRoute
   '/_portal/tenders/': typeof PortalTendersIndexRoute
+  '/_portal/vacancies/$vacancyId/apply': typeof PortalVacanciesVacancyIdApplyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -395,12 +423,14 @@ export interface FileRouteTypes {
     | '/admin/events'
     | '/admin/feedback'
     | '/admin/forgot-password'
+    | '/admin/job-applications'
     | '/admin/login'
     | '/admin/messages'
     | '/admin/multimedia'
     | '/admin/news'
     | '/admin/notifications'
     | '/admin/permissions'
+    | '/admin/portfolio'
     | '/admin/profile'
     | '/admin/publications'
     | '/admin/register'
@@ -418,6 +448,7 @@ export interface FileRouteTypes {
     | '/vacancies/$vacancyId'
     | '/news/'
     | '/tenders/'
+    | '/vacancies/$vacancyId/apply'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
@@ -435,12 +466,14 @@ export interface FileRouteTypes {
     | '/admin/events'
     | '/admin/feedback'
     | '/admin/forgot-password'
+    | '/admin/job-applications'
     | '/admin/login'
     | '/admin/messages'
     | '/admin/multimedia'
     | '/admin/news'
     | '/admin/notifications'
     | '/admin/permissions'
+    | '/admin/portfolio'
     | '/admin/profile'
     | '/admin/publications'
     | '/admin/register'
@@ -459,6 +492,7 @@ export interface FileRouteTypes {
     | '/vacancies/$vacancyId'
     | '/news'
     | '/tenders'
+    | '/vacancies/$vacancyId/apply'
   id:
     | '__root__'
     | '/_portal'
@@ -477,12 +511,14 @@ export interface FileRouteTypes {
     | '/admin/events'
     | '/admin/feedback'
     | '/admin/forgot-password'
+    | '/admin/job-applications'
     | '/admin/login'
     | '/admin/messages'
     | '/admin/multimedia'
     | '/admin/news'
     | '/admin/notifications'
     | '/admin/permissions'
+    | '/admin/portfolio'
     | '/admin/profile'
     | '/admin/publications'
     | '/admin/register'
@@ -501,6 +537,7 @@ export interface FileRouteTypes {
     | '/_portal/vacancies/$vacancyId'
     | '/_portal/news/'
     | '/_portal/tenders/'
+    | '/_portal/vacancies/$vacancyId/apply'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -513,12 +550,14 @@ export interface RootRouteChildren {
   AdminEventsRoute: typeof AdminEventsRoute
   AdminFeedbackRoute: typeof AdminFeedbackRoute
   AdminForgotPasswordRoute: typeof AdminForgotPasswordRoute
+  AdminJobApplicationsRoute: typeof AdminJobApplicationsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMessagesRoute: typeof AdminMessagesRoute
   AdminMultimediaRoute: typeof AdminMultimediaRoute
   AdminNewsRoute: typeof AdminNewsRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminPermissionsRoute: typeof AdminPermissionsRoute
+  AdminPortfolioRoute: typeof AdminPortfolioRoute
   AdminProfileRoute: typeof AdminProfileRoute
   AdminPublicationsRoute: typeof AdminPublicationsRoute
   AdminRegisterRoute: typeof AdminRegisterRoute
@@ -659,6 +698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/job-applications': {
+      id: '/admin/job-applications'
+      path: '/admin/job-applications'
+      fullPath: '/admin/job-applications'
+      preLoaderRoute: typeof AdminJobApplicationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/login': {
       id: '/admin/login'
       path: '/admin/login'
@@ -699,6 +745,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/permissions'
       fullPath: '/admin/permissions'
       preLoaderRoute: typeof AdminPermissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/portfolio': {
+      id: '/admin/portfolio'
+      path: '/admin/portfolio'
+      fullPath: '/admin/portfolio'
+      preLoaderRoute: typeof AdminPortfolioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/profile': {
@@ -813,15 +866,36 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalVacanciesVacancyIdRouteImport
       parentRoute: typeof PortalVacanciesRoute
     }
+    '/_portal/vacancies/$vacancyId/apply': {
+      id: '/_portal/vacancies/$vacancyId/apply'
+      path: '/apply'
+      fullPath: '/vacancies/$vacancyId/apply'
+      preLoaderRoute: typeof PortalVacanciesVacancyIdApplyRouteImport
+      parentRoute: typeof PortalVacanciesVacancyIdRoute
+    }
   }
 }
 
+interface PortalVacanciesVacancyIdRouteChildren {
+  PortalVacanciesVacancyIdApplyRoute: typeof PortalVacanciesVacancyIdApplyRoute
+}
+
+const PortalVacanciesVacancyIdRouteChildren: PortalVacanciesVacancyIdRouteChildren =
+  {
+    PortalVacanciesVacancyIdApplyRoute: PortalVacanciesVacancyIdApplyRoute,
+  }
+
+const PortalVacanciesVacancyIdRouteWithChildren =
+  PortalVacanciesVacancyIdRoute._addFileChildren(
+    PortalVacanciesVacancyIdRouteChildren,
+  )
+
 interface PortalVacanciesRouteChildren {
-  PortalVacanciesVacancyIdRoute: typeof PortalVacanciesVacancyIdRoute
+  PortalVacanciesVacancyIdRoute: typeof PortalVacanciesVacancyIdRouteWithChildren
 }
 
 const PortalVacanciesRouteChildren: PortalVacanciesRouteChildren = {
-  PortalVacanciesVacancyIdRoute: PortalVacanciesVacancyIdRoute,
+  PortalVacanciesVacancyIdRoute: PortalVacanciesVacancyIdRouteWithChildren,
 }
 
 const PortalVacanciesRouteWithChildren = PortalVacanciesRoute._addFileChildren(
@@ -875,12 +949,14 @@ const rootRouteChildren: RootRouteChildren = {
   AdminEventsRoute: AdminEventsRoute,
   AdminFeedbackRoute: AdminFeedbackRoute,
   AdminForgotPasswordRoute: AdminForgotPasswordRoute,
+  AdminJobApplicationsRoute: AdminJobApplicationsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMessagesRoute: AdminMessagesRoute,
   AdminMultimediaRoute: AdminMultimediaRoute,
   AdminNewsRoute: AdminNewsRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminPermissionsRoute: AdminPermissionsRoute,
+  AdminPortfolioRoute: AdminPortfolioRoute,
   AdminProfileRoute: AdminProfileRoute,
   AdminPublicationsRoute: AdminPublicationsRoute,
   AdminRegisterRoute: AdminRegisterRoute,
