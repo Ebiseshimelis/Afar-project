@@ -14,6 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        ->call([
+            RoleSeeder::class,
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | DIRECTORATES
@@ -130,3 +134,5 @@ class DatabaseSeeder extends Seeder
         ;
     }
 }
+
+

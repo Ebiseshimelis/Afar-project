@@ -1,4 +1,4 @@
-import type { StaffRole } from "@/lib/permissions";
+﻿import type { StaffRole } from "@/lib/permissions";
 import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 
 /**
@@ -49,16 +49,16 @@ export function getAdminToken(): string | null {
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(TOKEN_KEY);
+  return window.sessionStorage.getItem(TOKEN_KEY);
 }
 
 function setToken(token: string | null) {
   if (typeof window === "undefined") return;
 
   if (token) {
-    window.localStorage.setItem(TOKEN_KEY, token);
+    window.sessionStorage.setItem(TOKEN_KEY, token);
   } else {
-    window.localStorage.removeItem(TOKEN_KEY);
+    window.sessionStorage.removeItem(TOKEN_KEY);
   }
 }
 
@@ -417,4 +417,5 @@ export const DEMO_MODULE_HINT =
   ASSIGNABLE_MODULES.map(
     (m) => m.key,
   );
+
 

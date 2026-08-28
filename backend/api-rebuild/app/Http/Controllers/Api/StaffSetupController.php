@@ -132,11 +132,13 @@ class StaffSetupController extends Controller
                 'role' => $user->role,
                 'is_active' => (bool) $user->is_active,
                 'account_status' => $user->account_status,
-                'permissions' => $user->permissions ?? [],
+                'permissions' => $user->assignedRole ? $user->assignedRole->permissionKeys() : [],
             ],
         ], 201);
     }
 }
+
+
 
 
 

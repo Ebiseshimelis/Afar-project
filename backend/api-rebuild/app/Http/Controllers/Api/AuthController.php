@@ -178,7 +178,10 @@ class AuthController extends Controller
              */
             'permissions' => $user->isSuperAdmin()
                 ? ['*']
-                : ($user->permissions ?? []),
+                : ($user->assignedRole ? $user->assignedRole->permissionKeys() : []),
         ];
     }
 }
+
+
+

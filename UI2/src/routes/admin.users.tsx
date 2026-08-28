@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   AdminLayout,
@@ -11,15 +11,14 @@ import {
   type AdminUser,
 } from "@/services/adminUserService";
 import { useAuth } from "@/lib/auth";
+import { listRoles, assignAdminRole, type AdminRole } from "@/services/adminRoleService";
 import {
   Loader2,
   ShieldCheck,
   UserCheck,
   UserX,
   Trash2,
-  KeyRound,
   Users,
-  ChevronRight,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
@@ -37,6 +36,7 @@ function UsersRolesAdmin() {
   const { isSuperAdmin } = useAuth();
 
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,7 +44,13 @@ function UsersRolesAdmin() {
     try {
       setError("");
       setLoading(true);
-      setUsers(await listUsers());
+      const [loadedUsers, loadedRoles] = await Promise.all([
+        listUsers(),
+        listRoles(),
+      ]);
+
+      setUsers(loadedUsers);
+      setRoles(loadedRoles);
     } catch (e) {
       setError(
         e instanceof Error ? e.message : "Unable to load users.",
@@ -58,6 +64,23 @@ function UsersRolesAdmin() {
     void loadUsers();
   }, []);
 
+  async function changeRole(user: AdminUser, roleId: string) {
+    if (!isSuperAdmin || user.role === "super_admin") return;
+
+    try {
+      setError("");
+
+      await assignAdminRole(user.id, roleId);
+
+      await loadUsers();
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Unable to assign role.",
+      );
+    }
+  }
   async function toggleStatus(user: AdminUser) {
     if (!isSuperAdmin) return;
 
@@ -142,7 +165,6 @@ function UsersRolesAdmin() {
                   <th className="px-5 py-3">Staff Member</th>
                   <th className="px-5 py-3">Role</th>
                   <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Permissions</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
               </thead>
@@ -168,14 +190,36 @@ function UsersRolesAdmin() {
                       </td>
 
                       <td className="px-5 py-4">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">
-                          <ShieldCheck className="h-3.5 w-3.5" />
+  {isSuperAdminUser ? (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">
+      <ShieldCheck className="h-3.5 w-3.5" />
+      Super Admin
+    </span>
+  ) : isSuperAdmin ? (
+    <select
+      value={user.role_id ?? ""}
+      onChange={(event) =>
+        void changeRole(user, event.target.value)
+      }
+      className="h-9 min-w-[220px] rounded-lg border bg-background px-3 text-sm outline-none focus:border-primary"
+    >
+      <option value="">Unassigned</option>
 
-                          {isSuperAdminUser
-                            ? "Super Admin"
-                            : "Admin"}
-                        </span>
-                      </td>
+      {roles
+        .filter((role) => role.id !== "super_admin")
+        .map((role) => (
+          <option key={role.id} value={role.id}>
+            {role.name}
+          </option>
+        ))}
+    </select>
+  ) : (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium">
+      <ShieldCheck className="h-3.5 w-3.5" />
+      {user.role_name ?? "Unassigned"}
+    </span>
+  )}
+</td>
 
                       <td className="px-5 py-4">
                         <span
@@ -191,31 +235,8 @@ function UsersRolesAdmin() {
                         </span>
                       </td>
 
-                      <td className="px-5 py-4">
-                        {isSuperAdminUser ? (
-                          <span className="font-medium">
-                            All permissions
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">
-                            {user.permissions.length} assigned
-                          </span>
-                        )}
-                      </td>
-
                       <td className="px-5 py-4 text-right">
                         <div className="inline-flex items-center gap-1">
-                          {!isSuperAdminUser && (
-                            <Link
-                              to="/admin/permissions"
-                              search={{ user: user.id }}
-                              className="inline-flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium hover:bg-secondary"
-                              title="Manage permissions"
-                            >
-                              <KeyRound className="h-3.5 w-3.5" />
-                              Permissions
-                            </Link>
-                          )}
 
                           {isSuperAdmin && !isSuperAdminUser && (
                             <>
@@ -248,15 +269,6 @@ function UsersRolesAdmin() {
                               </button>
                             </>
                           )}
-
-                          <Link
-                            to="/admin/permissions"
-                            search={{ user: user.id }}
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                            title="Open permissions"
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Link>
                         </div>
                       </td>
                     </tr>
@@ -270,3 +282,12 @@ function UsersRolesAdmin() {
     </AdminLayout>
   );
 }
+
+
+
+
+
+
+
+
+

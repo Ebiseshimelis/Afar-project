@@ -25,6 +25,7 @@ import {
   User,
   HelpCircle,
   ShieldAlert,
+  ShieldCheck,
   Check,
   Loader2,
   Inbox,
@@ -50,7 +51,6 @@ type AdminPath =
   | "/admin/city-admins"
   | "/admin/directory"
   | "/admin/users"
-  | "/admin/permissions"
   | "/admin/messages"
   | "/admin/notifications"
   | "/admin/multimedia"
@@ -123,30 +123,35 @@ const NAV_GROUPS: NavGroup[] = [
         label: "News",
         icon: Newspaper,
         permission: "news.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/events",
         label: "Events",
         icon: Calendar,
         permission: "events.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/tenders",
         label: "Tenders",
         icon: FileText,
         permission: "tenders.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/vacancies",
         label: "Vacancies",
         icon: Briefcase,
         permission: "vacancies.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/job-applications",
         label: "Job Applications",
         icon: FileText,
         permission: "job_applications.view",
+        alwaysVisible: true,
         superAdminOnly: true,
       },
       {
@@ -154,12 +159,14 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Publications",
         icon: BookOpen,
         permission: "publications.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/city-admins",
         label: "City Administrations",
         icon: Building2,
         permission: "city_admins.view",
+        alwaysVisible: true,
       },
 
       /*
@@ -183,16 +190,16 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       {
         to: "/admin/users",
-        label: "Users & Roles",
+        label: "Users",
         icon: Users,
         permission: "users.view",
         superAdminOnly: true,
       },
-      {
-        to: "/admin/permissions",
-        label: "Permissions",
-        icon: KeyRound,
-        permission: "permissions.view",
+            {
+        to: "/admin/roles",
+        label: "Roles",
+        icon: ShieldCheck,
+        permission: "roles.view",
         superAdminOnly: true,
       },
     ],
@@ -206,12 +213,14 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Messages",
         icon: MessageSquare,
         permission: "messages.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/notifications",
         label: "Notifications",
         icon: BellRing,
         permission: "notifications.view",
+        alwaysVisible: true,
       },
     ],
   },
@@ -224,6 +233,7 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Multimedia Library",
         icon: ImageIcon,
         permission: "multimedia.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/settings",
@@ -242,12 +252,14 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Background Image",
         icon: ImageIcon,
         permission: "backgrounds.view",
+        alwaysVisible: true,
       },
       {
         to: "/admin/portfolio",
         label: "Portfolio",
         icon: ImageIcon,
         permission: "portfolios.view",
+        alwaysVisible: true,
       },
     ],
   },
@@ -545,7 +557,7 @@ export function AdminLayout({
                 </span>
 
                 <kbd className="ml-auto hidden rounded border bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-foreground/60 sm:inline-block">
-                  ⌘K
+                  ?K
                 </kbd>
               </button>
 
@@ -667,7 +679,7 @@ function SidebarNav({
           to="/"
           className="mt-1 block rounded-lg px-3 py-2 text-xs text-sidebar-foreground/60 hover:text-gold"
         >
-          ← Back to public portal
+          ? Back to public portal
         </Link>
       </div>
     </aside>
@@ -1553,4 +1565,15 @@ export function EmptyState({
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
 

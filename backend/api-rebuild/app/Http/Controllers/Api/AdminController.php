@@ -3,43 +3,77 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
+    /**
+     * Return all database roles.
+     *
+     * Super Admin itself is kept as a protected system role.
+     * All other roles come from the roles table.
+     */
     public function roles(Request $request): JsonResponse
     {
         $this->ensureSuperAdmin($request);
 
+        $roles = Role::withCount('rolePermissions')
+            ->with('rolePermissions')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Role $role) {
+                return [
+                    'id' => (string) $role->id,
+                    'name' => $role->name,
+                    'description' => $role->description,
+                    'users' => User::where('role_id', $role->id)
+                        ->where('role', 'admin')
+                        ->count(),
+                    'permissions' => $role->permissionKeys(),
+                    'permissions_count' => $role->rolePermissions_count,
+                    'editable' => true,
+                    'deletable' => true,
+                ];
+            })
+            ->values();
+
+        /*
+         * Super Admin is a protected system role and does not need
+         * to exist in the roles table.
+         */
+        $superAdmin = [
+            'id' => 'super_admin',
+            'name' => 'Super Admin',
+            'description' => 'Full access to all administrative functions.',
+            'users' => User::where('role', 'super_admin')->count(),
+            'permissions' => ['*'],
+            'permissions_count' => null,
+            'editable' => false,
+            'deletable' => false,
+        ];
+
         return response()->json([
-            'data' => [
-                [
-                    'id' => 'super_admin',
-                    'name' => 'Super Admin',
-                    'description' => 'Full access to all administrative functions.',
-                    'users' => User::where('role', 'super_admin')->count(),
-                    'permissions' => ['*'],
-                    'editable' => false,
-                ],
-                [
-                    'id' => 'admin',
-                    'name' => 'Admin',
-                    'description' => 'Normal administrative account with individually assigned permissions.',
-                    'users' => User::where('role', 'admin')->count(),
-                    'permissions' => [],
-                    'editable' => false,
-                ],
-            ],
+            'data' => collect([$superAdmin])
+                ->merge($roles)
+                ->values(),
         ]);
     }
 
+    /**
+     * Return all staff users together with their assigned database role.
+     */
     public function users(Request $request): JsonResponse
     {
         $this->ensureSuperAdmin($request);
 
         $users = User::query()
+            ->with([
+                'assignedRole.rolePermissions',
+            ])
             ->whereIn('role', ['admin', 'super_admin'])
             ->orderBy('name')
             ->get()
@@ -51,61 +85,204 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Create a new database role.
+     *
+     * Super Admin only.
+     */
+    public function createRole(Request $request): JsonResponse
+    {
+        $this->ensureSuperAdmin($request);
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:roles,name',
+            ],
+            'description' => [
+                'nullable',
+                'string',
+            ],
+            'permissions' => [
+                'sometimes',
+                'array',
+            ],
+            'permissions.*' => [
+                'string',
+            ],
+        ]);
+
+        $role = Role::create([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        foreach ($validated['permissions'] ?? [] as $permission) {
+            $role->rolePermissions()->create([
+                'permission' => $permission,
+            ]);
+        }
+
+        $role->load('rolePermissions');
+
+        return response()->json([
+            'message' => 'Role created successfully.',
+            'data' => [
+                'id' => (string) $role->id,
+                'name' => $role->name,
+                'description' => $role->description,
+                'users' => 0,
+                'permissions' => $role->permissionKeys(),
+                'permissions_count' => count($role->permissionKeys()),
+                'editable' => true,
+                'deletable' => true,
+            ],
+        ], 201);
+    }
+    /**
+     * Update an existing database role and replace its permissions.
+     *
+     * Super Admin only.
+     */
+    public function updateRole(Request $request, Role $role): JsonResponse
+    {
+        $this->ensureSuperAdmin($request);
+
+        $validated = $request->validate([
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('roles', 'name')->ignore($role->id),
+            ],
+            'description' => [
+                'nullable',
+                'string',
+            ],
+            'permissions' => [
+                'sometimes',
+                'array',
+            ],
+            'permissions.*' => [
+                'string',
+            ],
+        ]);
+
+        $role->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        if (array_key_exists('permissions', $validated)) {
+            $role->rolePermissions()->delete();
+
+            foreach ($validated['permissions'] as $permission) {
+                $role->rolePermissions()->create([
+                    'permission' => $permission,
+                ]);
+            }
+        }
+
+        $role->load('rolePermissions');
+
+        return response()->json([
+            'message' => 'Role updated successfully.',
+            'data' => [
+                'id' => (string) $role->id,
+                'name' => $role->name,
+                'description' => $role->description,
+                'users' => User::where('role_id', $role->id)
+                    ->where('role', 'admin')
+                    ->count(),
+                'permissions' => $role->permissionKeys(),
+                'permissions_count' => count($role->permissionKeys()),
+                'editable' => true,
+                'deletable' => true,
+            ],
+        ]);
+    }
+
+    /**
+     * Delete a database role.
+     *
+     * Assigned users lose the role and therefore have no permissions.
+     *
+     * Super Admin only.
+     */
+    public function deleteRole(Request $request, Role $role): JsonResponse
+    {
+        $this->ensureSuperAdmin($request);
+
+        $role->delete();
+
+        return response()->json([
+            'message' => 'Role deleted successfully. Assigned users now have no role and no permissions.',
+        ]);
+    }
+    /**
+     * Assign a database role to an Admin.
+     */
     public function assignRole(Request $request, User $user): JsonResponse
     {
         $this->ensureSuperAdmin($request);
 
         $validated = $request->validate([
-            'role' => ['required', 'in:admin,super_admin'],
+            'role_id' => [
+                'required',
+                'integer',
+                Rule::exists('roles', 'id'),
+            ],
         ]);
 
         $actor = $request->user();
 
         /*
-         * Super Admin roles are permanently protected.
-         *
-         * A Super Admin can NEVER be downgraded to Admin,
-         * even when multiple Super Admin accounts exist.
+         * Super Admin accounts are permanently protected.
          */
-        if (
-            $user->role === 'super_admin' &&
-            $validated['role'] !== 'super_admin'
-        ) {
+        if ($user->role === 'super_admin') {
             return response()->json([
-                'message' => 'A Super Admin role cannot be removed or downgraded.',
+                'message' => 'A Super Admin role cannot be changed.',
             ], 422);
         }
 
         /*
-         * Nobody can remove their own Super Admin role.
+         * Nobody can modify their own protected account through
+         * the normal role-assignment operation.
          */
-        if (
-            $user->id === $actor->id &&
-            $validated['role'] !== 'super_admin'
-        ) {
+        if ($user->id === $actor->id) {
             return response()->json([
-                'message' => 'You cannot remove your own Super Admin role.',
+                'message' => 'You cannot change your own role.',
             ], 422);
         }
 
-        $user->role = $validated['role'];
+        $role = Role::with('rolePermissions')->findOrFail(
+            $validated['role_id']
+        );
 
-        if ($validated['role'] === 'super_admin') {
-            $user->permissions = null;
-            $user->account_status = 'approved';
-            $user->is_active = true;
-        } elseif ($user->permissions === null) {
-            $user->permissions = [];
-        }
+        $user->role = 'admin';
+        $user->role_id = $role->id;
+
+        /*
+         * Keep the legacy permissions column empty for role-based
+         * Admin accounts. Authorization now comes from role_id.
+         */
 
         $user->save();
 
+        $user->load('assignedRole.rolePermissions');
+
         return response()->json([
-            'message' => 'Role updated successfully.',
-            'data' => $this->userPayload($user->fresh()),
+            'message' => 'Role assigned successfully.',
+            'data' => $this->userPayload($user),
         ]);
     }
 
+    /**
+     * Approve, reject, enable, disable, or return an Admin account
+     * to pending status.
+     */
     public function status(Request $request, User $user): JsonResponse
     {
         $this->ensureSuperAdmin($request);
@@ -121,12 +298,6 @@ class AdminController extends Controller
 
         /*
          * Super Admin accounts are permanently protected.
-         *
-         * They cannot be:
-         * - disabled
-         * - rejected
-         * - put into pending status
-         * - modified through the normal staff status endpoint
          */
         if ($user->role === 'super_admin') {
             if (
@@ -148,6 +319,9 @@ class AdminController extends Controller
             }
         }
 
+        /*
+         * Nobody can disable their own account.
+         */
         if (
             $user->id === $request->user()->id &&
             array_key_exists('is_active', $validated) &&
@@ -158,16 +332,9 @@ class AdminController extends Controller
             ], 422);
         }
 
-        if (
-            $user->role === 'super_admin' &&
-            isset($validated['account_status']) &&
-            $validated['account_status'] !== 'approved'
-        ) {
-            return response()->json([
-                'message' => 'A Super Admin account must remain approved.',
-            ], 422);
-        }
-
+        /*
+         * Approved.
+         */
         if (
             isset($validated['account_status']) &&
             $validated['account_status'] === 'approved'
@@ -176,6 +343,9 @@ class AdminController extends Controller
             $user->is_active = true;
         }
 
+        /*
+         * Rejected.
+         */
         if (
             isset($validated['account_status']) &&
             $validated['account_status'] === 'rejected'
@@ -185,6 +355,9 @@ class AdminController extends Controller
             $user->tokens()->delete();
         }
 
+        /*
+         * Pending.
+         */
         if (
             isset($validated['account_status']) &&
             $validated['account_status'] === 'pending'
@@ -194,24 +367,25 @@ class AdminController extends Controller
             $user->tokens()->delete();
         }
 
+        /*
+         * Explicit active/disabled state.
+         */
         if (array_key_exists('is_active', $validated)) {
-            $user->is_active = $validated['is_active'];
-
-            if (!$user->is_active) {
-                $user->tokens()->delete();
-            }
-
             if (
                 $user->role === 'admin' &&
-                $user->is_active &&
+                $validated['is_active'] &&
                 $user->account_status !== 'approved'
             ) {
-                $user->is_active = false;
-
                 return response()->json([
                     'message' => 'The Admin must be approved before the account can be enabled.',
                     'data' => $this->userPayload($user->fresh()),
                 ], 422);
+            }
+
+            $user->is_active = $validated['is_active'];
+
+            if (!$user->is_active) {
+                $user->tokens()->delete();
             }
         }
 
@@ -232,15 +406,15 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Delete a normal Admin account.
+     */
     public function destroy(Request $request, User $user): JsonResponse
     {
         $this->ensureSuperAdmin($request);
 
         /*
-         * Super Admin accounts can NEVER be deleted.
-         *
-         * This applies even when there is more than one
-         * Super Admin account.
+         * Super Admin accounts can never be deleted.
          */
         if ($user->role === 'super_admin') {
             return response()->json([
@@ -257,9 +431,6 @@ class AdminController extends Controller
             ], 422);
         }
 
-        /*
-         * Normal Admin accounts may be deleted by a Super Admin.
-         */
         $user->tokens()->delete();
         $user->delete();
 
@@ -268,6 +439,9 @@ class AdminController extends Controller
         ]);
     }
 
+    /**
+     * Only Super Admins may manage Users & Roles.
+     */
     private function ensureSuperAdmin(Request $request): void
     {
         abort_unless(
@@ -277,22 +451,50 @@ class AdminController extends Controller
         );
     }
 
+    /**
+     * Consistent user response used by the Users & Roles page.
+     */
     private function userPayload(User $user): array
     {
+        $role = $user->assignedRole;
+
         return [
             'id' => (string) $user->id,
             'name' => $user->name,
             'email' => $user->email,
+
+            /*
+             * Keep role for backward compatibility with the existing UI.
+             */
             'role' => $user->role,
+
+            /*
+             * New database-role fields.
+             */
+            'role_id' => $role?->id ? (string) $role->id : null,
+            'role_name' => $user->isSuperAdmin()
+                ? 'Super Admin'
+                : $role?->name,
+
             'is_active' => (bool) $user->is_active,
             'account_status' => $user->account_status,
+
+            /*
+             * Super Admin has unrestricted permissions.
+             * Normal Admin inherits permissions from assignedRole.
+             */
             'permissions' => $user->isSuperAdmin()
                 ? ['*']
-                : ($user->permissions ?? []),
+                : ($role
+                    ? $role->permissionKeys()
+                    : []),
+
             'last_login' => null,
         ];
     }
 }
+
+
 
 
 

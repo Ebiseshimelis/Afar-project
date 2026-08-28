@@ -21,7 +21,6 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FeedbackController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\AdminAccountController;
-use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\SystemSettingController;
 use App\Http\Controllers\Api\StaffSetupController;
 use App\Http\Controllers\Api\PortfolioController;
@@ -683,10 +682,6 @@ Route::prefix('v1')
         [AdminAccountController::class, 'update']
     )->middleware('permission:admin_accounts.update');
 
-    Route::put(
-        '/admin/accounts/{user}/permissions',
-        [AdminAccountController::class, 'permissions']
-    )->middleware('permission:admin_accounts.update');
 
     Route::delete(
         '/admin/accounts/{user}',
@@ -708,14 +703,24 @@ Route::prefix('v1')
         [AdminController::class, 'users']
     );
 
-    Route::get(
-        '/admin/permissions',
-        [PermissionController::class, 'index']
-    );
 
     Route::get(
         '/admin/roles',
         [AdminController::class, 'roles']
+    );
+
+    Route::post(
+        '/admin/roles',
+        [AdminController::class, 'createRole']
+    );
+    Route::put(
+        '/admin/roles/{role}',
+        [AdminController::class, 'updateRole']
+    );
+
+    Route::delete(
+        '/admin/roles/{role}',
+        [AdminController::class, 'deleteRole']
     );
 
     Route::put(
@@ -750,3 +755,7 @@ Route::prefix('v1')
         [SystemSettingController::class, 'update']
     )->middleware('permission:settings.update');
 });
+
+
+
+

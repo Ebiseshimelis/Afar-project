@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -15,7 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
     'email',
     'password',
     'role',
-    'permissions',
+    'role_id',
     'is_active',
     'account_status',
 ])]
@@ -30,7 +31,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'permissions',
+        'role_id',
         'is_active',
         'account_status',
     ];
@@ -46,8 +47,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
-            'permissions' => 'array',
         ];
+    }
+
+    /**
+     * The role assigned to this user.
+     */
+    public function assignedRole(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id');
     }
 
     /**
@@ -131,9 +139,6 @@ class User extends Authenticatable
     {
         /*
          * Super Admins have unrestricted permissions.
-         *
-         * Their permissions column does NOT need to contain
-         * every permission.
          */
         if ($this->isSuperAdmin()) {
             return true;
@@ -147,13 +152,23 @@ class User extends Authenticatable
         }
 
         /*
-         * Permission is granted only when explicitly assigned.
+         * A normal admin inherits permissions from the
+         * role assigned through role_id.
          */
-        return in_array(
-            $permission,
-            $this->permissions ?? [],
-            true
-        );
+        if ($this->assignedRole) {
+            return in_array(
+                $permission,
+                $this->assignedRole->permissionKeys(),
+                true
+            );
+        }
+
+        /*
+         * Normal Admins must have a role.
+         * An Admin without a role has no permissions,
+         * even if old direct permissions exist on the user.
+         */
+        return false;
     }
 
     /**
@@ -197,3 +212,6 @@ class User extends Authenticatable
         return true;
     }
 }
+
+
+

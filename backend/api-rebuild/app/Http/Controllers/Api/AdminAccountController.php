@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ class AdminAccountController extends Controller
     public function index(): JsonResponse
     {
         $admins = User::query()
+            ->with('assignedRole.rolePermissions')
             ->where('role', 'admin')
             ->orderBy('name')
             ->get()
@@ -33,36 +35,79 @@ class AdminAccountController extends Controller
     /**
      * Create a normal Admin account.
      *
-     * A client can never create a super_admin through this endpoint.
+     * A client can never create a Super Admin through this endpoint.
      */
     public function store(Request $request): JsonResponse
     {
-        $allowedPermissions = $this->assignablePermissionKeys();
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'string', 'min:8'],
-            'is_active' => ['sometimes', 'boolean'],
+
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                'unique:users,email',
+            ],
+
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+            ],
+
+            'role_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('roles', 'id'),
+            ],
+
+            'is_active' => [
+                'sometimes',
+                'boolean',
+            ],
+
             'account_status' => [
                 'sometimes',
-                Rule::in(['pending', 'approved', 'rejected']),
+                Rule::in([
+                    'pending',
+                    'approved',
+                    'rejected',
+                ]),
             ],
-            'permissions' => ['sometimes', 'array'],
-            'permissions.*' => ['string', Rule::in($allowedPermissions)],
         ]);
 
+        $role = null;
+
+        if (
+            array_key_exists('role_id', $validated) &&
+            $validated['role_id'] !== null
+        ) {
+            $role = Role::findOrFail($validated['role_id']);
+        }
+
+        /*
+         * If no role is supplied, the account can remain unassigned.
+         * It will not receive role-based permissions until a role
+         * is assigned by the Super Admin.
+         */
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => 'admin',
-            'is_active' => $validated['is_active'] ?? true,
-            'account_status' => $validated['account_status'] ?? 'approved',
-            'permissions' => $this->normalizeAdminPermissions(
-                $validated['permissions'] ?? []
-            ),
+            'role_id' => $role?->id,
+            'is_active' => $validated['is_active'] ?? false,
+            'account_status' => $validated['account_status'] ?? 'pending',
+
+            /*
+             * Role-based permissions are now the source of truth.
+             * Keep the legacy column empty.
+             */
+            'permissions' => [],
         ]);
+
+        $user->load('assignedRole.rolePermissions');
 
         return response()->json([
             'message' => 'Admin account created successfully.',
@@ -75,14 +120,20 @@ class AdminAccountController extends Controller
      *
      * Super Admin only.
      */
-    public function update(Request $request, User $user): JsonResponse
-    {
+    public function update(
+        Request $request,
+        User $user
+    ): JsonResponse {
         $this->ensureNormalAdmin($user);
 
-        $allowedPermissions = $this->assignablePermissionKeys();
-
         $validated = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+            ],
+
             'email' => [
                 'sometimes',
                 'required',
@@ -90,14 +141,34 @@ class AdminAccountController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
-            'password' => ['sometimes', 'nullable', 'string', 'min:8'],
-            'is_active' => ['sometimes', 'boolean'],
+
+            'password' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:8',
+            ],
+
+            'role_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('roles', 'id'),
+            ],
+
+            'is_active' => [
+                'sometimes',
+                'boolean',
+            ],
+
             'account_status' => [
                 'sometimes',
-                Rule::in(['pending', 'approved', 'rejected']),
+                Rule::in([
+                    'pending',
+                    'approved',
+                    'rejected',
+                ]),
             ],
-            'permissions' => ['sometimes', 'array'],
-            'permissions.*' => ['string', Rule::in($allowedPermissions)],
         ]);
 
         if (array_key_exists('name', $validated)) {
@@ -113,58 +184,64 @@ class AdminAccountController extends Controller
             $validated['password'] !== null &&
             $validated['password'] !== ''
         ) {
-            $user->password = Hash::make($validated['password']);
+            $user->password = Hash::make(
+                $validated['password']
+            );
+        }
+
+        if (array_key_exists('role_id', $validated)) {
+            $user->role_id = $validated['role_id'];
         }
 
         if (array_key_exists('is_active', $validated)) {
             $user->is_active = $validated['is_active'];
+
+            /*
+             * Revoke tokens when an account is disabled.
+             */
+            if (!$validated['is_active']) {
+                $user->tokens()->delete();
+            }
         }
 
         if (array_key_exists('account_status', $validated)) {
-            $user->account_status = $validated['account_status'];
+            $user->account_status =
+                $validated['account_status'];
+
+            if (
+                $validated['account_status'] === 'approved'
+            ) {
+                $user->is_active = true;
+            }
+
+            if (
+                in_array(
+                    $validated['account_status'],
+                    ['pending', 'rejected'],
+                    true
+                )
+            ) {
+                $user->is_active = false;
+                $user->tokens()->delete();
+            }
         }
 
-        if (array_key_exists('permissions', $validated)) {
-            $user->permissions = $this->normalizeAdminPermissions(
-                $validated['permissions']
-            );
-        }
-
-        // Never allow this endpoint to turn an Admin into a Super Admin.
+        /*
+         * Never allow this endpoint to turn an Admin
+         * into a Super Admin.
+         */
         $user->role = 'admin';
 
+        /*
+         * Role-based permissions are the source of truth.
+         */
+
         $user->save();
+
+        $user->load('assignedRole.rolePermissions');
 
         return response()->json([
             'message' => 'Admin account updated successfully.',
-            'data' => $this->adminPayload($user),
-        ]);
-    }
-
-    /**
-     * Replace the permissions assigned to an Admin.
-     */
-    public function permissions(
-        Request $request,
-        User $user
-    ): JsonResponse {
-        $this->ensureNormalAdmin($user);
-
-        $allowedPermissions = $this->assignablePermissionKeys();
-
-        $validated = $request->validate([
-            'permissions' => ['required', 'array'],
-            'permissions.*' => ['string', Rule::in($allowedPermissions)],
-        ]);
-
-        $user->permissions = $this->normalizeAdminPermissions(
-            $validated['permissions']
-        );
-
-        $user->save();
-
-        return response()->json([
-            'message' => 'Admin permissions updated successfully.',
             'data' => $this->adminPayload($user),
         ]);
     }
@@ -176,7 +253,9 @@ class AdminAccountController extends Controller
     {
         $this->ensureNormalAdmin($user);
 
-        // Revoke all active tokens before deleting the account.
+        /*
+         * Revoke all active tokens before deleting.
+         */
         $user->tokens()->delete();
 
         $user->delete();
@@ -187,34 +266,7 @@ class AdminAccountController extends Controller
     }
 
     /**
-     * Build the complete list of permissions that a normal Admin may receive.
-     */
-    private function assignablePermissionKeys(): array
-    {
-        $modules = config('permission.assignable_modules', []);
-        $actions = config('permission.actions', []);
-
-        $permissions = [];
-
-        foreach ($modules as $module) {
-            foreach ($actions as $action) {
-                $permissions[] = "{$module}.{$action}";
-            }
-        }
-
-        return $permissions;
-    }
-
-    /**
-     * Normalize a normal Admin permission list.
-     */
-    private function normalizeAdminPermissions(array $permissions): array
-    {
-        return array_values(array_unique($permissions));
-    }
-
-    /**
-     * Ensure this endpoint can never modify/delete a Super Admin.
+     * Only normal Admin accounts can be managed here.
      */
     private function ensureNormalAdmin(User $user): void
     {
@@ -230,14 +282,38 @@ class AdminAccountController extends Controller
      */
     private function adminPayload(User $user): array
     {
+        $role = $user->assignedRole;
+
         return [
             'id' => (string) $user->id,
             'name' => $user->name,
             'email' => $user->email,
+
             'role' => 'admin',
+
+            'role_id' => $role?->id
+                ? (string) $role->id
+                : null,
+
+            'role_name' => $role?->name,
+
             'is_active' => (bool) $user->is_active,
+
             'account_status' => $user->account_status,
-            'permissions' => $user->permissions ?? [],
+
+            /*
+             * Permissions come from the assigned database role.
+             */
+            'permissions' => $role
+                ? $role->permissionKeys()
+                : [],
+
+            'permissions_count' => $role
+                ? count($role->permissionKeys())
+                : 0,
         ];
     }
 }
+
+
+

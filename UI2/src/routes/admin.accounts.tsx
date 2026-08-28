@@ -1,27 +1,22 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   Plus,
   Pencil,
   Trash2,
   ShieldCheck,
-  KeyRound,
   X,
-  Check,
 } from "lucide-react";
 import {
   AdminLayout,
   AdminPageHeader,
 } from "@/components/admin/AdminLayout";
-import {
-  ASSIGNABLE_MODULES,
-  PERMISSION_ACTIONS,
-} from "@/lib/permissions";
 import * as svc from "@/services/adminAccountService";
 import type {
   AdminAccount,
   AdminAccountInput,
+  AdminRole,
 } from "@/services/adminAccountService";
 
 export const Route = createFileRoute("/admin/accounts")({
@@ -38,13 +33,14 @@ const emptyForm: AdminAccountInput = {
   name: "",
   email: "",
   password: "",
+  role_id: null,
   is_active: true,
   account_status: "pending",
-  permissions: [],
 };
 
 function AdminAccountsPage() {
   const [list, setList] = useState<AdminAccount[]>([]);
+  const [roles, setRoles] = useState<AdminRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<AdminAccount | null>(null);
   const [creating, setCreating] = useState(false);
@@ -53,7 +49,13 @@ function AdminAccountsPage() {
     setLoading(true);
 
     try {
-      setList(await svc.listAdmins());
+      const [admins, availableRoles] = await Promise.all([
+        svc.listAdmins(),
+        svc.listRoles(),
+      ]);
+
+      setList(admins);
+      setRoles(availableRoles);
     } catch (e: any) {
       toast.error(e?.message ?? "Could not load admin accounts.");
     } finally {
@@ -79,10 +81,16 @@ function AdminAccountsPage() {
     }
   };
 
-  const setApprovalStatus = async (a: AdminAccount, status: "pending" | "approved" | "rejected") => {
+  const setApprovalStatus = async (
+    a: AdminAccount,
+    status: "pending" | "approved" | "rejected",
+  ) => {
     try {
-      await svc.updateAdmin(a.id, { account_status: status });
-      toast.success("Account ");
+      await svc.updateAdmin(a.id, {
+        account_status: status,
+      });
+
+      toast.success(`Account ${status}.`);
       void load();
     } catch (e: any) {
       toast.error(e?.message ?? "Approval update failed.");
@@ -107,7 +115,7 @@ function AdminAccountsPage() {
     <AdminLayout permission="admin_accounts.view">
       <AdminPageHeader
         title="Admin Accounts"
-        description="Super Admin only — create Admin accounts and grant module permissions."
+        description="Super Admin only — create Admin accounts and assign database roles."
         action={
           <button
             onClick={() => setCreating(true)}
@@ -126,6 +134,7 @@ function AdminAccountsPage() {
               <tr>
                 <th className="px-5 py-3">Name</th>
                 <th className="px-5 py-3">Email</th>
+                <th className="px-5 py-3">Role</th>
                 <th className="px-5 py-3">Active</th>
                 <th className="px-5 py-3">Approval</th>
                 <th className="px-5 py-3">Permissions</th>
@@ -137,7 +146,7 @@ function AdminAccountsPage() {
               {loading && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={7}
                     className="px-5 py-10 text-center text-muted-foreground"
                   >
                     Loading accounts...
@@ -148,7 +157,7 @@ function AdminAccountsPage() {
               {!loading && list.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={7}
                     className="px-5 py-10 text-center text-muted-foreground"
                   >
                     No admin accounts yet.
@@ -172,6 +181,12 @@ function AdminAccountsPage() {
 
                   <td className="px-5 py-3 text-muted-foreground">
                     {a.email}
+                  </td>
+
+                  <td className="px-5 py-3">
+                    <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+                      {a.role_name ?? "Unassigned"}
+                    </span>
                   </td>
 
                   <td className="px-5 py-3">
@@ -207,13 +222,14 @@ function AdminAccountsPage() {
                             : "bg-warning/15 text-warning")
                       }
                     >
-                      {a.account_status.charAt(0).toUpperCase() + a.account_status.slice(1)}
+                      {a.account_status.charAt(0).toUpperCase() +
+                        a.account_status.slice(1)}
                     </button>
                   </td>
 
                   <td className="px-5 py-3">
                     <span className="rounded-md bg-secondary px-2 py-1 text-xs font-medium">
-                      {a.permissions.length} granted
+                      {a.permissions_count ?? a.permissions.length} granted
                     </span>
                   </td>
 
@@ -245,13 +261,14 @@ function AdminAccountsPage() {
 
       <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
         <ShieldCheck className="h-3.5 w-3.5" />
-        Roles are fixed to Super Admin and Admin. The backend re-checks every
-        permission on each request.
+        Admin permissions come from the assigned database role. The backend
+        re-checks authorization on every request.
       </p>
 
       {(creating || editing) && (
         <AccountDialog
           account={editing}
+          roles={roles}
           onClose={() => {
             setCreating(false);
             setEditing(null);
@@ -269,10 +286,12 @@ function AdminAccountsPage() {
 
 function AccountDialog({
   account,
+  roles,
   onClose,
   onSaved,
 }: {
   account: AdminAccount | null;
+  roles: AdminRole[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -282,54 +301,18 @@ function AccountDialog({
           name: account.name,
           email: account.email,
           password: "",
+          role_id: account.role_id,
           is_active: account.is_active,
           account_status: account.account_status,
-          permissions: account.permissions,
         }
       : emptyForm,
   );
 
   const [saving, setSaving] = useState(false);
 
-  const groups = useMemo(
-    () =>
-      Array.from(
-        new Set(ASSIGNABLE_MODULES.map((m) => m.group)),
-      ),
-    [],
+  const selectedRole = roles.find(
+    (role) => role.id === form.role_id,
   );
-
-  const toggle = (key: string) =>
-    setForm((f) => ({
-      ...f,
-      permissions: f.permissions.includes(key)
-        ? f.permissions.filter((p) => p !== key)
-        : [...f.permissions, key],
-    }));
-
-  const toggleModule = (mod: string) => {
-    const keys = PERMISSION_ACTIONS.map(
-      (a) => `${mod}.${a}`,
-    );
-
-    const all = keys.every((k) =>
-      form.permissions.includes(k),
-    );
-
-    setForm((f) => ({
-      ...f,
-      permissions: all
-        ? f.permissions.filter(
-            (p) => !keys.includes(p),
-          )
-        : Array.from(
-            new Set([
-              ...f.permissions,
-              ...keys,
-            ]),
-          ),
-    }));
-  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -340,8 +323,9 @@ function AccountDialog({
         const payload: Partial<AdminAccountInput> = {
           name: form.name,
           email: form.email,
+          role_id: form.role_id,
           is_active: form.is_active,
-          permissions: form.permissions,
+          account_status: form.account_status,
         };
 
         if (form.password) {
@@ -377,7 +361,7 @@ function AccountDialog({
             </h2>
 
             <p className="text-xs text-muted-foreground">
-              Role is always Admin.
+              Role is always Admin. Permissions come from the selected role.
             </p>
           </div>
 
@@ -394,9 +378,7 @@ function AccountDialog({
         <div className="space-y-4 px-5 py-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm">
-              <span className="font-medium">
-                Full name
-              </span>
+              <span className="font-medium">Full name</span>
 
               <input
                 required
@@ -412,9 +394,7 @@ function AccountDialog({
             </label>
 
             <label className="block text-sm">
-              <span className="font-medium">
-                Email
-              </span>
+              <span className="font-medium">Email</span>
 
               <input
                 required
@@ -454,7 +434,31 @@ function AccountDialog({
               />
             </label>
 
-            <label className="mt-6 inline-flex items-center gap-2 text-sm">
+            <label className="block text-sm">
+              <span className="font-medium">Role</span>
+
+              <select
+                required
+                value={form.role_id ?? ""}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    role_id: e.target.value || null,
+                  })
+                }
+                className="mt-1 h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+              >
+                <option value="">Select a role</option>
+
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="inline-flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
                 checked={form.is_active}
@@ -469,99 +473,68 @@ function AccountDialog({
 
               Account active
             </label>
+
+            <label className="block text-sm">
+              <span className="font-medium">Account status</span>
+
+              <select
+                value={form.account_status}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    account_status: e.target.value as
+                      | "pending"
+                      | "approved"
+                      | "rejected",
+                  })
+                }
+                className="mt-1 h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none ring-ring focus:ring-2"
+              >
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </label>
           </div>
 
-          <div className="rounded-lg border">
-            <div className="flex items-center gap-2 border-b bg-secondary/50 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              <KeyRound className="h-3.5 w-3.5" />
-              Module permissions
-            </div>
-
-            <div className="max-h-72 overflow-y-auto p-4">
-              {groups.map((g) => (
-                <div
-                  key={g}
-                  className="mb-4 last:mb-0"
-                >
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {g}
-                  </div>
-
-                  <div className="mt-2 space-y-2">
-                    {ASSIGNABLE_MODULES.filter(
-                      (m) => m.group === g,
-                    ).map((m) => {
-                      const keys =
-                        PERMISSION_ACTIONS.map(
-                          (a) => `${m.key}.${a}`,
-                        );
-
-                      const all = keys.every((k) =>
-                        form.permissions.includes(k),
-                      );
-
-                      return (
-                        <div
-                          key={m.key}
-                          className="rounded-lg border px-3 py-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm font-medium">
-                              {m.label}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                toggleModule(m.key)
-                              }
-                              className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-[11px] font-medium hover:bg-secondary/70"
-                            >
-                              <Check className="h-3 w-3" />
-
-                              {all
-                                ? "Clear all"
-                                : "Select all"}
-                            </button>
-                          </div>
-
-                          <div className="mt-2 flex flex-wrap gap-3">
-                            {PERMISSION_ACTIONS.map(
-                              (a) => {
-                                const key = `${m.key}.${a}`;
-
-                                return (
-                                  <label
-                                    key={key}
-                                    className="inline-flex items-center gap-1.5 text-xs"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={form.permissions.includes(
-                                        key,
-                                      )}
-                                      onChange={() =>
-                                        toggle(key)
-                                      }
-                                      className="rounded border"
-                                    />
-
-                                    <span className="capitalize">
-                                      {a}
-                                    </span>
-                                  </label>
-                                );
-                              },
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+          {selectedRole && (
+            <div className="rounded-lg border">
+              <div className="border-b bg-secondary/50 px-4 py-3">
+                <div className="text-sm font-semibold">
+                  {selectedRole.name}
                 </div>
-              ))}
+
+                {selectedRole.description && (
+                  <div className="mt-1 text-xs text-muted-foreground">
+                    {selectedRole.description}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Permissions granted by this role
+                </div>
+
+                {selectedRole.permissions.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    This role has no permissions.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {selectedRole.permissions.map((permission) => (
+                      <span
+                        key={permission}
+                        className="rounded-md bg-secondary px-2 py-1 text-xs font-medium"
+                      >
+                        {permission}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 border-t px-5 py-4">
@@ -574,7 +547,7 @@ function AccountDialog({
           </button>
 
           <button
-            disabled={saving}
+            disabled={saving || !form.role_id}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
           >
             {saving
@@ -588,13 +561,3 @@ function AccountDialog({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
