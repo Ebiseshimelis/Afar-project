@@ -1,12 +1,18 @@
-import { Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+﻿import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Menu, X, Phone, Mail, ChevronDown } from "lucide-react";
 import { FaFacebookF, FaTelegramPlane } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
-import { directory } from "@/lib/mock-data";
+import {
+  getDirectorates,
+  type Directorate,
+} from "@/services/directorateService";
 import { useLanguage } from "@/lib/language";
 import logo from "@/assets/logo.png";
-import { useSectionBackground, type SectionKey } from "@/lib/site-images";
+import {
+  useSectionBackground,
+  type SectionKey,
+} from "@/lib/site-images";
 
 type NavChild = {
   to: string;
@@ -30,6 +36,29 @@ function isActivePath(pathname: string, to: string) {
 
 /*
 |--------------------------------------------------------------------------
+| Directorate label helper
+|--------------------------------------------------------------------------
+|
+| The API provides both English and Amharic names.
+| The active language determines which one appears
+| in the Directorate dropdown.
+|
+|--------------------------------------------------------------------------
+*/
+
+function directorateLabel(
+  directorate: Directorate,
+  lang: string
+) {
+  if (lang === "am") {
+    return directorate.nameAm || directorate.name;
+  }
+
+  return directorate.name || directorate.nameAm;
+}
+
+/*
+|--------------------------------------------------------------------------
 | AUDCB SOCIAL MEDIA LINKS
 |--------------------------------------------------------------------------
 |
@@ -38,12 +67,6 @@ function isActivePath(pathname: string, to: string) {
 |
 | When the official accounts are confirmed, replace the empty strings
 | below with the real URLs.
-|
-| Example:
-|
-| facebook: "https://www.facebook.com/official-page",
-| telegram: "https://t.me/official-channel",
-| x: "https://x.com/official-account",
 |
 |--------------------------------------------------------------------------
 */
@@ -64,61 +87,116 @@ export function PortalLayout() {
 
   const { lang, setLang, t } = useLanguage();
 
+  const [directorates, setDirectorates] = useState<Directorate[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDirectorates() {
+      try {
+        const data = await getDirectorates();
+
+        if (!cancelled) {
+          setDirectorates(data);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load directorates for navigation:",
+          error
+        );
+      }
+    }
+
+    void loadDirectorates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
   const MAIN_NAV: NavItem[] = useMemo(() => {
-    const directorates = directory.filter(
-      (d) => d.category === "Directorates"
-    );
-
-    const label = (d: typeof directory[number]) =>
-      lang === "am" && d.nameAm ? d.nameAm : d.name;
-
     return [
-      { to: "/", label: t("home") },
+      {
+        to: "/",
+        label: t("home"),
+      },
 
-      { to: "/about", label: t("about") },
+      {
+        to: "/about",
+        label: t("about"),
+      },
 
       {
         to: "/news",
         label: t("news"),
         children: [
-          { to: "/news", label: t("latestNews") },
-          { to: "/events", label: t("upcomingEvents") },
+          {
+            to: "/news",
+            label: t("latestNews"),
+          },
+          {
+            to: "/events",
+            label: t("upcomingEvents"),
+          },
         ],
       },
 
-      { to: "/tenders", label: t("tenders") },
+      {
+        to: "/tenders",
+        label: t("tenders"),
+      },
 
       {
         to: "/multimedia/images",
         label: t("multimedia"),
         children: [
-          { to: "/multimedia/images", label: t("imageGallery") },
-          { to: "/multimedia/videos", label: t("videoGallery") },
+          {
+            to: "/multimedia/images",
+            label: t("imageGallery"),
+          },
+          {
+            to: "/multimedia/videos",
+            label: t("videoGallery"),
+          },
         ],
       },
 
+      /*
+       * Directorate dropdown.
+       *
+       * Each directorate returned by the backend becomes
+       * one item in this dropdown.
+       */
       {
         to: "/directory",
         label: t("directorate"),
         children: directorates.map((d) => ({
-          to: "/directory",
-          label: label(d),
-          search: {
-            type: "directorates",
-            name: d.name,
-          },
+          to: `/directory/${d.id}`,
+          label: directorateLabel(d, lang),
         })),
       },
 
-      { to: "/city-admins", label: t("cityAdmins") },
+      {
+        to: "/city-admins",
+        label: t("cityAdmins"),
+      },
 
-      { to: "/vacancies", label: t("vacancies") },
+      {
+        to: "/vacancies",
+        label: t("vacancies"),
+      },
 
-      { to: "/publications", label: t("publications") },
+      {
+        to: "/publications",
+        label: t("publications"),
+      },
 
-      { to: "/contact", label: t("contact") },
+      {
+        to: "/contact",
+        label: t("contact"),
+      },
     ];
-  }, [t, lang]);
+  }, [t, lang, directorates]);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -268,8 +346,13 @@ export function PortalLayout() {
 
               {MAIN_NAV.map((item) => {
 
-                const active = isActivePath(pathname, item.to);
-                const hasChildren = !!item.children?.length;
+                const active = isActivePath(
+                  pathname,
+                  item.to
+                );
+
+                const hasChildren =
+                  !!item.children?.length;
 
                 return (
                   <li
@@ -303,6 +386,7 @@ export function PortalLayout() {
 
                     </Link>
 
+                    {/* Desktop dropdown */}
                     {hasChildren && (
                       <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
 
@@ -345,9 +429,16 @@ export function PortalLayout() {
 
               {MAIN_NAV.map((item) => {
 
-                const active = isActivePath(pathname, item.to);
-                const hasChildren = !!item.children?.length;
-                const isSubOpen = openSub === item.label;
+                const active = isActivePath(
+                  pathname,
+                  item.to
+                );
+
+                const hasChildren =
+                  !!item.children?.length;
+
+                const isSubOpen =
+                  openSub === item.label;
 
                 return (
                   <li key={item.label}>
@@ -400,33 +491,32 @@ export function PortalLayout() {
 
                     )}
 
-                    {hasChildren && isSubOpen && (
+                    {hasChildren &&
+                      isSubOpen && (
+                        <ul className="ml-3 border-l pl-3">
 
-                      <ul className="ml-3 border-l pl-3">
+                          {item.children!.map((c) => (
 
-                        {item.children!.map((c) => (
+                            <li key={c.label}>
 
-                          <li key={c.label}>
+                              <Link
+                                to={c.to}
+                                search={c.search as never}
+                                onClick={() => {
+                                  setOpen(false);
+                                  setOpenSub(null);
+                                }}
+                                className="block rounded-full px-3 py-2 text-sm text-foreground/70 hover:text-primary"
+                              >
+                                {c.label}
+                              </Link>
 
-                            <Link
-                              to={c.to}
-                              search={c.search as never}
-                              onClick={() => {
-                                setOpen(false);
-                                setOpenSub(null);
-                              }}
-                              className="block rounded-full px-3 py-2 text-sm text-foreground/70 hover:text-primary"
-                            >
-                              {c.label}
-                            </Link>
+                            </li>
 
-                          </li>
+                          ))}
 
-                        ))}
-
-                      </ul>
-
-                    )}
+                        </ul>
+                      )}
 
                   </li>
                 );
@@ -490,12 +580,30 @@ function SiteFooter() {
     to: string;
     label: string;
   }[] = [
-    { to: "/", label: t("home") },
-    { to: "/about", label: t("about") },
-    { to: "/directory", label: t("directorate") },
-    { to: "/news", label: t("news") },
-    { to: "/contact", label: t("contact") },
-    { to: "/admin/login", label: t("staffLogin") },
+    {
+      to: "/",
+      label: t("home"),
+    },
+    {
+      to: "/about",
+      label: t("about"),
+    },
+    {
+      to: "/directory",
+      label: t("directorate"),
+    },
+    {
+      to: "/news",
+      label: t("news"),
+    },
+    {
+      to: "/contact",
+      label: t("contact"),
+    },
+    {
+      to: "/admin/login",
+      label: t("staffLogin"),
+    },
   ];
 
   return (
@@ -505,7 +613,6 @@ function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 md:grid-cols-4">
 
         {/* Footer brand */}
-
         <div>
 
           <div className="flex items-center gap-3">
@@ -542,7 +649,6 @@ function SiteFooter() {
         </div>
 
         {/* Quick links */}
-
         <div>
 
           <h4 className="font-display text-sm font-semibold text-gold">
@@ -571,7 +677,6 @@ function SiteFooter() {
         </div>
 
         {/* Contact */}
-
         <div>
 
           <h4 className="font-display text-sm font-semibold text-gold">
@@ -609,7 +714,6 @@ function SiteFooter() {
         </div>
 
         {/* Social media */}
-
         <div>
 
           <h4 className="font-display text-sm font-semibold text-gold">
@@ -658,7 +762,6 @@ function SiteFooter() {
       </div>
 
       {/* Copyright */}
-
       <div className="border-t border-sidebar-border">
 
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-4 text-xs text-sidebar-foreground/60 md:flex-row">

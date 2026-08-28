@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -49,7 +49,7 @@ function ProfileAdmin() {
   const roleLabel =
     user.role === "super_admin"
       ? "Super Administrator"
-      : "Administrator";
+      : user.role_name || "Administrator";
 
   const permissionLabel =
     user.permissions.includes("*")
@@ -433,3 +433,5 @@ function PasswordField({
     </div>
   );
 }
+
+

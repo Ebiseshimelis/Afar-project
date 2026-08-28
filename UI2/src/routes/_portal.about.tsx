@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
 import {
   Target,
@@ -13,7 +13,7 @@ import { getAbout } from "@/services/aboutService";
 export const Route = createFileRoute("/_portal/about")({
   head: () => ({
     meta: [
-      { title: "About — Afar UDCB" },
+      { title: "About â€” Afar UDCB" },
       {
         name: "description",
         content:
@@ -106,19 +106,12 @@ function AboutPage() {
               })}
             </ul>
           </div>
-
           <div className="overflow-hidden rounded-2xl border shadow-soft">
-            {about.image ? (
-              <img
-                src={about.image}
-                alt="Afar UDCB"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex min-h-[300px] items-center justify-center bg-secondary text-muted-foreground">
-                Afar UDCB
-              </div>
-            )}
+            <img
+              src="/portfolio2.png"
+              alt="Afar Regional State Urban Development and Construction Bureau"
+              className="h-full min-h-[300px] w-full object-cover"
+            />
           </div>
         </div>
       </section>

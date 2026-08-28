@@ -43,6 +43,8 @@ import { Route as AdminTendersRouteImport } from './routes/admin.tenders'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminVacanciesRouteImport } from './routes/admin.vacancies'
 import { Route as PasswordResetTokenRouteImport } from './routes/password-reset.$token'
+import { Route as PortalDirectoryIndexRouteImport } from './routes/_portal.directory.index'
+import { Route as PortalDirectoryDirectorateIdRouteImport } from './routes/_portal.directory.$directorateId'
 import { Route as PortalMultimediaImagesRouteImport } from './routes/_portal.multimedia.images'
 import { Route as PortalMultimediaVideosRouteImport } from './routes/_portal.multimedia.videos'
 import { Route as PortalNewsIndexRouteImport } from './routes/_portal.news.index'
@@ -221,6 +223,17 @@ const PasswordResetTokenRoute = PasswordResetTokenRouteImport.update({
   path: '/password-reset/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PortalDirectoryIndexRoute = PortalDirectoryIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PortalDirectoryRoute,
+} as any)
+const PortalDirectoryDirectorateIdRoute =
+  PortalDirectoryDirectorateIdRouteImport.update({
+    id: '/$directorateId',
+    path: '/$directorateId',
+    getParentRoute: () => PortalDirectoryRoute,
+  } as any)
 const PortalMultimediaImagesRoute = PortalMultimediaImagesRouteImport.update({
   id: '/multimedia/images',
   path: '/multimedia/images',
@@ -269,7 +282,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof PortalAboutRoute
   '/city-admins': typeof PortalCityAdminsRoute
   '/contact': typeof PortalContactRoute
-  '/directory': typeof PortalDirectoryRoute
+  '/directory': typeof PortalDirectoryRouteWithChildren
   '/events': typeof PortalEventsRoute
   '/publications': typeof PortalPublicationsRoute
   '/vacancies': typeof PortalVacanciesRouteWithChildren
@@ -298,11 +311,13 @@ export interface FileRoutesByFullPath {
   '/admin/vacancies': typeof AdminVacanciesRoute
   '/password-reset/$token': typeof PasswordResetTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/directory/$directorateId': typeof PortalDirectoryDirectorateIdRoute
   '/multimedia/images': typeof PortalMultimediaImagesRoute
   '/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/news/$id': typeof PortalNewsIdRoute
   '/tenders/$id': typeof PortalTendersIdRoute
   '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRouteWithChildren
+  '/directory/': typeof PortalDirectoryIndexRoute
   '/news/': typeof PortalNewsIndexRoute
   '/tenders/': typeof PortalTendersIndexRoute
   '/vacancies/$vacancyId/apply': typeof PortalVacanciesVacancyIdApplyRoute
@@ -311,7 +326,6 @@ export interface FileRoutesByTo {
   '/about': typeof PortalAboutRoute
   '/city-admins': typeof PortalCityAdminsRoute
   '/contact': typeof PortalContactRoute
-  '/directory': typeof PortalDirectoryRoute
   '/events': typeof PortalEventsRoute
   '/publications': typeof PortalPublicationsRoute
   '/vacancies': typeof PortalVacanciesRouteWithChildren
@@ -341,11 +355,13 @@ export interface FileRoutesByTo {
   '/password-reset/$token': typeof PasswordResetTokenRoute
   '/': typeof PortalIndexRoute
   '/admin': typeof AdminIndexRoute
+  '/directory/$directorateId': typeof PortalDirectoryDirectorateIdRoute
   '/multimedia/images': typeof PortalMultimediaImagesRoute
   '/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/news/$id': typeof PortalNewsIdRoute
   '/tenders/$id': typeof PortalTendersIdRoute
   '/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRouteWithChildren
+  '/directory': typeof PortalDirectoryIndexRoute
   '/news': typeof PortalNewsIndexRoute
   '/tenders': typeof PortalTendersIndexRoute
   '/vacancies/$vacancyId/apply': typeof PortalVacanciesVacancyIdApplyRoute
@@ -356,7 +372,7 @@ export interface FileRoutesById {
   '/_portal/about': typeof PortalAboutRoute
   '/_portal/city-admins': typeof PortalCityAdminsRoute
   '/_portal/contact': typeof PortalContactRoute
-  '/_portal/directory': typeof PortalDirectoryRoute
+  '/_portal/directory': typeof PortalDirectoryRouteWithChildren
   '/_portal/events': typeof PortalEventsRoute
   '/_portal/publications': typeof PortalPublicationsRoute
   '/_portal/vacancies': typeof PortalVacanciesRouteWithChildren
@@ -386,11 +402,13 @@ export interface FileRoutesById {
   '/password-reset/$token': typeof PasswordResetTokenRoute
   '/_portal/': typeof PortalIndexRoute
   '/admin/': typeof AdminIndexRoute
+  '/_portal/directory/$directorateId': typeof PortalDirectoryDirectorateIdRoute
   '/_portal/multimedia/images': typeof PortalMultimediaImagesRoute
   '/_portal/multimedia/videos': typeof PortalMultimediaVideosRoute
   '/_portal/news/$id': typeof PortalNewsIdRoute
   '/_portal/tenders/$id': typeof PortalTendersIdRoute
   '/_portal/vacancies/$vacancyId': typeof PortalVacanciesVacancyIdRouteWithChildren
+  '/_portal/directory/': typeof PortalDirectoryIndexRoute
   '/_portal/news/': typeof PortalNewsIndexRoute
   '/_portal/tenders/': typeof PortalTendersIndexRoute
   '/_portal/vacancies/$vacancyId/apply': typeof PortalVacanciesVacancyIdApplyRoute
@@ -431,11 +449,13 @@ export interface FileRouteTypes {
     | '/admin/vacancies'
     | '/password-reset/$token'
     | '/admin/'
+    | '/directory/$directorateId'
     | '/multimedia/images'
     | '/multimedia/videos'
     | '/news/$id'
     | '/tenders/$id'
     | '/vacancies/$vacancyId'
+    | '/directory/'
     | '/news/'
     | '/tenders/'
     | '/vacancies/$vacancyId/apply'
@@ -444,7 +464,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/city-admins'
     | '/contact'
-    | '/directory'
     | '/events'
     | '/publications'
     | '/vacancies'
@@ -474,11 +493,13 @@ export interface FileRouteTypes {
     | '/password-reset/$token'
     | '/'
     | '/admin'
+    | '/directory/$directorateId'
     | '/multimedia/images'
     | '/multimedia/videos'
     | '/news/$id'
     | '/tenders/$id'
     | '/vacancies/$vacancyId'
+    | '/directory'
     | '/news'
     | '/tenders'
     | '/vacancies/$vacancyId/apply'
@@ -518,11 +539,13 @@ export interface FileRouteTypes {
     | '/password-reset/$token'
     | '/_portal/'
     | '/admin/'
+    | '/_portal/directory/$directorateId'
     | '/_portal/multimedia/images'
     | '/_portal/multimedia/videos'
     | '/_portal/news/$id'
     | '/_portal/tenders/$id'
     | '/_portal/vacancies/$vacancyId'
+    | '/_portal/directory/'
     | '/_portal/news/'
     | '/_portal/tenders/'
     | '/_portal/vacancies/$vacancyId/apply'
@@ -797,6 +820,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PasswordResetTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_portal/directory/': {
+      id: '/_portal/directory/'
+      path: '/'
+      fullPath: '/directory/'
+      preLoaderRoute: typeof PortalDirectoryIndexRouteImport
+      parentRoute: typeof PortalDirectoryRoute
+    }
+    '/_portal/directory/$directorateId': {
+      id: '/_portal/directory/$directorateId'
+      path: '/$directorateId'
+      fullPath: '/directory/$directorateId'
+      preLoaderRoute: typeof PortalDirectoryDirectorateIdRouteImport
+      parentRoute: typeof PortalDirectoryRoute
+    }
     '/_portal/multimedia/images': {
       id: '/_portal/multimedia/images'
       path: '/multimedia/images'
@@ -856,6 +893,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PortalDirectoryRouteChildren {
+  PortalDirectoryDirectorateIdRoute: typeof PortalDirectoryDirectorateIdRoute
+  PortalDirectoryIndexRoute: typeof PortalDirectoryIndexRoute
+}
+
+const PortalDirectoryRouteChildren: PortalDirectoryRouteChildren = {
+  PortalDirectoryDirectorateIdRoute: PortalDirectoryDirectorateIdRoute,
+  PortalDirectoryIndexRoute: PortalDirectoryIndexRoute,
+}
+
+const PortalDirectoryRouteWithChildren = PortalDirectoryRoute._addFileChildren(
+  PortalDirectoryRouteChildren,
+)
+
 interface PortalVacanciesVacancyIdRouteChildren {
   PortalVacanciesVacancyIdApplyRoute: typeof PortalVacanciesVacancyIdApplyRoute
 }
@@ -886,7 +937,7 @@ interface PortalRouteChildren {
   PortalAboutRoute: typeof PortalAboutRoute
   PortalCityAdminsRoute: typeof PortalCityAdminsRoute
   PortalContactRoute: typeof PortalContactRoute
-  PortalDirectoryRoute: typeof PortalDirectoryRoute
+  PortalDirectoryRoute: typeof PortalDirectoryRouteWithChildren
   PortalEventsRoute: typeof PortalEventsRoute
   PortalPublicationsRoute: typeof PortalPublicationsRoute
   PortalVacanciesRoute: typeof PortalVacanciesRouteWithChildren
@@ -903,7 +954,7 @@ const PortalRouteChildren: PortalRouteChildren = {
   PortalAboutRoute: PortalAboutRoute,
   PortalCityAdminsRoute: PortalCityAdminsRoute,
   PortalContactRoute: PortalContactRoute,
-  PortalDirectoryRoute: PortalDirectoryRoute,
+  PortalDirectoryRoute: PortalDirectoryRouteWithChildren,
   PortalEventsRoute: PortalEventsRoute,
   PortalPublicationsRoute: PortalPublicationsRoute,
   PortalVacanciesRoute: PortalVacanciesRouteWithChildren,

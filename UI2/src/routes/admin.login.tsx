@@ -111,7 +111,7 @@ function LoginPage() {
           </div>
 
           <div className="text-xs text-primary-foreground/60">
-            Â© {new Date().getFullYear()} Afar Regional State
+            © {new Date().getFullYear()} Afar Regional State
           </div>
         </div>
       </div>
@@ -295,6 +295,8 @@ function LoginPage() {
     </div>
   );
 }
+
+
 
 
 

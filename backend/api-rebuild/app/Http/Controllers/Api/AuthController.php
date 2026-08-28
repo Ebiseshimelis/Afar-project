@@ -169,6 +169,7 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            'role_name' => $user->assignedRole?->name,
             'is_active' => (bool) $user->is_active,
             'account_status' => $user->account_status,
 
@@ -182,6 +183,11 @@ class AuthController extends Controller
         ];
     }
 }
+
+
+
+
+
 
 
 

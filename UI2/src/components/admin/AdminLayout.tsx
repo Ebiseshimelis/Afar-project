@@ -51,6 +51,7 @@ type AdminPath =
   | "/admin/city-admins"
   | "/admin/directory"
   | "/admin/users"
+  | "/admin/roles"
   | "/admin/messages"
   | "/admin/notifications"
   | "/admin/multimedia"
@@ -69,6 +70,7 @@ type Permission =
   | "city_admins.view"
   | "directory.view"
   | "users.view"
+  | "roles.view"
   | "permissions.view"
   | "messages.view"
   | "notifications.view"
@@ -679,7 +681,7 @@ function SidebarNav({
           to="/"
           className="mt-1 block rounded-lg px-3 py-2 text-xs text-sidebar-foreground/60 hover:text-gold"
         >
-          ? Back to public portal
+          ← Back to public portal
         </Link>
       </div>
     </aside>
@@ -1565,6 +1567,9 @@ export function EmptyState({
     </div>
   );
 }
+
+
+
 
 
 

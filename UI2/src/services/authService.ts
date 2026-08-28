@@ -1,4 +1,4 @@
-﻿import type { StaffRole } from "@/lib/permissions";
+import type { StaffRole } from "@/lib/permissions";
 import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 
 /**
@@ -23,6 +23,7 @@ export type AuthUser = {
   name: string;
   email: string;
   role: StaffRole;
+  role_name?: string | null;
   is_active: boolean;
   permissions: string[];
 };
@@ -294,6 +295,7 @@ function normalizeUser(raw: any): AuthUser {
       raw.role === "super_admin"
         ? "super_admin"
         : "admin",
+    role_name: raw.role_name ?? null,
     is_active: raw.is_active !== false,
     permissions: Array.isArray(raw.permissions)
       ? raw.permissions.map(String)
@@ -417,5 +419,7 @@ export const DEMO_MODULE_HINT =
   ASSIGNABLE_MODULES.map(
     (m) => m.key,
   );
+
+
 
 
