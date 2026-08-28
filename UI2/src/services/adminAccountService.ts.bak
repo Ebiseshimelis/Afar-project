@@ -1,0 +1,254 @@
+﻿import { authFetch } from "@/services/authService";
+
+export type AdminRole = {
+  id: string;
+  name: string;
+  description?: string | null;
+  permissions: string[];
+  permissions_count?: number;
+  users?: number;
+};
+
+export type AdminAccount = {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin";
+  role_id: string | null;
+  role_name: string | null;
+  is_active: boolean;
+  account_status: "pending" | "approved" | "rejected";
+  permissions: string[];
+  permissions_count?: number;
+};
+
+export type AdminAccountInput = {
+  name: string;
+  email: string;
+  password?: string;
+  role_id?: string | null;
+  is_active: boolean;
+  account_status: "pending" | "approved" | "rejected";
+};
+
+function normalizeAccount(raw: any): AdminAccount {
+  return {
+    id: String(raw?.id ?? ""),
+    name: String(raw?.name ?? ""),
+    email: String(raw?.email ?? ""),
+    role: "admin",
+    role_id:
+      raw?.role_id !== null && raw?.role_id !== undefined
+        ? String(raw.role_id)
+        : null,
+    role_name:
+      raw?.role_name !== null && raw?.role_name !== undefined
+        ? String(raw.role_name)
+        : null,
+    is_active: raw?.is_active !== false,
+    account_status:
+      raw?.account_status === "approved"
+        ? "approved"
+        : raw?.account_status === "rejected"
+          ? "rejected"
+          : "pending",
+    permissions: Array.isArray(raw?.permissions)
+      ? raw.permissions.map(String)
+      : [],
+    permissions_count:
+      typeof raw?.permissions_count === "number"
+        ? raw.permissions_count
+        : Array.isArray(raw?.permissions)
+          ? raw.permissions.length
+          : 0,
+  };
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const response = await authFetch(path, init);
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+
+    if (response.status === 401 || response.status === 403) {
+      throw new Error(
+        body?.message
+          ? String(body.message)
+          : "You do not have permission to perform this action.",
+      );
+    }
+
+    throw new Error(
+      body?.message
+        ? String(body.message)
+        : "The request could not be completed.",
+    );
+  }
+
+  const body = await response.json().catch(() => null);
+
+  return body?.data ?? body;
+}
+
+export async function listAdminAccounts(): Promise<AdminAccount[]> {
+  const data = await request<any>("/admin/accounts", {
+    method: "GET",
+  });
+
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+      ? data.data
+      : [];
+
+  return rows.map(normalizeAccount);
+}
+
+export async function listAdmins(): Promise<AdminAccount[]> {
+  return listAdminAccounts();
+}
+
+export async function listRoles(): Promise<AdminRole[]> {
+  const data = await request<any>("/admin/roles", {
+    method: "GET",
+  });
+
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+      ? data.data
+      : [];
+
+  return rows.map((raw: any) => ({
+    id: String(raw?.id ?? ""),
+    name: String(raw?.name ?? ""),
+    description: raw?.description ?? null,
+    permissions: Array.isArray(raw?.permissions)
+      ? raw.permissions.map(String)
+      : [],
+    permissions_count: raw?.permissions_count,
+    users: raw?.users,
+  }));
+}
+
+export async function createAdmin(
+  input: AdminAccountInput,
+): Promise<AdminAccount> {
+  const data = await request<any>("/admin/accounts", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: input.name,
+      email: input.email,
+      password: input.password,
+      role_id: input.role_id ?? null,
+      is_active: input.is_active,
+      account_status: input.account_status,
+    }),
+  });
+
+  return normalizeAccount(data);
+}
+
+export async function updateAdmin(
+  id: string,
+  input: Partial<AdminAccountInput>,
+): Promise<AdminAccount> {
+  const data = await request<any>(`/admin/accounts/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      ...input,
+      role: "admin",
+    }),
+  });
+
+  return normalizeAccount(data);
+}
+
+export async function setAdminActive(
+  id: string,
+  is_active: boolean,
+): Promise<AdminAccount> {
+  return updateAdmin(id, { is_active });
+}
+
+export async function setAdminRole(
+  id: string,
+  role_id: string,
+): Promise<AdminAccount> {
+  const data = await request<any>(
+    `/admin/accounts/${id}/permissions`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        role_id: Number(role_id),
+      }),
+    },
+  );
+
+  return normalizeAccount(data);
+}
+
+export async function deleteAdmin(id: string): Promise<void> {
+  await request<any>(`/admin/accounts/${id}`, {
+    method: "DELETE",
+  });
+}
+
+/**
+ * Replace permissions assigned to an admin.
+ */
+export async function setAdminPermissions(
+  id: string,
+  permissions: string[],
+): Promise<AdminAccount> {
+  const data = await request<any>(
+    `/admin/accounts/${id}/permissions`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        permissions,
+      }),
+    },
+    () => {
+      const accounts = readDemoAccounts();
+
+      const updated = accounts.map((account) =>
+        account.id === id
+          ? {
+              ...account,
+              permissions,
+            }
+          : account,
+      );
+
+      writeDemoAccounts(updated);
+
+      const account = updated.find(
+        (item) => item.id === id,
+      );
+
+      if (!account) {
+        throw new Error("Admin account not found.");
+      }
+
+      return account;
+    },
+  );
+
+  return normalizeAccount(data);
+}

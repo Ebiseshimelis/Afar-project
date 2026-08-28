@@ -197,7 +197,13 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "users.view",
         superAdminOnly: true,
       },
-            {
+      {
+        to: "/admin/accounts",
+        label: "Admin Accounts",
+        icon: ShieldCheck,
+        superAdminOnly: true,
+      },
+      {
         to: "/admin/roles",
         label: "Roles",
         icon: ShieldCheck,
@@ -1567,6 +1573,11 @@ export function EmptyState({
     </div>
   );
 }
+
+
+
+
+
 
 
 

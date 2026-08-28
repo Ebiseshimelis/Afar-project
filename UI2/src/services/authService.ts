@@ -1,22 +1,36 @@
-import type { StaffRole } from "@/lib/permissions";
+﻿import type { StaffRole } from "@/lib/permissions";
 import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 
 /**
- * Staff authentication service (Super Admin / Admin).
+ * Staff authentication service.
  *
  * Laravel API:
  *   POST /auth/login
  *   GET  /auth/me
  *   POST /auth/logout
  *
- * The backend remains the source of truth when it is reachable.
- * A local demo adapter is used only when the API cannot be reached.
+ * The backend is the source of truth.
  */
+
+/* ------------------------------------------------------------------ */
+/* API / Storage                                                       */
+/* ------------------------------------------------------------------ */
 
 export const API_BASE = "http://127.0.0.1:8000/api/v1";
 
-const TOKEN_KEY = "afar_admin_token";
+/*
+ * The existing application uses "admin_token" in localStorage.
+ *
+ * "afar_admin_token" was used by the newer authentication code,
+ * so getToken() supports both during the transition.
+ */
+const TOKEN_KEY = "admin_token";
+const LEGACY_TOKEN_KEY = "afar_admin_token";
 const DEMO_KEY = "afar_admin_demo_session";
+
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
 
 export type AuthUser = {
   id: string;
@@ -25,6 +39,7 @@ export type AuthUser = {
   role: StaffRole;
   role_name?: string | null;
   is_active: boolean;
+  account_status?: string | null;
   permissions: string[];
 };
 
@@ -38,50 +53,141 @@ export class AuthError extends Error {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Token handling                                                      */
+/* ------------------------------------------------------------------ */
+
 /**
  * Compatibility helper for older services.
- *
- * Existing News and Directorate services use getAdminToken()
- * when making authenticated admin API requests.
  */
 export function getAdminToken(): string | null {
   return getToken();
 }
 
+/**
+ * Get the current Laravel Sanctum token.
+ *
+ * Primary storage:
+ *   localStorage["admin_token"]
+ *
+ * Legacy compatibility:
+ *   sessionStorage["afar_admin_token"]
+ *   localStorage["afar_admin_token"]
+ */
 export function getToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.sessionStorage.getItem(TOKEN_KEY);
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const localToken = window.localStorage.getItem(TOKEN_KEY);
+
+  if (localToken && localToken.trim() !== "") {
+    return localToken.trim();
+  }
+
+  const legacySessionToken =
+    window.sessionStorage.getItem(LEGACY_TOKEN_KEY);
+
+  if (legacySessionToken && legacySessionToken.trim() !== "") {
+    return legacySessionToken.trim();
+  }
+
+  const legacyLocalToken =
+    window.localStorage.getItem(LEGACY_TOKEN_KEY);
+
+  if (legacyLocalToken && legacyLocalToken.trim() !== "") {
+    return legacyLocalToken.trim();
+  }
+
+  return null;
 }
 
+/**
+ * Store/remove the Laravel Sanctum token.
+ *
+ * The main application token is stored in localStorage under
+ * "admin_token" because the existing application already uses
+ * this key.
+ */
 function setToken(token: string | null) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined") {
+    return;
+  }
 
-  if (token) {
-    window.sessionStorage.setItem(TOKEN_KEY, token);
+  if (token && token.trim() !== "") {
+    const cleanToken = token.trim();
+
+    window.localStorage.setItem(TOKEN_KEY, cleanToken);
+
+    /*
+     * Remove stale versions so the application has one
+     * authoritative authentication token.
+     */
+    window.sessionStorage.removeItem(LEGACY_TOKEN_KEY);
+    window.localStorage.removeItem(LEGACY_TOKEN_KEY);
   } else {
-    window.sessionStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.sessionStorage.removeItem(LEGACY_TOKEN_KEY);
+    window.localStorage.removeItem(LEGACY_TOKEN_KEY);
   }
 }
 
 /**
- * Authenticated fetch helper.
+ * Extract a token regardless of Laravel response shape.
  */
+function extractToken(body: any): string | null {
+  const token =
+    body?.token ??
+    body?.access_token ??
+    body?.data?.token ??
+    body?.data?.access_token ??
+    null;
+
+  if (typeof token !== "string" || token.trim() === "") {
+    return null;
+  }
+
+  return token.trim();
+}
+
+/* ------------------------------------------------------------------ */
+/* Authenticated fetch                                                 */
+/* ------------------------------------------------------------------ */
+
 export async function authFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
   const token = getToken();
 
+  const headers = new Headers(init.headers);
+
+  headers.set("Accept", "application/json");
+
+  /*
+   * Do not set Content-Type manually for FormData.
+   *
+   * The browser must generate the multipart boundary.
+   */
+  if (!(init.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  } else {
+    headers.delete("Authorization");
+  }
+
   return fetch(`${API_BASE}${path}`, {
     ...init,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(init.headers ?? {}),
-    },
+    headers,
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Error handling                                                      */
+/* ------------------------------------------------------------------ */
 
 function messageForStatus(status: number, body: any): string {
   if (body?.message && status !== 500) {
@@ -103,9 +209,10 @@ function messageForStatus(status: number, body: any): string {
   return "Sign in failed. Please try again.";
 }
 
-/**
- * Staff login.
- */
+/* ------------------------------------------------------------------ */
+/* Login                                                               */
+/* ------------------------------------------------------------------ */
+
 export async function login(
   email: string,
   password: string,
@@ -139,18 +246,54 @@ export async function login(
     );
   }
 
-  const user = normalizeUser(body?.user ?? body?.data?.user);
+  const user = normalizeUser(
+    body?.user ??
+      body?.data?.user ??
+      body?.data ??
+      null,
+  );
 
-  setToken(body?.token ?? body?.access_token ?? null);
+  const token = extractToken(body);
+
+  /*
+   * A successful real API login MUST return a token.
+   */
+  if (!token) {
+    console.error(
+      "Laravel login response did not contain a token:",
+      body,
+    );
+
+    throw new AuthError(
+      "Login succeeded, but the server did not return an authentication token.",
+      500,
+    );
+  }
+
+  setToken(token);
+
+  /*
+   * Real API authentication takes priority over demo authentication.
+   */
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(DEMO_KEY);
+  }
 
   return user;
 }
 
-/**
- * Get currently authenticated staff member.
- */
+/* ------------------------------------------------------------------ */
+/* Current authenticated user                                          */
+/* ------------------------------------------------------------------ */
+
 export async function me(): Promise<AuthUser | null> {
-  if (!getToken()) {
+  const token = getToken();
+
+  /*
+   * No Laravel token means there is no real API session.
+   * Check demo session only as a fallback.
+   */
+  if (!token) {
     return demoSession();
   }
 
@@ -177,12 +320,18 @@ export async function me(): Promise<AuthUser | null> {
 
   const body = await res.json().catch(() => null);
 
-  return normalizeUser(body?.user ?? body?.data ?? body);
+  return normalizeUser(
+    body?.user ??
+      body?.data?.user ??
+      body?.data ??
+      body,
+  );
 }
 
-/**
- * Logout.
- */
+/* ------------------------------------------------------------------ */
+/* Logout                                                              */
+/* ------------------------------------------------------------------ */
+
 export async function logout(): Promise<void> {
   try {
     if (getToken()) {
@@ -191,7 +340,7 @@ export async function logout(): Promise<void> {
       });
     }
   } catch {
-    // Clear local authentication even if API is unavailable.
+    // Clear local authentication even if the API is unavailable.
   }
 
   setToken(null);
@@ -201,24 +350,25 @@ export async function logout(): Promise<void> {
   }
 }
 
-/**
- * Password reset compatibility functions.
- *
- * These keep the existing password-reset pages compiling.
- * They use the Laravel API when those endpoints exist.
- */
+/* ------------------------------------------------------------------ */
+/* Password reset                                                      */
+/* ------------------------------------------------------------------ */
+
 export async function forgotPassword(email: string): Promise<void> {
   let res: Response;
 
   try {
-    res = await fetch("http://127.0.0.1:8000/api/forgot-password", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
+    res = await fetch(
+      "http://127.0.0.1:8000/api/forgot-password",
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
       },
-      body: JSON.stringify({ email }),
-    });
+    );
   } catch {
     throw new AuthError(
       "Unable to connect to the server.",
@@ -247,19 +397,22 @@ export async function resetPassword(
   let res: Response;
 
   try {
-    res = await fetch("http://127.0.0.1:8000/api/reset-password", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
+    res = await fetch(
+      "http://127.0.0.1:8000/api/reset-password",
+      {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          email,
+          password,
+          password_confirmation: passwordConfirmation,
+        }),
       },
-      body: JSON.stringify({
-        token,
-        email,
-        password,
-        password_confirmation: passwordConfirmation,
-      }),
-    });
+    );
   } catch {
     throw new AuthError(
       "Unable to connect to the server.",
@@ -279,6 +432,10 @@ export async function resetPassword(
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* User normalization                                                  */
+/* ------------------------------------------------------------------ */
+
 function normalizeUser(raw: any): AuthUser {
   if (!raw) {
     throw new AuthError(
@@ -297,6 +454,7 @@ function normalizeUser(raw: any): AuthUser {
         : "admin",
     role_name: raw.role_name ?? null,
     is_active: raw.is_active !== false,
+    account_status: raw.account_status ?? null,
     permissions: Array.isArray(raw.permissions)
       ? raw.permissions.map(String)
       : [],
@@ -304,7 +462,7 @@ function normalizeUser(raw: any): AuthUser {
 }
 
 /* ------------------------------------------------------------------ */
-/* Demo adapter                                                       */
+/* Demo adapter                                                        */
 /* ------------------------------------------------------------------ */
 
 const allFor = (mods: string[]) =>
@@ -411,6 +569,7 @@ function demoSession(): AuthUser | null {
   try {
     return normalizeUser(JSON.parse(raw));
   } catch {
+    window.localStorage.removeItem(DEMO_KEY);
     return null;
   }
 }
@@ -419,7 +578,3 @@ export const DEMO_MODULE_HINT =
   ASSIGNABLE_MODULES.map(
     (m) => m.key,
   );
-
-
-
-

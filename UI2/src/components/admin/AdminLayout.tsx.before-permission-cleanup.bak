@@ -1,4 +1,4 @@
-Ôªøimport { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -51,7 +51,7 @@ type AdminPath =
   | "/admin/city-admins"
   | "/admin/directory"
   | "/admin/users"
-  | "/admin/roles"
+  | "/admin/permissions"
   | "/admin/messages"
   | "/admin/notifications"
   | "/admin/multimedia"
@@ -70,7 +70,6 @@ type Permission =
   | "city_admins.view"
   | "directory.view"
   | "users.view"
-  | "roles.view"
   | "permissions.view"
   | "messages.view"
   | "notifications.view"
@@ -125,35 +124,30 @@ const NAV_GROUPS: NavGroup[] = [
         label: "News",
         icon: Newspaper,
         permission: "news.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/events",
         label: "Events",
         icon: Calendar,
         permission: "events.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/tenders",
         label: "Tenders",
         icon: FileText,
         permission: "tenders.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/vacancies",
         label: "Vacancies",
         icon: Briefcase,
         permission: "vacancies.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/job-applications",
         label: "Job Applications",
         icon: FileText,
         permission: "job_applications.view",
-        alwaysVisible: true,
         superAdminOnly: true,
       },
       {
@@ -161,14 +155,12 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Publications",
         icon: BookOpen,
         permission: "publications.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/city-admins",
         label: "City Administrations",
         icon: Building2,
         permission: "city_admins.view",
-        alwaysVisible: true,
       },
 
       /*
@@ -197,17 +189,18 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "users.view",
         superAdminOnly: true,
       },
-      {
-        to: "/admin/accounts",
-        label: "Admin Accounts",
-        icon: ShieldCheck,
-        superAdminOnly: true,
-      },
-      {
+            {
         to: "/admin/roles",
         label: "Roles",
         icon: ShieldCheck,
         permission: "roles.view",
+        superAdminOnly: true,
+      },
+      {
+        to: "/admin/permissions",
+        label: "Permissions",
+        icon: KeyRound,
+        permission: "permissions.view",
         superAdminOnly: true,
       },
     ],
@@ -221,14 +214,12 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Messages",
         icon: MessageSquare,
         permission: "messages.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/notifications",
         label: "Notifications",
         icon: BellRing,
         permission: "notifications.view",
-        alwaysVisible: true,
       },
     ],
   },
@@ -241,7 +232,6 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Multimedia Library",
         icon: ImageIcon,
         permission: "multimedia.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/settings",
@@ -260,14 +250,12 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Background Image",
         icon: ImageIcon,
         permission: "backgrounds.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/portfolio",
         label: "Portfolio",
         icon: ImageIcon,
         permission: "portfolios.view",
-        alwaysVisible: true,
       },
     ],
   },
@@ -561,7 +549,7 @@ export function AdminLayout({
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
 
                 <span className="truncate">
-                  Search modules and pages‚Ä¶
+                  Search modules and pagesÖ
                 </span>
 
                 <kbd className="ml-auto hidden rounded border bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-foreground/60 sm:inline-block">
@@ -679,7 +667,7 @@ function SidebarNav({
           <LogOut className="h-4 w-4" />
 
           {signingOut
-            ? "Signing out‚Ä¶"
+            ? "Signing outÖ"
             : "Sign out"}
         </button>
 
@@ -687,7 +675,7 @@ function SidebarNav({
           to="/"
           className="mt-1 block rounded-lg px-3 py-2 text-xs text-sidebar-foreground/60 hover:text-gold"
         >
-          ‚Üê Back to public portal
+          ? Back to public portal
         </Link>
       </div>
     </aside>
@@ -1040,7 +1028,7 @@ function NotificationBell({
                   className="rounded-md px-2 py-1 text-xs font-medium text-primary transition hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {markingAll
-                    ? "Marking‚Ä¶"
+                    ? "MarkingÖ"
                     : "Mark all as read"}
                 </button>
               )}
@@ -1063,7 +1051,7 @@ function NotificationBell({
               </div>
 
               <p className="mt-3 text-sm font-medium">
-                Checking notifications‚Ä¶
+                Checking notificationsÖ
               </p>
 
               <p className="mt-1 text-xs text-muted-foreground">
@@ -1343,7 +1331,7 @@ function ProfileMenu({
               <LogOut className="h-4 w-4" />
 
               {signingOut
-                ? "Signing out‚Ä¶"
+                ? "Signing outÖ"
                 : "Sign out"}
             </button>
           </div>
@@ -1394,7 +1382,7 @@ function GlobalSearch({
             onChange={(e) =>
               setQ(e.target.value)
             }
-            placeholder="Search modules and pages‚Ä¶"
+            placeholder="Search modules and pagesÖ"
             className="h-12 flex-1 bg-transparent text-sm outline-none"
           />
 
@@ -1573,17 +1561,6 @@ export function EmptyState({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 

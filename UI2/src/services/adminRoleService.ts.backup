@@ -1,0 +1,94 @@
+﻿import { authFetch } from "@/services/authService";
+
+export type AdminRole = {
+  id: string;
+  name: string;
+  description: string;
+  users: number;
+  permissions: string[];
+  editable: boolean;
+  deletable?: boolean;
+  permissions_count?: number | null;
+};
+
+export type RolePayload = {
+  name: string;
+  description?: string;
+  permissions: string[];
+};
+
+async function parseResponse(res: Response, fallback: string) {
+  const body = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(body?.message ?? fallback);
+  }
+
+  return body;
+}
+
+export async function listRoles(): Promise<AdminRole[]> {
+  const res = await authFetch("/admin/roles");
+
+  const body = await parseResponse(res, "Unable to load roles.");
+
+  return (body?.data ?? []) as AdminRole[];
+}
+
+export async function createRole(
+  payload: RolePayload,
+): Promise<AdminRole> {
+  const res = await authFetch("/admin/roles", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const body = await parseResponse(res, "Unable to create role.");
+
+  return body.data as AdminRole;
+}
+
+export async function updateRole(
+  roleId: string,
+  payload: RolePayload,
+): Promise<AdminRole> {
+  const res = await authFetch(`/admin/roles/${roleId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const body = await parseResponse(res, "Unable to update role.");
+
+  return body.data as AdminRole;
+}
+
+export async function deleteRole(roleId: string): Promise<void> {
+  const res = await authFetch(`/admin/roles/${roleId}`, {
+    method: "DELETE",
+  });
+
+  await parseResponse(res, "Unable to delete role.");
+}
+
+export async function assignAdminRole(
+  userId: string,
+  roleId: string,
+): Promise<void> {
+  const res = await authFetch(`/admin/users/${userId}/role`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      role_id: Number(roleId),
+    }),
+  });
+
+  await parseResponse(res, "Unable to assign role.");
+}

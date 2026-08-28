@@ -1,0 +1,527 @@
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AdminLayout,
+  AdminPageHeader,
+} from "@/components/admin/AdminLayout";
+import {
+  createRole,
+  deleteRole,
+  listRoles,
+  updateRole,
+  type AdminRole,
+} from "@/services/adminRoleService";
+import {
+  PERMISSION_ACTIONS,
+  PERMISSION_MODULES,
+  type PermissionAction,
+} from "@/lib/permissions";
+import {
+  Loader2,
+  Pencil,
+  Plus,
+  ShieldCheck,
+  Trash2,
+  X,
+} from "lucide-react";
+
+export const Route = createFileRoute("/admin/roles")({
+  head: () => ({
+    meta: [
+      { title: "Role Management" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: RolesAdmin,
+});
+
+type RoleForm = {
+  name: string;
+  description: string;
+  permissions: string[];
+};
+
+const EMPTY_FORM: RoleForm = {
+  name: "",
+  description: "",
+  permissions: [],
+};
+
+function RolesAdmin() {
+  const [roles, setRoles] = useState<AdminRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingRole, setEditingRole] = useState<AdminRole | null>(null);
+  const [form, setForm] = useState<RoleForm>(EMPTY_FORM);
+
+  async function loadRoles() {
+    try {
+      setError("");
+      setLoading(true);
+      setRoles(await listRoles());
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Unable to load roles.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadRoles();
+  }, []);
+
+  const editableRoles = useMemo(
+    () => roles.filter((role) => role.editable && role.id !== "super_admin"),
+    [roles],
+  );
+
+  function openCreate() {
+    setEditingRole(null);
+    setForm(EMPTY_FORM);
+    setError("");
+    setModalOpen(true);
+  }
+
+  function openEdit(role: AdminRole) {
+    if (!role.editable || role.id === "super_admin") {
+      return;
+    }
+
+    setEditingRole(role);
+    setForm({
+      name: role.name,
+      description: role.description ?? "",
+      permissions: [...role.permissions],
+    });
+    setError("");
+    setModalOpen(true);
+  }
+
+  function closeModal() {
+    if (saving) return;
+
+    setModalOpen(false);
+    setEditingRole(null);
+    setForm(EMPTY_FORM);
+  }
+
+  function permissionKey(
+    moduleKey: string,
+    action: PermissionAction,
+  ) {
+    return `${moduleKey}.${action}`;
+  }
+
+  function hasPermission(key: string) {
+    return form.permissions.includes(key);
+  }
+
+  function togglePermission(key: string) {
+    setForm((current) => ({
+      ...current,
+      permissions: current.permissions.includes(key)
+        ? current.permissions.filter((item) => item !== key)
+        : [...current.permissions, key],
+    }));
+  }
+
+  function moduleHasAllPermissions(moduleKey: string) {
+    return PERMISSION_ACTIONS.every((action) =>
+      hasPermission(permissionKey(moduleKey, action)),
+    );
+  }
+
+  function toggleModule(moduleKey: string) {
+    const keys = PERMISSION_ACTIONS.map((action) =>
+      permissionKey(moduleKey, action),
+    );
+
+    setForm((current) => {
+      const allSelected = keys.every((key) =>
+        current.permissions.includes(key),
+      );
+
+      if (allSelected) {
+        return {
+          ...current,
+          permissions: current.permissions.filter(
+            (permission) => !keys.includes(permission),
+          ),
+        };
+      }
+
+      return {
+        ...current,
+        permissions: Array.from(
+          new Set([...current.permissions, ...keys]),
+        ),
+      };
+    });
+  }
+
+  async function saveRole() {
+    const name = form.name.trim();
+
+    if (!name) {
+      setError("Role name is required.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const payload = {
+        name,
+        description: form.description.trim(),
+        permissions: form.permissions,
+      };
+
+      if (editingRole) {
+        await updateRole(editingRole.id, payload);
+      } else {
+        await createRole(payload);
+      }
+
+      setModalOpen(false);
+      setEditingRole(null);
+      setForm(EMPTY_FORM);
+
+      await loadRoles();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Unable to save role.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function removeRole(role: AdminRole) {
+    if (!role.deletable || role.id === "super_admin") {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete the "${role.name}" role?\n\nAssigned Admin accounts will lose this role and therefore have no permissions until another role is assigned.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError("");
+      await deleteRole(role.id);
+      await loadRoles();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Unable to delete role.",
+      );
+    }
+  }
+
+  return (
+    <AdminLayout>
+      <AdminPageHeader
+        title="Role Management"
+        description="Create roles and control the View, Create, Update, and Delete permissions available to staff."
+      />
+
+      <div className="mb-5 flex justify-end">
+        <button
+          type="button"
+          onClick={openCreate}
+          className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          Create Role
+        </button>
+      </div>
+
+      {error && (
+        <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center gap-2 p-10 text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading roles...
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {roles.map((role) => {
+            const isSuperAdmin = role.id === "super_admin";
+
+            return (
+              <div
+                key={role.id}
+                className="rounded-xl border bg-card p-5 shadow-soft"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-primary-foreground">
+                      <ShieldCheck className="h-5 w-5" />
+                    </div>
+
+                    <div>
+                      <div className="font-semibold">
+                        {role.name}
+                      </div>
+
+                      <div className="text-xs text-muted-foreground">
+                        {role.users} user
+                        {role.users === 1 ? "" : "s"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {!isSuperAdmin && role.editable && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(role)}
+                        className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                        title="Edit role"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+
+                      {role.deletable && (
+                        <button
+                          type="button"
+                          onClick={() => void removeRole(role)}
+                          className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
+                          title="Delete role"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {role.description}
+                </p>
+
+                <div className="mt-4 border-t pt-3">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Access
+                  </div>
+
+                  <div className="mt-2 text-sm">
+                    {isSuperAdmin
+                      ? "Unrestricted"
+                      : `${role.permissions.length} permission${role.permissions.length === 1 ? "" : "s"}`}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {roles.length === 0 && (
+            <div className="rounded-xl border bg-card p-8 text-center text-sm text-muted-foreground md:col-span-2">
+              No roles have been created yet.
+            </div>
+          )}
+        </div>
+      )}
+
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl border bg-card shadow-xl">
+            <div className="flex items-center justify-between border-b p-5">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {editingRole ? "Edit Role" : "Create Role"}
+                </h2>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Assign exactly which actions this role can perform.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={saving}
+                className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                title="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="max-h-[calc(90vh-150px)] overflow-y-auto p-5">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">
+                    Role name
+                  </label>
+
+                  <input
+                    value={form.name}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        name: event.target.value,
+                      }))
+                    }
+                    disabled={saving}
+                    className="h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:border-primary"
+                    placeholder="e.g. Content Manager"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium">
+                    Description
+                  </label>
+
+                  <input
+                    value={form.description}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
+                    disabled={saving}
+                    className="h-10 w-full rounded-lg border bg-background px-3 text-sm outline-none focus:border-primary"
+                    placeholder="Describe this role"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold">
+                      Permissions
+                    </h3>
+
+                    <p className="text-xs text-muted-foreground">
+                      Select View, Create, Update, and Delete independently.
+                    </p>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground">
+                    {form.permissions.length} selected
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-lg border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-secondary text-left text-xs uppercase tracking-wider text-muted-foreground">
+                      <tr>
+                        <th className="px-4 py-3">
+                          Module
+                        </th>
+
+                        {PERMISSION_ACTIONS.map((action) => (
+                          <th
+                            key={action}
+                            className="px-4 py-3 text-center"
+                          >
+                            {action}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {PERMISSION_MODULES.filter(
+                        (module) => !module.superAdminOnly,
+                      ).map((module) => (
+                        <tr
+                          key={module.key}
+                          className="border-t"
+                        >
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                toggleModule(module.key)
+                              }
+                              disabled={saving}
+                              className="text-left font-medium hover:underline"
+                              title="Toggle all permissions"
+                            >
+                              {module.label}
+                            </button>
+
+                            {moduleHasAllPermissions(module.key) && (
+                              <span className="ml-2 text-xs text-primary">
+                                All
+                              </span>
+                            )}
+                          </td>
+
+                          {PERMISSION_ACTIONS.map((action) => {
+                            const key = permissionKey(
+                              module.key,
+                              action,
+                            );
+
+                            return (
+                              <td
+                                key={key}
+                                className="px-4 py-3 text-center"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={hasPermission(key)}
+                                  onChange={() =>
+                                    togglePermission(key)
+                                  }
+                                  disabled={saving}
+                                  className="h-4 w-4"
+                                  aria-label={`${action} ${module.label}`}
+                                />
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t p-4">
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={saving}
+                className="h-9 rounded-lg border px-4 text-sm font-medium hover:bg-secondary"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void saveRole()}
+                disabled={saving}
+                className="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              >
+                {saving && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {editingRole ? "Save Changes" : "Create Role"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </AdminLayout>
+  );
+}
