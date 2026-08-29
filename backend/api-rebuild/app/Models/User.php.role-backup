@@ -142,6 +142,9 @@ class User extends Authenticatable
     {
         /*
          * Super Admins have unrestricted permissions.
+         *
+         * Their permissions column does NOT need to contain
+         * every permission.
          */
         if ($this->isSuperAdmin()) {
             return true;
@@ -155,21 +158,7 @@ class User extends Authenticatable
         }
 
         /*
-         * A normal admin inherits permissions from the
-         * role assigned through role_id.
-         */
-        if ($this->assignedRole) {
-            return in_array(
-                $permission,
-                $this->assignedRole->permissionKeys(),
-                true
-            );
-        }
-
-        /*
-         * Temporary backwards compatibility:
-         * users without a role can still use their existing
-         * explicitly assigned permissions.
+         * Permission is granted only when explicitly assigned.
          */
         return in_array(
             $permission,
@@ -219,4 +208,3 @@ class User extends Authenticatable
         return true;
     }
 }
-

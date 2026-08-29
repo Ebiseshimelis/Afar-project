@@ -30,6 +30,10 @@ class AuthController extends Controller
             ]);
         }
 
+        /*
+         * Only Admin and Super Admin accounts may use
+         * the staff login.
+         */
         if (!in_array($user->role, ['admin', 'super_admin'], true)) {
             return response()->json([
                 'message' => 'This account is not authorized for staff login.',
@@ -37,20 +41,18 @@ class AuthController extends Controller
         }
 
         /*
-         * Account must be active.
-         */
-        if (!$user->is_active) {
-            return response()->json([
-                'message' => 'Your account has been disabled. Please contact the Super Admin.',
-            ], 423);
-        }
-
-        /*
-         * Normal Admins and Super Admins must have an approved account.
-         *
          * The database is the source of truth.
+         *
+         * Super Admin accounts are protected system accounts.
+         * Normal Admin accounts must be approved before login.
          */
-        if (!$user->isApproved()) {
+        if ($user->isSuperAdmin()) {
+            if (!$user->is_active || !$user->isApproved()) {
+                return response()->json([
+                    'message' => 'The Super Admin account must remain active and approved.',
+                ], 403);
+            }
+        } elseif (!$user->isApproved()) {
             return response()->json([
                 'message' => match ($user->account_status) {
                     'pending' => 'Your account is waiting for Super Admin approval.',
@@ -82,7 +84,8 @@ class AuthController extends Controller
         }
 
         /*
-         * Revoke previous tokens so only the current login remains active.
+         * Revoke previous tokens so only the current login
+         * remains active.
          */
         $user->tokens()->delete();
 
@@ -107,6 +110,8 @@ class AuthController extends Controller
          *
          * If an account was disabled/rejected after login,
          * do not continue treating the session as valid.
+         *
+         * Super Admin is also required to remain active and approved.
          */
         if (!$user->is_active || !$user->isApproved()) {
             $user->currentAccessToken()?->delete();
@@ -169,25 +174,24 @@ class AuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
-            'role_name' => $user->assignedRole?->name,
+            'role_name' => $user->isSuperAdmin()
+                ? 'Super Admin'
+                : $user->assignedRole?->name,
             'is_active' => (bool) $user->is_active,
             'account_status' => $user->account_status,
 
             /*
              * Super Admin gets unrestricted access.
-             * Normal Admin gets the permissions actually stored in DB.
+             * Normal Admin inherits permissions from the
+             * assigned database role.
              */
             'permissions' => $user->isSuperAdmin()
                 ? ['*']
-                : ($user->assignedRole ? $user->assignedRole->permissionKeys() : []),
+                : (
+                    $user->assignedRole
+                        ? $user->assignedRole->permissionKeys()
+                        : []
+                ),
         ];
     }
 }
-
-
-
-
-
-
-
-
