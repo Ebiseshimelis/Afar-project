@@ -402,22 +402,22 @@ Route::prefix('v1')
     Route::get(
         '/job-applications',
         [JobApplicationController::class, 'index']
-    )->middleware('permission:vacancies.view');
+    )->middleware('permission:job_applications.view');
 
     Route::get(
         '/job-applications/{jobApplication}',
         [JobApplicationController::class, 'show']
-    )->middleware('permission:vacancies.view');
+    )->middleware('permission:job_applications.view');
 
     Route::put(
         '/job-applications/{jobApplication}',
         [JobApplicationController::class, 'update']
-    )->middleware('permission:vacancies.update');
+    )->middleware('permission:job_applications.update');
 
     Route::delete(
         '/job-applications/{jobApplication}',
         [JobApplicationController::class, 'destroy']
-    )->middleware('permission:vacancies.delete');
+    )->middleware('permission:job_applications.delete');
 
 
     /*
@@ -755,6 +755,8 @@ Route::prefix('v1')
         [SystemSettingController::class, 'update']
     )->middleware('permission:settings.update');
 });
+
+
 
 
 

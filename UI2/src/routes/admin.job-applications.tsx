@@ -1,4 +1,5 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -125,6 +126,7 @@ function getVacancyTitle(
 }
 
 function JobApplicationsAdmin() {
+  const { can } = useAuth();
   const [applications, setApplications] =
     useState<JobApplicationItem[]>([]);
 
@@ -479,10 +481,11 @@ function JobApplicationsAdmin() {
                         </td>
 
                         <td className="px-5 py-4">
-                          <select
-                            value={
-                              application.status
-                            }
+                          {can("job_applications.update") && (
+                            <select
+                              value={
+                                application.status
+                              }
                             disabled={
                               updatingId ===
                               application.id
@@ -512,7 +515,8 @@ function JobApplicationsAdmin() {
                                 </option>
                               )
                             )}
-                          </select>
+                            </select>
+                          )}
                         </td>
 
                         <td className="whitespace-nowrap px-5 py-4 text-sm text-gray-600">
@@ -523,27 +527,30 @@ function JobApplicationsAdmin() {
 
                         <td className="px-5 py-4">
                           <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                openDetails(
-                                  application
-                                )
-                              }
+                            {can("job_applications.view") && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openDetails(
+                                    application
+                                  )
+                                }
                               className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm hover:bg-gray-100"
                             >
                               <Eye
                                 size={16}
                               />
                               View
-                            </button>
+                              </button>
+                            )}
 
-                            <button
-                              type="button"
-                              disabled={
-                                deletingId ===
-                                application.id
-                              }
+                            {can("job_applications.delete") && (
+                              <button
+                                type="button"
+                                disabled={
+                                  deletingId ===
+                                  application.id
+                                }
                               onClick={() =>
                                 handleDelete(
                                   application
@@ -563,7 +570,8 @@ function JobApplicationsAdmin() {
                                 />
                               )}
                               Delete
-                            </button>
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -708,6 +716,7 @@ function JobApplicationsAdmin() {
                 </h3>
 
                 <div className="flex flex-wrap items-center gap-3">
+                  {can("job_applications.update") && (
                   <select
                     value={
                       selectedApplication.status
@@ -738,6 +747,7 @@ function JobApplicationsAdmin() {
                       )
                     )}
                   </select>
+                  )}
 
                   <span className="text-sm text-gray-500">
                     Submitted:{" "}
@@ -823,3 +833,10 @@ function InfoItem({
     </div>
   );
 }
+
+
+
+
+
+
+

@@ -40,10 +40,10 @@ export type UpdateMultimediaData = {
 };
 
 export const API_BASE_URL =
-  "http://127.0.0.1:8000/api/v1";
+  "http://127.0.0.1:8001/api/v1";
 
 export const BACKEND_BASE_URL =
-  "http://127.0.0.1:8000";
+  "http://127.0.0.1:8001";
 
 export const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 
@@ -66,7 +66,7 @@ function getAuthHeaders(): HeadersInit {
  * Examples:
  *
  * multimedia/photo.jpg
- * -> http://127.0.0.1:8000/storage/multimedia/photo.jpg
+ * -> http://127.0.0.1:8001/storage/multimedia/photo.jpg
  *
  * https://example.com/photo.jpg
  * -> unchanged

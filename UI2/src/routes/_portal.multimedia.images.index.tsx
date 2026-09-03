@@ -12,7 +12,7 @@ export const Route = createFileRoute(
   head: () => ({
     meta: [
       {
-        title: "Image Gallery � Afar UDCB",
+        title: "Image Gallery - Afar UDCB",
       },
     ],
   }),

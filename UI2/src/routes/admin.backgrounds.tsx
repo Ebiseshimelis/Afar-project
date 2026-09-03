@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminLayout, AdminPageHeader } from "@/components/admin/AdminLayout";
+import { useAuth } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { Loader2, Upload, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/admin/backgrounds")({
 const SECTIONS = Object.keys(DEFAULT_SECTION_BACKGROUNDS) as SectionKey[];
 
 function BackgroundsAdmin() {
+  const { can } = useAuth();
   const [overrides, setOverrides] = useState<SectionBackgrounds>({});
 
   const [savingKey, setSavingKey] = useState<SectionKey | null>(null);

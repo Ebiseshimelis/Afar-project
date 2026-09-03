@@ -35,8 +35,8 @@ export const Route = createFileRoute(
     meta: [
       {
         title: loaderData
-          ? `${loaderData.item.title} — Afar UDCB`
-          : "Image — Afar UDCB",
+          ? `${loaderData.item.title} â€” Afar UDCB`
+          : "Image â€” Afar UDCB",
       },
       {
         name: "description",
@@ -48,7 +48,7 @@ export const Route = createFileRoute(
         property: "og:title",
         content:
           loaderData?.item.title ||
-          "Image — Afar UDCB",
+          "Image â€” Afar UDCB",
       },
       {
         property: "og:description",

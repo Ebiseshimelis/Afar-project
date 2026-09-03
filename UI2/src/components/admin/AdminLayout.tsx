@@ -154,7 +154,6 @@ const NAV_GROUPS: NavGroup[] = [
         icon: FileText,
         permission: "job_applications.view",
         alwaysVisible: true,
-        superAdminOnly: true,
       },
       {
         to: "/admin/publications",
@@ -221,7 +220,6 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Messages",
         icon: MessageSquare,
         permission: "messages.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/notifications",
@@ -395,8 +393,19 @@ export function AdminLayout({
 
         if (item.alwaysVisible) return true;
 
+        
+        if (item.to === "/admin/messages") {
+          return (
+            can("messages.view") ||
+            can("messages.create") ||
+            can("messages.update") ||
+            can("messages.delete")
+          );
+        }
+
         if (!item.permission) return true;
 
+        
         return can(item.permission);
       }),
     })).filter((group) => group.items.length > 0);
@@ -1573,6 +1582,10 @@ export function EmptyState({
     </div>
   );
 }
+
+
+
+
 
 
 

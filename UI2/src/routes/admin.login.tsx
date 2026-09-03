@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Eye, EyeOff, Lock, Mail, LogIn, ShieldCheck, UserCog } from "lucide-react";
 import { toast } from "sonner";
@@ -9,7 +9,7 @@ import type { StaffRole } from "@/lib/permissions";
 export const Route = createFileRoute("/admin/login")({
   head: () => ({
     meta: [
-      { title: "Staff Login â€” Afar UDCB" },
+      { title: "Staff Login - Afar UDCB" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -50,7 +50,7 @@ function LoginPage() {
 
       toast.success(`Welcome back, ${user.name}`);
 
-      nav({ to: "/admin" });
+      nav({ to: user.role === "super_admin" ? "/admin/accounts" : "/admin" });
     } catch (error: unknown) {
       console.error("LOGIN ERROR:", error);
 
@@ -111,7 +111,7 @@ function LoginPage() {
           </div>
 
           <div className="text-xs text-primary-foreground/60">
-            © {new Date().getFullYear()} Afar Regional State
+            Ãƒâ€šÃ‚Â© {new Date().getFullYear()} Afar Regional State
           </div>
         </div>
       </div>
@@ -295,6 +295,7 @@ function LoginPage() {
     </div>
   );
 }
+
 
 
 

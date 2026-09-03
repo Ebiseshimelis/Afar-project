@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
 import {
   getTender,
@@ -114,10 +114,10 @@ function getFileUrl(filePath: string): string {
   }
 
   if (filePath.startsWith("/")) {
-    return `http://127.0.0.1:8000${filePath}`;
+    return `http://127.0.0.1:8001${filePath}`;
   }
 
-  return `http://127.0.0.1:8000/storage/${filePath}`;
+  return `http://127.0.0.1:8001/storage/${filePath}`;
 }
 
 function getFileExtension(filePath: string): string {

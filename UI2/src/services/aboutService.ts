@@ -10,7 +10,7 @@ export interface About {
   updated_at: string;
 }
 
-const API_URL = "http://127.0.0.1:8000/api/v1";
+const API_URL = "http://127.0.0.1:8001/api/v1";
 
 export async function getAbout(): Promise<About> {
   const response = await fetch(`${API_URL}/about`);

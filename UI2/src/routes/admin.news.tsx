@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 
 import {
   AdminLayout,
@@ -35,6 +35,7 @@ import {
 } from "react";
 
 import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 export const Route =
   createFileRoute("/admin/news")({
@@ -54,6 +55,7 @@ export const Route =
   });
 
 function NewsAdmin() {
+  const { can } = useAuth();
   const [news, setNews] =
     useState<any[]>([]);
 
@@ -199,6 +201,7 @@ function NewsAdmin() {
   async function openViewNews(
     id: string
   ) {
+    if (!can("news.view")) return;
     try {
       setLoadingView(true);
       setShowView(true);
@@ -267,6 +270,7 @@ function NewsAdmin() {
   */
 
   function openCreateForm() {
+    if (!can("news.create")) return;
     resetForm();
     setShowForm(true);
   }
@@ -344,6 +348,7 @@ function NewsAdmin() {
   async function openEditForm(
     id: string
   ) {
+    if (!can("news.update")) return;
     try {
       setLoadingEdit(true);
       setShowForm(true);
@@ -506,6 +511,7 @@ function NewsAdmin() {
   async function handleDelete(
     id: string
   ) {
+    if (!can("news.delete")) return;
     const confirmed =
       window.confirm(
         "Are you sure you want to delete this news article?"
@@ -635,16 +641,18 @@ function NewsAdmin() {
         title="News Management"
         description="Create, edit, and publish news articles."
         action={
-          <button
-            type="button"
-            onClick={
-              openCreateForm
-            }
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New article
-          </button>
+          can("news.create") ? (
+            <button
+              type="button"
+              onClick={
+                openCreateForm
+              }
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New article
+            </button>
+          ) : undefined
         }
       />
 
@@ -712,7 +720,7 @@ function NewsAdmin() {
                           ).startsWith(
                             "news/"
                           )
-                            ? `http://127.0.0.1:8000/storage/${String(
+                            ? `http://127.0.0.1:8001/storage/${String(
                                 viewingNews.imagePath
                               )}`
                             : `/${String(
@@ -841,7 +849,7 @@ function NewsAdmin() {
                     <div className="rounded-xl border bg-background p-4">
                       <p className="whitespace-pre-wrap text-sm leading-8">
                         {viewingNews.contentAm ||
-                          "ምንም የአማርኛ ይዘት የለም።"}
+                          "??? ????? ??? ????"}
                       </p>
                     </div>
                   </div>
@@ -950,7 +958,7 @@ function NewsAdmin() {
                         e.target.value
                       )
                     }
-                    placeholder="የዜና ርዕስ"
+                    placeholder="??? ???"
                     disabled={saving}
                     className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 disabled:opacity-50"
                   />
@@ -991,7 +999,7 @@ function NewsAdmin() {
                         e.target.value
                       )
                     }
-                    placeholder="የዜና ይዘት"
+                    placeholder="??? ???"
                     rows={5}
                     disabled={saving}
                     className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 disabled:opacity-50"
@@ -1332,57 +1340,159 @@ function NewsAdmin() {
                           {/* VIEW BUTTON                                       */}
                           {/* ================================================= */}
 
-                          <button
-                            type="button"
-                            aria-label="View news"
-                            title="View news details"
-                            onClick={() =>
-                              openViewNews(
-                                String(
-                                  n.id
+                          {can("news.view") && (
+
+
+                            <button
+
+
+                              type="button"
+
+
+                              aria-label="View news"
+
+
+                              title="View news details"
+
+
+                              onClick={() =>
+
+
+                                openViewNews(
+
+
+                                  String(
+
+
+                                    n.id
+
+
+                                  )
+
+
                                 )
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
+
+
+                              }
+
+
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+
+
+                            >
+
+
+                              <Eye className="h-4 w-4" />
+
+
+                            </button>
+
+
+                          )}
 
                           {/* Edit */}
 
-                          <button
-                            type="button"
-                            aria-label="Edit"
-                            title="Edit news"
-                            onClick={() =>
-                              openEditForm(
-                                String(
-                                  n.id
+                          {can("news.update") && (
+
+
+                            <button
+
+
+                              type="button"
+
+
+                              aria-label="Edit"
+
+
+                              title="Edit news"
+
+
+                              onClick={() =>
+
+
+                                openEditForm(
+
+
+                                  String(
+
+
+                                    n.id
+
+
+                                  )
+
+
                                 )
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
+
+
+                              }
+
+
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+
+
+                            >
+
+
+                              <Pencil className="h-4 w-4" />
+
+
+                            </button>
+
+
+                          )}
 
                           {/* Delete */}
 
-                          <button
-                            type="button"
-                            aria-label="Delete"
-                            title="Delete news"
-                            onClick={() =>
-                              handleDelete(
-                                String(
-                                  n.id
+                          {can("news.delete") && (
+
+
+                            <button
+
+
+                              type="button"
+
+
+                              aria-label="Delete"
+
+
+                              title="Delete news"
+
+
+                              onClick={() =>
+
+
+                                handleDelete(
+
+
+                                  String(
+
+
+                                    n.id
+
+
+                                  )
+
+
                                 )
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+
+
+                              }
+
+
+                              className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
+
+
+                            >
+
+
+                              <Trash2 className="h-4 w-4" />
+
+
+                            </button>
+
+
+                          )}
 
                         </div>
 
@@ -1403,3 +1513,4 @@ function NewsAdmin() {
     </AdminLayout>
   );
 }
+

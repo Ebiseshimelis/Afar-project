@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Edit, Image as ImageIcon, Loader2, Plus, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { AdminLayout, AdminPageHeader } from "@/components/admin/AdminLayout";
+import { useAuth } from "@/lib/auth";
 import {
   createPortfolio,
   deletePortfolio,
@@ -20,6 +21,7 @@ type FormState = { title: string; order: string; content: string; image: File | 
 const emptyForm: FormState = { title: "", order: "0", content: "", image: null };
 
 function AdminPortfolio() {
+  const { can } = useAuth();
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -49,6 +51,8 @@ function AdminPortfolio() {
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (editing && !can("portfolios.update")) return;
+    if (!editing && !can("portfolios.create")) return;
     if (!editing && !form.image) { toast.error("Please choose an image."); return; }
     const order = Number(form.order);
     if (!Number.isInteger(order) || order < 0) { toast.error("Order must be a whole number of zero or more."); return; }
@@ -65,7 +69,7 @@ function AdminPortfolio() {
   }
 
   async function remove(item: PortfolioItem) {
-    if (!window.confirm(`Delete “${item.title}”?`)) return;
+    if (!window.confirm(`Delete ΓÇ£${item.title}ΓÇ¥?`)) return;
     try {
       setDeletingId(item.id);
       await deletePortfolio(item.id);
@@ -79,7 +83,7 @@ function AdminPortfolio() {
   return (
     <AdminLayout>
       <AdminPageHeader title="Portfolio" description="Manage the project and milestone items shown on the public home page." action={
-        <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"><Plus className="h-4 w-4" /> Add Portfolio</button>
+        can("portfolios.create") ? (<button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"><Plus className="h-4 w-4" /> Add Portfolio</button>) : undefined
       } />
 
       {showForm && <div className="mb-8 rounded-xl border bg-card p-6 shadow-soft">
@@ -92,9 +96,18 @@ function AdminPortfolio() {
         </form>
       </div>}
 
-      {loading ? <div className="rounded-xl border bg-card p-10 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /><p className="mt-3 text-sm text-muted-foreground">Loading portfolio...</p></div> : items.length === 0 ? <div className="rounded-xl border bg-card p-10 text-center"><ImageIcon className="mx-auto h-10 w-10 text-muted-foreground" /><h3 className="mt-4 text-lg font-semibold">No portfolio items yet</h3><p className="mt-2 text-sm text-muted-foreground">Add the first portfolio item to show it on the home page.</p></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{items.map((item) => <article key={item.id} className="overflow-hidden rounded-xl border bg-card shadow-soft"><div className="aspect-[4/3] bg-secondary">{item.imageUrl ? <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center"><ImageIcon className="h-10 w-10 text-muted-foreground" /></div>}</div><div className="p-4"><div className="flex items-start justify-between gap-3"><div><span className="text-xs font-medium text-muted-foreground">Order {item.order}</span><h3 className="mt-1 font-semibold">{item.title}</h3></div><div className="flex gap-1"><button type="button" onClick={() => openEdit(item)} className="rounded p-2 hover:bg-secondary" aria-label={`Edit ${item.title}`}><Edit className="h-4 w-4" /></button><button type="button" onClick={() => void remove(item)} disabled={deletingId === item.id} className="rounded p-2 text-destructive hover:bg-destructive/10" aria-label={`Delete ${item.title}`}>{deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button></div></div><p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{item.content}</p></div></article>)}</div>}
+      {loading ? <div className="rounded-xl border bg-card p-10 text-center"><Loader2 className="mx-auto h-6 w-6 animate-spin" /><p className="mt-3 text-sm text-muted-foreground">Loading portfolio...</p></div> : items.length === 0 ? <div className="rounded-xl border bg-card p-10 text-center"><ImageIcon className="mx-auto h-10 w-10 text-muted-foreground" /><h3 className="mt-4 text-lg font-semibold">No portfolio items yet</h3><p className="mt-2 text-sm text-muted-foreground">Add the first portfolio item to show it on the home page.</p></div> : <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{items.map((item) => <article key={item.id} className="overflow-hidden rounded-xl border bg-card shadow-soft"><div className="aspect-[4/3] bg-secondary">{item.imageUrl ? <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center"><ImageIcon className="h-10 w-10 text-muted-foreground" /></div>}</div><div className="p-4"><div className="flex items-start justify-between gap-3"><div><span className="text-xs font-medium text-muted-foreground">Order {item.order}</span><h3 className="mt-1 font-semibold">{item.title}</h3></div><div className="flex gap-1">{can("portfolios.update") && (<button type="button" onClick={() => openEdit(item)} className="rounded p-2 hover:bg-secondary" aria-label={`Edit ${item.title}`}><Edit className="h-4 w-4" /></button>)}{can("portfolios.delete") && (<button type="button" onClick={() => void remove(item)} disabled={deletingId === item.id} className="rounded p-2 text-destructive hover:bg-destructive/10" aria-label={`Delete ${item.title}`}>{deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</button>)}</div></div><p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{item.content}</p></div></article>)}</div>}
     </AdminLayout>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block"><span className="mb-2 block text-sm font-medium">{label}</span>{children}</label>; }
+
+
+
+
+
+
+
+
+

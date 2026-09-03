@@ -47,7 +47,7 @@ export type UpdatePublicationData =
   Partial<CreatePublicationData>;
 
 const API_BASE_URL =
-  "http://127.0.0.1:8000/api/v1";
+  "http://127.0.0.1:8001/api/v1";
 
 function getAuthHeaders(): HeadersInit {
   const token =

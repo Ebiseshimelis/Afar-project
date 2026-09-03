@@ -17,6 +17,7 @@ export const PERMISSION_MODULES: PermissionModule[] = [
   { key: "events", label: "Events", group: "Content" },
   { key: "tenders", label: "Tenders", group: "Content" },
   { key: "vacancies", label: "Vacancies", group: "Content" },
+  { key: "job_applications", label: "Job Applications", group: "Recruitment" },
   { key: "publications", label: "Publications", group: "Content" },
   { key: "portfolios", label: "Portfolio", group: "Content" },
   { key: "multimedia", label: "Multimedia", group: "Content" },
@@ -101,4 +102,5 @@ export function permissionLabel(key: string): string {
     module?.label ?? mod
   }`;
 }
+
 

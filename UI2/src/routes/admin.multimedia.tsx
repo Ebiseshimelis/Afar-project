@@ -1,4 +1,5 @@
 ﻿import { createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -55,6 +56,7 @@ const initialForm: FormState = {
 };
 
 function AdminMultimediaPage() {
+  const { can } = useAuth();
   const [items, setItems] = useState<
     MultimediaItem[]
   >([]);
@@ -117,6 +119,8 @@ function AdminMultimediaPage() {
   }
 
   function openCreateForm() {
+    if (!can("multimedia.create")) return;
+
     setEditingItem(null);
 
     setForm({
@@ -129,6 +133,7 @@ function AdminMultimediaPage() {
   function openEditForm(
     item: MultimediaItem,
   ) {
+    if (!can("multimedia.update")) return;
     try {
       console.log(
         "Opening multimedia for edit:",
@@ -472,6 +477,7 @@ function AdminMultimediaPage() {
   async function handleDelete(
     item: MultimediaItem,
   ) {
+    if (!can("multimedia.delete")) return;
     const confirmed =
       window.confirm(
         `Are you sure you want to delete "${item.title}"?`,
@@ -520,14 +526,16 @@ function AdminMultimediaPage() {
         title="Multimedia"
         description="Manage images and videos displayed on the public portal."
         action={
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Add Multimedia
-          </button>
+          can("multimedia.create") ? (
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Add Multimedia
+            </button>
+          ) : undefined
         }
       />
 
@@ -847,16 +855,16 @@ function AdminMultimediaPage() {
             Create your first image or video.
           </p>
 
-          <button
-            type="button"
-            onClick={
-              openCreateForm
-            }
-            className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground"
-          >
-            <Plus className="h-4 w-4" />
-            Add Multimedia
-          </button>
+          {can("multimedia.create") && (
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground"
+            >
+              <Plus className="h-4 w-4" />
+              Add Multimedia
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -870,6 +878,8 @@ function AdminMultimediaPage() {
               onDelete={() =>
                 handleDelete(item)
               }
+              canEdit={can("multimedia.update")}
+              canDelete={can("multimedia.delete")}
               deleting={
                 deletingId ===
                 item.id
@@ -886,11 +896,15 @@ function MultimediaCard({
   item,
   onEdit,
   onDelete,
+  canEdit,
+  canDelete,
   deleting,
 }: {
   item: MultimediaItem;
   onEdit: () => void;
   onDelete: () => void;
+  canEdit: boolean;
+  canDelete: boolean;
   deleting: boolean;
 }) {
   const normalizedType =
@@ -994,7 +1008,7 @@ function MultimediaCard({
         )}
 
         <div className="mt-4 flex justify-end gap-2 border-t pt-3">
-          <button
+          {canEdit && (<button
             type="button"
             onClick={onEdit}
             className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs hover:bg-secondary"
@@ -1002,8 +1016,9 @@ function MultimediaCard({
             <Edit className="h-3.5 w-3.5" />
             Edit
           </button>
+          )}
 
-          <button
+          {canDelete && (<button
             type="button"
             onClick={onDelete}
             disabled={deleting}
@@ -1017,8 +1032,11 @@ function MultimediaCard({
 
             Delete
           </button>
+
+          )}
         </div>
       </div>
     </div>
   );
 }
+

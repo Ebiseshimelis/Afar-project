@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
 import {
   getPublications,
@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 export const Route = createFileRoute("/_portal/publications")({
   head: () => ({
     meta: [
-      { title: "Publications — Afar UDCB" },
+      { title: "Publications â€” Afar UDCB" },
       {
         name: "description",
         content: "Strategies, reports, manuals, and policy documents.",
@@ -29,10 +29,10 @@ function getFileUrl(filePath: string): string {
   }
 
   if (filePath.startsWith("/")) {
-    return `http://127.0.0.1:8000${filePath}`;
+    return `http://127.0.0.1:8001${filePath}`;
   }
 
-  return `http://127.0.0.1:8000/storage/${filePath}`;
+  return `http://127.0.0.1:8001/storage/${filePath}`;
 }
 
 function getFileExtension(filePath: string): string {
@@ -268,7 +268,7 @@ function PublicationsPage() {
                           ? new Date(
                               publication.published_at,
                             ).toLocaleDateString()
-                          : "—"}
+                          : "â€”"}
                       </td>
 
                       <td className="px-5 py-4 text-right">

@@ -24,7 +24,7 @@ export type CityAdminFormData = {
   image?: File | null;
 };
 
-const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
+const API_BASE_URL = "http://127.0.0.1:8001/api/v1";
 
 function mapCityAdmin(item: any): CityAdmin {
   return {
@@ -45,11 +45,11 @@ function mapCityAdmin(item: any): CityAdmin {
       ? String(item.image_path).startsWith("http")
         ? String(item.image_path)
         : String(item.image_path).startsWith("/storage/")
-          ? `http://127.0.0.1:8000${String(item.image_path)}`
+          ? `http://127.0.0.1:8001${String(item.image_path)}`
           : String(item.image_path).startsWith("storage/")
-            ? `http://127.0.0.1:8000/${String(item.image_path)}`
+            ? `http://127.0.0.1:8001/${String(item.image_path)}`
             : String(item.image_path).includes("city-admins/")
-              ? `http://127.0.0.1:8000/storage/${String(
+              ? `http://127.0.0.1:8001/storage/${String(
                 item.image_path
               ).replace(/^\/+/, "")}`
            : String(item.image_path)

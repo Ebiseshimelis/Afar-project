@@ -1,4 +1,4 @@
-﻿import type { StaffRole } from "@/lib/permissions";
+import type { StaffRole } from "@/lib/permissions";
 import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 
 /**
@@ -16,7 +16,7 @@ import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 /* API / Storage                                                       */
 /* ------------------------------------------------------------------ */
 
-export const API_BASE = "http://127.0.0.1:8000/api/v1";
+export const API_BASE = "http://127.0.0.1:8001/api/v1";
 
 /*
  * The existing application uses "admin_token" in localStorage.
@@ -359,7 +359,7 @@ export async function forgotPassword(email: string): Promise<void> {
 
   try {
     res = await fetch(
-      "http://127.0.0.1:8000/api/forgot-password",
+      "http://127.0.0.1:8001/api/forgot-password",
       {
         method: "POST",
         headers: {
@@ -398,7 +398,7 @@ export async function resetPassword(
 
   try {
     res = await fetch(
-      "http://127.0.0.1:8000/api/reset-password",
+      "http://127.0.0.1:8001/api/reset-password",
       {
         method: "POST",
         headers: {

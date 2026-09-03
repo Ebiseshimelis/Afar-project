@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import { useEffect, useRef, useState } from "react";
 import {
   Building2,
@@ -42,6 +43,7 @@ const emptyForm: CityAdminFormData = {
 };
 
 function AdminCityAdminsPage() {
+  const { can } = useAuth();
   const [cities, setCities] = useState<CityAdmin[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -90,6 +92,7 @@ function AdminCityAdminsPage() {
   }
 
   function openCreateForm() {
+    if (!can("city_admins.create")) return;
     setForm({ ...emptyForm });
     setEditingId(null);
     setPreview("");
@@ -101,6 +104,7 @@ function AdminCityAdminsPage() {
   }
 
   function openEditForm(city: CityAdmin) {
+    if (!can("city_admins.update")) return;
     setEditingId(city.id);
 
     setForm({
@@ -227,6 +231,7 @@ function AdminCityAdminsPage() {
   }
 
   async function handleDelete(city: CityAdmin) {
+    if (!can("city_admins.delete")) return;
     const confirmed = window.confirm(
       `Are you sure you want to delete "${city.name}"?`,
     );
@@ -264,14 +269,16 @@ function AdminCityAdminsPage() {
         title="City Administrations"
         description="Manage city administrations, mayors, contact details, descriptions, and photos."
         action={
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Add City Administration
-          </button>
+          can("city_admins.create") ? (
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Add City Administration
+            </button>
+          ) : undefined
         }
       />
 
@@ -309,7 +316,7 @@ function AdminCityAdminsPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Name — English *
+                  Name â€” English *
                 </label>
 
                 <input
@@ -328,7 +335,7 @@ function AdminCityAdminsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Name — Amharic *
+                  Name â€” Amharic *
                 </label>
 
                 <input
@@ -339,7 +346,7 @@ function AdminCityAdminsPage() {
                       e.target.value,
                     )
                   }
-                  placeholder="የሰመራ ከተማ አስተዳደር"
+                  placeholder="á‹¨áˆ°áˆ˜áˆ« áŠ¨á‰°áˆ› áŠ áˆµá‰°á‹³á‹°áˆ­"
                   className="h-11 w-full rounded-md border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
                   required
                 />
@@ -350,7 +357,7 @@ function AdminCityAdminsPage() {
             <div className="grid gap-5 md:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Description — English
+                  Description â€” English
                 </label>
 
                 <textarea
@@ -369,7 +376,7 @@ function AdminCityAdminsPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Description — Amharic
+                  Description â€” Amharic
                 </label>
 
                 <textarea
@@ -381,7 +388,7 @@ function AdminCityAdminsPage() {
                     )
                   }
                   rows={4}
-                  placeholder="የከተማ አስተዳደሩን መግለጫ..."
+                  placeholder="á‹¨áŠ¨á‰°áˆ› áŠ áˆµá‰°á‹³á‹°áˆ©áŠ• áˆ˜áŒáˆˆáŒ«..."
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
@@ -635,46 +642,50 @@ function AdminCityAdminsPage() {
                     </td>
 
                     <td className="px-5 py-4">
-                      {city.mayor_name || "—"}
+                      {city.mayor_name || "â€”"}
                     </td>
 
                     <td className="px-5 py-4">
-                      {city.location || "—"}
+                      {city.location || "â€”"}
                     </td>
 
                     <td className="px-5 py-4">
                       <div>
-                        {city.email || "—"}
+                        {city.email || "â€”"}
                       </div>
 
                       <div className="mt-1 text-xs text-muted-foreground">
-                        {city.phone || "—"}
+                        {city.phone || "â€”"}
                       </div>
                     </td>
 
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openEditForm(city)
-                          }
-                          className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-medium hover:bg-muted"
-                        >
-                          <Edit className="h-3.5 w-3.5" />
-                          Edit
-                        </button>
+                        {can("city_admins.update") && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openEditForm(city)
+                            }
+                            className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-xs font-medium hover:bg-muted"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                            Edit
+                          </button>
+                        )}
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handleDelete(city)
-                          }
-                          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-destructive/30 px-3 text-xs font-medium text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Delete
-                        </button>
+                        {can("city_admins.delete") && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDelete(city)
+                            }
+                            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-destructive/30 px-3 text-xs font-medium text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

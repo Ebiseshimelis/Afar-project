@@ -1,4 +1,4 @@
-﻿import { getAdminToken } from "./authService";
+import { getAdminToken } from "./authService";
 
 export type Directorate = {
   id: number;
@@ -66,7 +66,7 @@ type ApiResponse = {
 
 const API_BASE =
   import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:8000/api/v1";
+  "http://127.0.0.1:8001/api/v1";
 
 /**
  * Convert a Laravel public-storage path into
@@ -89,7 +89,7 @@ function makeStorageUrl(
 
   const cleanPath = path.replace(/^\/+/, "");
 
-  return `http://127.0.0.1:8000/storage/${cleanPath}`;
+  return `http://127.0.0.1:8001/storage/${cleanPath}`;
 }
 
 /**

@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/admin/vacancies")({
 });
 
 function VacanciesAdmin() {
+  const { can } = useAuth();
   const [vacancies, setVacancies] = useState<VacancyItem[]>([]);
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -90,12 +92,14 @@ function VacanciesAdmin() {
   }
 
   function openCreateForm() {
+    if (!can("vacancies.create")) return;
     resetForm();
     setShowForm(true);
     setError("");
   }
 
   function openEditForm(vacancy: VacancyItem) {
+    if (!can("vacancies.update")) return;
     setEditingId(vacancy.id);
 
     setTitleEn(vacancy.title?.en ?? "");
@@ -221,6 +225,7 @@ function VacanciesAdmin() {
   }
 
   async function handleDelete(id: number) {
+    if (!can("vacancies.delete")) return;
     const confirmed = window.confirm(
       "Are you sure you want to delete this vacancy?"
     );
@@ -267,14 +272,16 @@ function VacanciesAdmin() {
         title="Vacancy Management"
         description="Post and manage job openings."
         action={
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New vacancy
-          </button>
+          can("vacancies.create") ? (
+            <button
+              type="button"
+              onClick={openCreateForm}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New vacancy
+            </button>
+          ) : undefined
         }
       />
 
@@ -342,7 +349,7 @@ function VacanciesAdmin() {
                     setTitleAm(e.target.value)
                   }
                   className="h-10 w-full rounded-lg border bg-background px-3 text-sm"
-                  placeholder="የሲኒየር ከተማ እቅድ አውጪ"
+                  placeholder="á‹¨áˆ²áŠ’á‹¨áˆ­ áŠ¨á‰°áˆ› áŠ¥á‰…á‹µ áŠ á‹áŒª"
                 />
               </div>
             </div>
@@ -375,7 +382,7 @@ function VacanciesAdmin() {
                     setContentAm(e.target.value)
                   }
                   className="min-h-32 w-full rounded-lg border bg-background p-3 text-sm"
-                  placeholder="የስራውን መግለጫ..."
+                  placeholder="á‹¨áˆµáˆ«á‹áŠ• áˆ˜áŒáˆˆáŒ«..."
                 />
               </div>
             </div>
@@ -579,7 +586,7 @@ function VacanciesAdmin() {
                     </td>
 
                     <td className="px-5 py-3 text-muted-foreground">
-                      {v.category_id ?? "—"}
+                      {v.category_id ?? "â€”"}
                     </td>
 
                     <td className="px-5 py-3">
@@ -598,27 +605,31 @@ function VacanciesAdmin() {
 
                     <td className="px-5 py-3 text-right">
                       <div className="inline-flex items-center gap-1">
-                        <button
-                          type="button"
-                          aria-label="Edit"
-                          onClick={() =>
-                            openEditForm(v)
-                          }
-                          className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
+                        {can("vacancies.update") && (
+                          <button
+                            type="button"
+                            aria-label="Edit"
+                            onClick={() =>
+                              openEditForm(v)
+                            }
+                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
 
-                        <button
-                          type="button"
-                          aria-label="Delete"
-                          onClick={() =>
-                            handleDelete(v.id)
-                          }
-                          className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {can("vacancies.delete") && (
+                          <button
+                            type="button"
+                            aria-label="Delete"
+                            onClick={() =>
+                              handleDelete(v.id)
+                            }
+                            className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

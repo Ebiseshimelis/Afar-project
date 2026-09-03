@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -51,12 +52,12 @@ function getLocalizedText(
 }
 
 function formatDate(value?: string | null): string {
-  if (!value) return "—";
+  if (!value) return "â€”";
 
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "—";
+    return "â€”";
   }
 
   return date.toLocaleDateString();
@@ -89,7 +90,8 @@ type FormState = {
   status: "draft" | "published";
   opensAt: string;
   closesAt: string;
-  publishedAt: string;
+  publishedAt: string;
+
 };
 
 const emptyForm: FormState = {
@@ -105,6 +107,7 @@ const emptyForm: FormState = {
 };
 
 function TendersAdmin() {
+  const { can } = useAuth();
   const [tenders, setTenders] = useState<Tender[]>([]);
   const [q, setQ] = useState("");
 
@@ -171,6 +174,7 @@ function TendersAdmin() {
   }, [tenders, q]);
 
   function openCreate() {
+    if (!can("tenders.create")) return;
     setMessage("");
     setError("");
     setEditingId(null);
@@ -179,6 +183,7 @@ function TendersAdmin() {
   }
 
   async function openView(id: number) {
+    if (!can("tenders.view")) return;
     try {
       setMessage("");
       setError("");
@@ -199,6 +204,7 @@ function TendersAdmin() {
   }
 
   async function openEdit(id: number) {
+    if (!can("tenders.update")) return;
     try {
       setMessage("");
       setError("");
@@ -309,6 +315,7 @@ function TendersAdmin() {
   }
 
   async function handleDelete(id: number) {
+    if (!can("tenders.delete")) return;
     const tender = tenders.find(
       (item) => Number(item.id) === id
     );
@@ -351,14 +358,16 @@ function TendersAdmin() {
         title="Tender Management"
         description="Publish and track procurement opportunities."
         action={
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New tender
-          </button>
+          can("tenders.create") ? (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New tender
+            </button>
+          ) : undefined
         }
       />
 
@@ -463,7 +472,7 @@ function TendersAdmin() {
                       <td className="px-5 py-3 text-muted-foreground">
                         {tender.category_id
                           ? `Category ${tender.category_id}`
-                          : "—"}
+                          : "â€”"}
                       </td>
 
                       <td className="px-5 py-3">
@@ -493,47 +502,53 @@ function TendersAdmin() {
 
                       <td className="px-5 py-3 text-right">
                         <div className="inline-flex items-center gap-1">
-                          <button
-                            type="button"
-                            aria-label="View"
-                            title="View tender"
-                            onClick={() =>
-                              openView(
-                                Number(tender.id)
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
+                          {can("tenders.view") && (
+                            <button
+                              type="button"
+                              aria-label="View"
+                              title="View tender"
+                              onClick={() =>
+                                openView(
+                                  Number(tender.id)
+                                )
+                              }
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            aria-label="Edit"
-                            title="Edit tender"
-                            onClick={() =>
-                              openEdit(
-                                Number(tender.id)
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
+                          {can("tenders.update") && (
+                            <button
+                              type="button"
+                              aria-label="Edit"
+                              title="Edit tender"
+                              onClick={() =>
+                                openEdit(
+                                  Number(tender.id)
+                                )
+                              }
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            aria-label="Delete"
-                            title="Delete tender"
-                            onClick={() =>
-                              handleDelete(
-                                Number(tender.id)
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {can("tenders.delete") && (
+                            <button
+                              type="button"
+                              aria-label="Delete"
+                              title="Delete tender"
+                              onClick={() =>
+                                handleDelete(
+                                  Number(tender.id)
+                                )
+                              }
+                              className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -619,7 +634,7 @@ function TendersAdmin() {
                       })
                     }
                     className="h-10 w-full rounded-lg border bg-background px-3 text-sm"
-                    placeholder="የጨረታ ርዕስ"
+                    placeholder="á‹¨áŒ¨áˆ¨á‰³ áˆ­á‹•áˆµ"
                   />
                 </div>
               </div>
@@ -659,7 +674,7 @@ function TendersAdmin() {
                     }
                     rows={5}
                     className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    placeholder="የጨረታ መግለጫ"
+                    placeholder="á‹¨áŒ¨áˆ¨á‰³ áˆ˜áŒáˆˆáŒ«"
                   />
                 </div>
               </div>
@@ -829,7 +844,7 @@ function TendersAdmin() {
 
                 <p className="mt-1 font-medium">
                   {selectedTender.title?.en ||
-                    "—"}
+                    "â€”"}
                 </p>
               </div>
 
@@ -840,7 +855,7 @@ function TendersAdmin() {
 
                 <p className="mt-1 font-medium">
                   {selectedTender.title?.am ||
-                    "—"}
+                    "â€”"}
                 </p>
               </div>
 
@@ -852,7 +867,7 @@ function TendersAdmin() {
 
                   <p className="mt-1 whitespace-pre-wrap text-sm">
                     {selectedTender.content?.en ||
-                      "—"}
+                      "â€”"}
                   </p>
                 </div>
 
@@ -863,7 +878,7 @@ function TendersAdmin() {
 
                   <p className="mt-1 whitespace-pre-wrap text-sm">
                     {selectedTender.content?.am ||
-                      "—"}
+                      "â€”"}
                   </p>
                 </div>
               </div>
@@ -876,7 +891,7 @@ function TendersAdmin() {
 
                   <p className="mt-1">
                     {selectedTender.category_id ??
-                      "—"}
+                      "â€”"}
                   </p>
                 </div>
 
@@ -946,6 +961,8 @@ function TendersAdmin() {
     </AdminLayout>
   );
 }
+
+
 
 
 

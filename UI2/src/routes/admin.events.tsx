@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -13,6 +13,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -75,6 +76,7 @@ const emptyForm: EventForm = {
 ========================================================= */
 
 function EventsAdmin() {
+  const { can } = useAuth();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [q, setQ] = useState("");
 
@@ -168,6 +170,7 @@ function EventsAdmin() {
   ======================================================= */
 
   function openCreate() {
+    if (!can("events.create")) return;
     setEditingId(null);
 
     setForm({
@@ -182,6 +185,7 @@ function EventsAdmin() {
   ======================================================= */
 
   async function openEdit(id: number) {
+    if (!can("events.update")) return;
     try {
       setSaving(true);
 
@@ -248,6 +252,7 @@ function EventsAdmin() {
   ======================================================= */
 
   async function openView(id: number) {
+    if (!can("events.view")) return;
     try {
       const event = await getEvent(id);
 
@@ -273,6 +278,7 @@ function EventsAdmin() {
   ======================================================= */
 
   async function handleDelete(id: number) {
+    if (!can("events.delete")) return;
     const confirmed =
       window.confirm(
         "Are you sure you want to delete this event?"
@@ -454,14 +460,16 @@ function EventsAdmin() {
         title="Event Management"
         description="Publish forums, workshops, and public consultations."
         action={
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New event
-          </button>
+          can("events.create") ? (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New event
+            </button>
+          ) : undefined
         }
       />
 
@@ -572,7 +580,7 @@ function EventsAdmin() {
 
                       <td className="px-5 py-3 text-muted-foreground">
                         {event.category_id ??
-                          "—"}
+                          "â€”"}
                       </td>
 
                       <td className="px-5 py-3">
@@ -604,55 +612,135 @@ function EventsAdmin() {
                           <MapPin className="h-3.5 w-3.5" />
 
                           {event.location ||
-                            "—"}
+                            "â€”"}
                         </span>
                       </td>
 
                       <td className="px-5 py-3 text-right">
                         <div className="inline-flex items-center gap-1">
-                          <button
-                            type="button"
-                            aria-label="View"
-                            title="View event"
-                            onClick={() =>
-                              openView(
-                                event.id
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
+                          {can("events.view") && (
 
-                          <button
-                            type="button"
-                            aria-label="Edit"
-                            title="Edit event"
-                            disabled={saving}
-                            onClick={() =>
-                              openEdit(
-                                event.id
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary disabled:opacity-50"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
+                            <button
 
-                          <button
-                            type="button"
-                            aria-label="Delete"
-                            title="Delete event"
-                            disabled={saving}
-                            onClick={() =>
-                              handleDelete(
-                                event.id
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                              type="button"
+
+                              aria-label="View"
+
+                              title="View event"
+
+                              onClick={() =>
+
+                                openView(
+
+                                  event.id
+
+                                )
+
+                              }
+
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+
+                            >
+
+                              <Eye className="h-4 w-4" />
+
+                            </button>
+
+                          )}
+
+                          {can("events.update") && (
+
+
+                            <button
+
+
+                              type="button"
+
+
+                              aria-label="Edit"
+
+
+                              title="Edit event"
+
+
+                              disabled={saving}
+
+
+                              onClick={() =>
+
+
+                                openEdit(
+
+
+                                  event.id
+
+
+                                )
+
+
+                              }
+
+
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary disabled:opacity-50"
+
+
+                            >
+
+
+                              <Pencil className="h-4 w-4" />
+
+
+                            </button>
+
+
+                          )}
+
+                          {can("events.delete") && (
+
+
+                            <button
+
+
+                              type="button"
+
+
+                              aria-label="Delete"
+
+
+                              title="Delete event"
+
+
+                              disabled={saving}
+
+
+                              onClick={() =>
+
+
+                                handleDelete(
+
+
+                                  event.id
+
+
+                                )
+
+
+                              }
+
+
+                              className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+
+
+                            >
+
+
+                              <Trash2 className="h-4 w-4" />
+
+
+                            </button>
+
+
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -755,7 +843,7 @@ function EventsAdmin() {
                       })
                     }
                     className="h-12 w-full rounded-xl border bg-background px-4 text-base outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    placeholder="የክስተት ርዕስ"
+                    placeholder="á‹¨áŠ­áˆµá‰°á‰µ áˆ­á‹•áˆµ"
                   />
                 </div>
               </div>
@@ -801,7 +889,7 @@ function EventsAdmin() {
                     }
                     rows={8}
                     className="min-h-[220px] w-full resize-y rounded-xl border bg-background px-4 py-3 text-base leading-6 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    placeholder="የክስተቱ መግለጫ"
+                    placeholder="á‹¨áŠ­áˆµá‰°á‰± áˆ˜áŒáˆˆáŒ«"
                   />
                 </div>
               </div>
@@ -1035,7 +1123,7 @@ function EventsAdmin() {
 
                     <p className="mt-2 font-medium">
                       {selectedEvent.title
-                        ?.en || "—"}
+                        ?.en || "â€”"}
                     </p>
                   </div>
 
@@ -1046,7 +1134,7 @@ function EventsAdmin() {
 
                     <p className="mt-2 font-medium">
                       {selectedEvent.title
-                        ?.am || "—"}
+                        ?.am || "â€”"}
                     </p>
                   </div>
                 </div>
@@ -1061,7 +1149,7 @@ function EventsAdmin() {
 
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
                       {selectedEvent.content
-                        ?.en || "—"}
+                        ?.en || "â€”"}
                     </p>
                   </div>
 
@@ -1072,7 +1160,7 @@ function EventsAdmin() {
 
                     <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
                       {selectedEvent.content
-                        ?.am || "—"}
+                        ?.am || "â€”"}
                     </p>
                   </div>
                 </div>
@@ -1087,7 +1175,7 @@ function EventsAdmin() {
 
                     <p className="mt-2">
                       {selectedEvent.category_id ??
-                        "—"}
+                        "â€”"}
                     </p>
                   </div>
 
@@ -1109,7 +1197,7 @@ function EventsAdmin() {
 
                     <p className="mt-2">
                       {selectedEvent.location ||
-                        "—"}
+                        "â€”"}
                     </p>
                   </div>
 
@@ -1180,7 +1268,7 @@ function formatDate(
     | undefined
 ): string {
   if (!value) {
-    return "—";
+    return "â€”";
   }
 
   const date = new Date(value);
@@ -1190,7 +1278,7 @@ function formatDate(
       date.getTime()
     )
   ) {
-    return "—";
+    return "â€”";
   }
 
   return date.toLocaleString(
@@ -1246,3 +1334,6 @@ function toDateTimeLocal(
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
+
+
+

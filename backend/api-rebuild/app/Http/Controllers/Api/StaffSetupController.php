@@ -19,8 +19,18 @@ class StaffSetupController extends Controller
     {
         $superAdminExists = User::where('role', 'super_admin')->exists();
 
+        $registrationSetting = SystemSetting::where(
+            'key',
+            'allow_admin_registration'
+        )->first();
+
+        $registrationAllowed =
+            $registrationSetting !== null &&
+            $registrationSetting->value === '1';
+
         return response()->json([
             'setup_required' => !$superAdminExists,
+            'registration_allowed' => $registrationAllowed,
         ]);
     }
 

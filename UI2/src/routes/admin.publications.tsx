@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -96,10 +97,11 @@ function getFileUrl(path: string | null) {
     return path;
   }
 
-  return `http://127.0.0.1:8000/storage/${path}`;
+  return `http://127.0.0.1:8001/storage/${path}`;
 }
 
 function PublicationsAdmin() {
+  const { can } = useAuth();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -309,14 +311,16 @@ function PublicationsAdmin() {
         title="Publication Management"
         description="Upload reports, policies, manuals, and other publications."
         action={
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            New publication
-          </button>
+          can("publications.create") ? (
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              New publication
+            </button>
+          ) : undefined
         }
       />
 
@@ -460,7 +464,7 @@ function PublicationsAdmin() {
 
                       <td className="px-5 py-3 text-right">
                         <div className="inline-flex items-center gap-1">
-                          {fileUrl && (
+                          {can("publications.view") && fileUrl && (
                             <a
                               href={fileUrl}
                               target="_blank"
@@ -473,47 +477,53 @@ function PublicationsAdmin() {
                             </a>
                           )}
 
-                          <button
-                            type="button"
-                            aria-label="View"
-                            title="View publication"
-                            onClick={() =>
-                              openView(
-                                publication
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
+                          {can("publications.view") && (
+                            <button
+                              type="button"
+                              aria-label="View"
+                              title="View publication"
+                              onClick={() =>
+                                openView(
+                                  publication
+                                )
+                              }
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            aria-label="Edit"
-                            title="Edit publication"
-                            onClick={() =>
-                              openEdit(
-                                publication
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </button>
+                          {can("publications.update") && (
+                            <button
+                              type="button"
+                              aria-label="Edit"
+                              title="Edit publication"
+                              onClick={() =>
+                                openEdit(
+                                  publication
+                                )
+                              }
+                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                          )}
 
-                          <button
-                            type="button"
-                            aria-label="Delete"
-                            title="Delete publication"
-                            onClick={() =>
-                              handleDelete(
-                                publication
-                              )
-                            }
-                            className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          {can("publications.delete") && (
+                            <button
+                              type="button"
+                              aria-label="Delete"
+                              title="Delete publication"
+                              onClick={() =>
+                                handleDelete(
+                                  publication
+                                )
+                              }
+                              className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -932,3 +942,4 @@ function PublicationsAdmin() {
     </AdminLayout>
   );
 }
+

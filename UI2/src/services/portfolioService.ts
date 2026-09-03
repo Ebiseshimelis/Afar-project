@@ -1,4 +1,4 @@
-import { API_BASE, getToken } from "@/services/authService";
+﻿import { API_BASE, getToken } from "@/services/authService";
 import { getMediaUrl } from "@/services/multimediaService";
 
 export type PortfolioItem = {
@@ -22,7 +22,7 @@ export type PortfolioPayload = {
 function normalize(item: any): PortfolioItem {
   return {
     id: Number(item.id), title: item.title ?? "", order: Number(item.order ?? 0), content: item.content ?? "",
-    imagePath: item.image ?? "", imageUrl: item.image_url ?? getMediaUrl(item.image),
+    imagePath: item.image ?? "", imageUrl: getMediaUrl(item.image),
     createdAt: item.created_at ?? "", updatedAt: item.updated_at ?? "",
   };
 }
@@ -79,3 +79,4 @@ export async function deletePortfolio(id: number): Promise<void> {
   const response = await fetch(`${API_BASE}/portfolios/${id}`, { method: "DELETE", headers: authHeaders() });
   await parseResponse(response);
 }
+

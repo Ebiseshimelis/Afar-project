@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/directory")({
@@ -54,6 +55,7 @@ const emptyForm: DirectorateFormData = {
 };
 
 function DirectoryAdmin() {
+  const { can } = useAuth();
   const [directorates, setDirectorates] = useState<Directorate[]>([]);
   const [q, setQ] = useState("");
 
@@ -356,7 +358,7 @@ function DirectoryAdmin() {
 
                         <div>
                           <div className="font-medium">
-                            {directorate.headName || "â€”"}
+                            {directorate.headName || "—"}
                           </div>
 
                           {directorate.headNameAm && (
@@ -391,7 +393,7 @@ function DirectoryAdmin() {
 
                       {!directorate.phone &&
                         !directorate.email &&
-                        "â€”"}
+                        "—"}
                     </td>
 
                     <td className="px-5 py-4">
@@ -402,36 +404,40 @@ function DirectoryAdmin() {
 
                     <td className="px-5 py-4 text-right">
                       <div className="inline-flex items-center gap-1">
-                        <button
-                          type="button"
-                          aria-label={`Edit ${directorate.name}`}
-                          title="Edit Directorate"
-                          onClick={() =>
-                            openEditModal(directorate)
-                          }
-                          className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
+                        {can("directorates.update") && (
+                          <button
+                            type="button"
+                            aria-label={`Edit ${directorate.name}`}
+                            title="Edit Directorate"
+                            onClick={() =>
+                              openEditModal(directorate)
+                            }
+                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        )}
 
-                        <button
-                          type="button"
-                          aria-label={`Delete ${directorate.name}`}
-                          title="Delete Directorate"
-                          disabled={
-                            deletingId === directorate.id
-                          }
-                          onClick={() =>
-                            handleDelete(directorate)
-                          }
-                          className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
-                        >
-                          {deletingId === directorate.id ? (
-                            <span className="text-xs">...</span>
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </button>
+                        {can("directorates.delete") && (
+                          <button
+                            type="button"
+                            aria-label={`Delete ${directorate.name}`}
+                            title="Delete Directorate"
+                            disabled={
+                              deletingId === directorate.id
+                            }
+                            onClick={() =>
+                              handleDelete(directorate)
+                            }
+                            className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-50"
+                          >
+                            {deletingId === directorate.id ? (
+                              <span className="text-xs">...</span>
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -773,4 +779,6 @@ function FormTextarea({
     </label>
   );
 }
+
+
 

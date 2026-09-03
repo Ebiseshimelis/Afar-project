@@ -1,4 +1,4 @@
-﻿import {
+import {
   createFileRoute,
   Link,
   Outlet,
@@ -65,7 +65,7 @@ function getFileUrl(filePath: string) {
 
   const cleanPath = filePath.replace(/^\/+/, "");
 
-  return `http://127.0.0.1:8000/storage/${cleanPath}`;
+  return `http://127.0.0.1:8001/storage/${cleanPath}`;
 }
 
 function getFileName(filePath: string) {
@@ -321,7 +321,7 @@ function VacancyDetailPage() {
                     <div className="h-8 w-1 rounded-full bg-primary" />
 
                     <h3 className="font-display text-lg font-bold">
-  የሥራ መግለጫ
+  ??? ????
 </h3>
                   </div>
 

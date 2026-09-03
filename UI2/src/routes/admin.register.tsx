@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowLeft,
   Eye,
@@ -7,10 +7,11 @@ import {
   Mail,
   UserPlus,
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
+import { getSetupStatus, registerAdmin } from "@/services/staffSetupService";
 
-const API_BASE = "http://127.0.0.1:8000/api/v1";
+const API_BASE = "http://127.0.0.1:8001/api/v1";
 
 export const Route = createFileRoute("/admin/register")({
   component: AdminRegisterPage,
@@ -31,8 +32,43 @@ function AdminRegisterPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [registrationAllowed, setRegistrationAllowed] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkRegistrationStatus() {
+      try {
+        const status = await getSetupStatus();
+
+        if (!mounted) return;
+
+        setRegistrationAllowed(status.registration_allowed);
+      } catch (err) {
+        if (!mounted) return;
+
+        setRegistrationAllowed(false);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to check whether Admin registration is available.",
+        );
+      } finally {
+        if (mounted) {
+          setCheckingStatus(false);
+        }
+      }
+    }
+
+    checkRegistrationStatus();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,42 +89,15 @@ function AdminRegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/staff-setup/admin`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          password_confirmation: passwordConfirmation,
-        }),
-      });
-
-      const body = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        if (response.status === 422 && body?.errors) {
-          const firstError = Object.values(body.errors)
-            .flat()
-            .find((value) => typeof value === "string");
-
-          throw new Error(
-            typeof firstError === "string"
-              ? firstError
-              : "Please check the information you entered.",
-          );
-        }
-
-        throw new Error(
-          body?.message || "Unable to create the Admin account.",
-        );
-      }
+      const result = await registerAdmin(
+        name,
+        email,
+        password,
+        passwordConfirmation,
+      );
 
       setSuccess(
-        body?.message ||
+        result.message ||
           "Admin account registration submitted successfully. Your account is waiting for Super Admin approval.",
       );
 
@@ -132,6 +141,25 @@ function AdminRegisterPage() {
             </p>
           </div>
 
+          {/* Registration status */}
+          {checkingStatus && (
+            <div className="mb-5 rounded-xl border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+              Checking Admin registration availability...
+            </div>
+          )}
+
+          {!checkingStatus && !registrationAllowed && !error && (
+            <div className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-4 text-sm text-destructive">
+              <p className="font-semibold">
+                Admin registration is currently disabled.
+              </p>
+              <p className="mt-1">
+                Please contact the Super Admin if you need an administrative
+                account.
+              </p>
+            </div>
+          )}
+
           {/* Status messages */}
           {error && (
             <div className="mb-5 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -153,7 +181,8 @@ function AdminRegisterPage() {
             </div>
           )}
 
-          <form onSubmit={onSubmit} className="space-y-4">
+          {!checkingStatus && registrationAllowed && (
+            <form onSubmit={onSubmit} className="space-y-4">
             {/* Name */}
             <div>
               <label className="block text-sm font-medium">
@@ -291,7 +320,8 @@ function AdminRegisterPage() {
                 </>
               )}
             </button>
-          </form>
+            </form>
+          )}
 
           {/* Login */}
           <div className="mt-6 text-center text-sm">

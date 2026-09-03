@@ -1,7 +1,8 @@
-﻿import { API_BASE, AuthError } from "./authService";
+import { API_BASE, AuthError } from "./authService";
 
 export type StaffSetupStatus = {
   setup_required: boolean;
+  registration_allowed: boolean;
 };
 
 export type StaffSetupUser = {
