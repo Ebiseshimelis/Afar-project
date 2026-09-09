@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAuth } from "@/lib/auth";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -25,7 +24,6 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { API_ORIGIN } from "@/services/authService";
 
 export const Route = createFileRoute("/admin/publications")({
   head: () => ({
@@ -66,7 +64,7 @@ function getLocalizedText(
 }
 
 function formatDate(value: string | null) {
-  if (!value) return "—";
+  if (!value) return "�";
 
   const date = new Date(value);
 
@@ -78,7 +76,7 @@ function formatDate(value: string | null) {
 }
 
 function formatFileSize(bytes: number) {
-  if (!bytes) return "—";
+  if (!bytes) return "�";
 
   if (bytes < 1024) {
     return `${bytes} B`;
@@ -98,11 +96,10 @@ function getFileUrl(path: string | null) {
     return path;
   }
 
-  return `${API_ORIGIN}/storage/${path}`;
+  return `http://127.0.0.1:8000/storage/${path}`;
 }
 
 function PublicationsAdmin() {
-  const { can } = useAuth();
   const [publications, setPublications] = useState<Publication[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -312,16 +309,14 @@ function PublicationsAdmin() {
         title="Publication Management"
         description="Upload reports, policies, manuals, and other publications."
         action={
-          can("publications.create") ? (
-            <button
-              type="button"
-              onClick={openCreate}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" />
-              New publication
-            </button>
-          ) : undefined
+          <button
+            type="button"
+            onClick={openCreate}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            New publication
+          </button>
         }
       />
 
@@ -433,7 +428,7 @@ function PublicationsAdmin() {
                             )
                           : publication.category_id
                             ? `Category ${publication.category_id}`
-                            : "—"}
+                            : "�"}
                       </td>
 
                       <td className="px-5 py-3">
@@ -465,7 +460,7 @@ function PublicationsAdmin() {
 
                       <td className="px-5 py-3 text-right">
                         <div className="inline-flex items-center gap-1">
-                          {can("publications.view") && fileUrl && (
+                          {fileUrl && (
                             <a
                               href={fileUrl}
                               target="_blank"
@@ -478,53 +473,47 @@ function PublicationsAdmin() {
                             </a>
                           )}
 
-                          {can("publications.view") && (
-                            <button
-                              type="button"
-                              aria-label="View"
-                              title="View publication"
-                              onClick={() => {
-                                if (fileUrl) {
-                                  window.location.href = fileUrl;
-                                }
-                              }}
-                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            aria-label="View"
+                            title="View publication"
+                            onClick={() =>
+                              openView(
+                                publication
+                              )
+                            }
+                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
 
-                          {can("publications.update") && (
-                            <button
-                              type="button"
-                              aria-label="Edit"
-                              title="Edit publication"
-                              onClick={() =>
-                                openEdit(
-                                  publication
-                                )
-                              }
-                              className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            aria-label="Edit"
+                            title="Edit publication"
+                            onClick={() =>
+                              openEdit(
+                                publication
+                              )
+                            }
+                            className="grid h-8 w-8 place-items-center rounded-md hover:bg-secondary"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
 
-                          {can("publications.delete") && (
-                            <button
-                              type="button"
-                              aria-label="Delete"
-                              title="Delete publication"
-                              onClick={() =>
-                                handleDelete(
-                                  publication
-                                )
-                              }
-                              className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            aria-label="Delete"
+                            title="Delete publication"
+                            onClick={() =>
+                              handleDelete(
+                                publication
+                              )
+                            }
+                            className="grid h-8 w-8 place-items-center rounded-md text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -831,7 +820,7 @@ function PublicationsAdmin() {
 
                   <p className="mt-1 font-medium">
                     {selectedPublication.title
-                      ?.en || "—"}
+                      ?.en || "�"}
                   </p>
                 </div>
 
@@ -842,7 +831,7 @@ function PublicationsAdmin() {
 
                   <p className="mt-1 font-medium">
                     {selectedPublication.title
-                      ?.am || "—"}
+                      ?.am || "�"}
                   </p>
                 </div>
 
@@ -855,7 +844,7 @@ function PublicationsAdmin() {
                     <p className="mt-1 whitespace-pre-wrap text-sm">
                       {selectedPublication
                         .description?.en ||
-                        "—"}
+                        "�"}
                     </p>
                   </div>
 
@@ -867,7 +856,7 @@ function PublicationsAdmin() {
                     <p className="mt-1 whitespace-pre-wrap text-sm">
                       {selectedPublication
                         .description?.am ||
-                        "—"}
+                        "�"}
                     </p>
                   </div>
                 </div>
@@ -890,7 +879,7 @@ function PublicationsAdmin() {
 
                     <p className="mt-1 uppercase">
                       {selectedPublication.file_type ||
-                        "—"}
+                        "�"}
                     </p>
                   </div>
 
@@ -943,4 +932,3 @@ function PublicationsAdmin() {
     </AdminLayout>
   );
 }
-

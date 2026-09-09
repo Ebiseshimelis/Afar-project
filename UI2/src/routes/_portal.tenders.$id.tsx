@@ -1,5 +1,6 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { PageHeader } from "@/components/portal/PortalLayout";
+import { API_ORIGIN } from "@/services/authService";
 import {
   getTender,
   getTenderStatus,
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/_portal/tenders/$id")({
     return {
       meta: [
         {
-          title: `${title} — Tender`,
+          title: `${title} â€” Tender`,
         },
         {
           name: "description",
@@ -94,18 +95,22 @@ function getContent(tender: Tender): string {
 }
 
 function formatDate(date: string | null): string {
-  if (!date) return "—";
+  if (!date) return "â€”";
 
   const parsed = new Date(date);
 
   if (Number.isNaN(parsed.getTime())) {
-    return "—";
+    return "â€”";
   }
 
   return parsed.toLocaleDateString();
 }
 
-function getFileUrl(filePath: string): string {
+function getFileUrl(filePath: string | null): string {
+  if (!filePath) {
+    return "";
+  }
+
   if (
     filePath.startsWith("http://") ||
     filePath.startsWith("https://")
@@ -114,10 +119,10 @@ function getFileUrl(filePath: string): string {
   }
 
   if (filePath.startsWith("/")) {
-    return `http://127.0.0.1:8001${filePath}`;
+    return `${API_ORIGIN}${filePath}`;
   }
 
-  return `http://127.0.0.1:8001/storage/${filePath}`;
+  return `${API_ORIGIN}/storage/${filePath}`;
 }
 
 function getFileExtension(filePath: string): string {
@@ -342,7 +347,7 @@ function TenderDetailPage() {
             <div className="mt-8 border-t pt-6">
               <button
                 type="button"
-                onClick={() => setShowDocument(true)}
+                onClick={() => { window.location.href = getFileUrl(item.file_path); }}
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90"
               >
                 <Eye className="h-4 w-4" />
@@ -382,3 +387,4 @@ function StatusBadge({
     </span>
   );
 }
+

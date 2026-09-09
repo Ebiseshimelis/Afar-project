@@ -14,6 +14,8 @@ export type ContactMessage = {
   deleted_at?: string | null;
 };
 
+import { API_BASE } from "@/services/authService";
+
 type MessagesResponse = {
   data: ContactMessage[];
   current_page?: number;
@@ -22,7 +24,7 @@ type MessagesResponse = {
   total?: number;
 };
 
-const API_BASE_URL = "http://127.0.0.1:8001/api/v1";
+const API_BASE_URL = API_BASE;
 
 function getAuthHeaders(): HeadersInit {
   const token = getToken();

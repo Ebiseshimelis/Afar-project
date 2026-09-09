@@ -19,8 +19,7 @@ export type SectionKey =
   | "directorates"
   | "newsEvents"
   | "cityAdmins"
-  | "tenders"
-  | "multimedia";
+  | "tenders";
 
 /** Current images kept as defaults/placeholders. */
 export const DEFAULT_SECTION_BACKGROUNDS: Record<SectionKey, string> = {
@@ -31,7 +30,6 @@ export const DEFAULT_SECTION_BACKGROUNDS: Record<SectionKey, string> = {
   newsEvents: defaultBackground,
   cityAdmins: defaultBackground,
   tenders: defaultBackground,
-  multimedia: defaultBackground,
 };
 
 export const SECTION_LABELS: Record<SectionKey, string> = {
@@ -42,7 +40,6 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   newsEvents: "News & Events",
   cityAdmins: "City Administration",
   tenders: "Tenders",
-  multimedia: "Multimedia",
 };
 
 export type SectionBackgrounds = Partial<Record<SectionKey, string>>;
@@ -51,7 +48,10 @@ export function resolveSectionBackground(
   key: SectionKey,
   overrides: SectionBackgrounds,
 ): string {
-  return overrides[key] || DEFAULT_SECTION_BACKGROUNDS[key] || DEFAULT_SECTION_BACKGROUNDS.default;
+  return overrides[key]
+    || overrides.default
+    || DEFAULT_SECTION_BACKGROUNDS[key]
+    || DEFAULT_SECTION_BACKGROUNDS.default;
 }
 
 /**

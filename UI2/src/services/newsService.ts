@@ -1,9 +1,10 @@
 import type { NewsItem } from "@/lib/mock-data";
+import { API_ORIGIN } from "@/services/authService";
 
 export type { NewsItem };
-import { getAdminToken } from "@/services/authService";
+import { API_BASE, getAdminToken } from "@/services/authService";
 
-const NEWS_API_URL = "http://127.0.0.1:8001/api/v1/news";
+const NEWS_API_URL = `${API_BASE}/news`;
 
 export type AdminNewsData = {
   id: string;
@@ -70,7 +71,7 @@ function mapNewsItem(item: any): NewsItem {
     image:
       item.image_path
         ? String(item.image_path).startsWith("news/")
-          ? `http://127.0.0.1:8001/storage/${String(item.image_path)}`
+          ? `${API_ORIGIN}/storage/${String(item.image_path)}`
           : `/${String(item.image_path).replace(/^\/+/, "")}`
         : "/News1.jpg",
 

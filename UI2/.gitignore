@@ -1,3 +1,15 @@
+.env
+.env.*
+!.env.example
+
+*.bak
+*.backup
+*.before-*
+before_*
+*.clean-backup
+*.old
+*.tmp
+
 # Logs
 logs
 *.log

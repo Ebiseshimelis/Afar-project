@@ -5,32 +5,22 @@ import {
   EyeOff,
   Lock,
   Mail,
-  ShieldCheck,
-  UserCog,
   UserPlus,
 } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import logo from "@/assets/logo.png";
 
 const API_BASE = "http://127.0.0.1:8000/api/v1";
 
-type RegistrationType = "admin" | "super_admin";
-
 export const Route = createFileRoute("/admin/register")({
   component: AdminRegisterPage,
   head: () => ({
-    meta: [{ title: "Create Staff Account — Afar UDCB" }],
+    meta: [{ title: "Create Admin Account — Afar UDCB" }],
   }),
 });
 
 function AdminRegisterPage() {
   const navigate = useNavigate();
-
-  const [registrationType, setRegistrationType] =
-    useState<RegistrationType>("admin");
-
-  const [setupRequired, setSetupRequired] = useState<boolean | null>(null);
-  const [checkingSetup, setCheckingSetup] = useState(true);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -43,72 +33,6 @@ function AdminRegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  /*
-   * Ask the backend whether the first Super Admin still needs
-   * to be created.
-   */
-  useEffect(() => {
-    let cancelled = false;
-
-    async function checkSetupStatus() {
-      try {
-        const response = await fetch(`${API_BASE}/staff-setup/status`, {
-          headers: {
-            Accept: "application/json",
-          },
-        });
-
-        const body = await response.json().catch(() => null);
-
-        if (!response.ok) {
-          throw new Error(
-            body?.message || "Unable to check staff account setup.",
-          );
-        }
-
-        if (!cancelled) {
-          setSetupRequired(body?.setup_required === true);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Unable to connect to the server.",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setCheckingSetup(false);
-        }
-      }
-    }
-
-    checkSetupStatus();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  /*
-   * When the backend tells us that a Super Admin already exists,
-   * default the UI to normal Admin registration.
-   *
-   * The backend remains the final authority.
-   */
-  useEffect(() => {
-    if (setupRequired === false && registrationType === "super_admin") {
-      setRegistrationType("admin");
-    }
-  }, [setupRequired, registrationType]);
-
-  function selectRegistrationType(type: RegistrationType) {
-    setError("");
-    setSuccess("");
-    setRegistrationType(type);
-  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,28 +50,10 @@ function AdminRegisterPage() {
       return;
     }
 
-    /*
-     * Extra UI guard for Super Admin registration.
-     *
-     * This is NOT the security mechanism. Laravel performs the
-     * authoritative check again.
-     */
-    if (registrationType === "super_admin" && setupRequired === false) {
-      setError(
-        "A Super Admin account already exists. You cannot create another one.",
-      );
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const endpoint =
-        registrationType === "super_admin"
-          ? "/staff-setup/super-admin"
-          : "/staff-setup/admin";
-
-      const response = await fetch(`${API_BASE}${endpoint}`, {
+      const response = await fetch(`${API_BASE}/staff-setup/admin`, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -164,13 +70,6 @@ function AdminRegisterPage() {
       const body = await response.json().catch(() => null);
 
       if (!response.ok) {
-        if (response.status === 403) {
-          throw new Error(
-            body?.message ||
-              "Super Admin setup has already been completed.",
-          );
-        }
-
         if (response.status === 422 && body?.errors) {
           const firstError = Object.values(body.errors)
             .flat()
@@ -184,42 +83,29 @@ function AdminRegisterPage() {
         }
 
         throw new Error(
-          body?.message || "Unable to create the account.",
+          body?.message || "Unable to create the Admin account.",
         );
       }
 
-      if (registrationType === "super_admin") {
-        setSuccess(
-          body?.message ||
-            "Super Admin account created successfully. You can now log in.",
-        );
-      } else {
-        setSuccess(
-          body?.message ||
-            "Admin account registration submitted successfully. Your account is waiting for Super Admin approval.",
-        );
-      }
+      setSuccess(
+        body?.message ||
+          "Admin account registration submitted successfully. Your account is waiting for Super Admin approval.",
+      );
 
       setName("");
       setEmail("");
       setPassword("");
       setPasswordConfirmation("");
-
-      if (registrationType === "super_admin") {
-        setSetupRequired(false);
-      }
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to create the account.",
+          : "Unable to create the Admin account.",
       );
     } finally {
       setLoading(false);
     }
   }
-
-  const isSuperAdmin = registrationType === "super_admin";
 
   return (
     <div className="min-h-screen bg-background">
@@ -238,73 +124,12 @@ function AdminRegisterPage() {
             </div>
 
             <h1 className="font-display text-2xl font-bold">
-              Create Staff Account
+              Create Admin Account
             </h1>
 
             <p className="mt-2 text-sm text-muted-foreground">
-              Choose the type of staff account you want to create.
+              Register for an Afar UDCB administrative account.
             </p>
-          </div>
-
-          {/* Account type */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium">
-              Account type
-            </label>
-
-            <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border bg-muted/30 p-1">
-              <button
-                type="button"
-                onClick={() => selectRegistrationType("admin")}
-                disabled={loading}
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  registrationType === "admin"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <UserCog className="h-4 w-4" />
-                Admin
-              </button>
-
-              <button
-                type="button"
-                onClick={() => selectRegistrationType("super_admin")}
-                disabled={loading || checkingSetup || setupRequired === false}
-                className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  registrationType === "super_admin"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                } ${
-                  setupRequired === false
-                    ? "cursor-not-allowed opacity-50"
-                    : ""
-                }`}
-              >
-                <ShieldCheck className="h-4 w-4" />
-                Super Admin
-              </button>
-            </div>
-
-            {checkingSetup && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Checking Super Admin setup status...
-              </p>
-            )}
-
-            {!checkingSetup && setupRequired === false && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                A Super Admin account already exists. Additional Super Admin
-                registrations are not allowed.
-              </p>
-            )}
-
-            {!checkingSetup && setupRequired === true && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                No Super Admin exists yet. The first Super Admin can be
-                created here.
-              </p>
-            )}
           </div>
 
           {/* Status messages */}
@@ -397,9 +222,7 @@ function AdminRegisterPage() {
                   type="button"
                   onClick={() => setShowPassword((value) => !value)}
                   disabled={loading}
-                  aria-label={
-                    showPassword ? "Hide password" : "Show password"
-                  }
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? (
@@ -440,9 +263,7 @@ function AdminRegisterPage() {
                   }
                   disabled={loading}
                   aria-label={
-                    showConfirmation
-                      ? "Hide password"
-                      : "Show password"
+                    showConfirmation ? "Hide password" : "Show password"
                   }
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
@@ -458,20 +279,11 @@ function AdminRegisterPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={
-                loading ||
-                checkingSetup ||
-                (isSuperAdmin && setupRequired === false)
-              }
+              disabled={loading}
               className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? (
                 "Creating account..."
-              ) : isSuperAdmin ? (
-                <>
-                  Create Super Admin Account
-                  <ShieldCheck className="h-4 w-4" />
-                </>
               ) : (
                 <>
                   Create Admin Account
@@ -494,25 +306,10 @@ function AdminRegisterPage() {
 
           {/* Account information */}
           <div className="mt-6 rounded-xl border bg-muted/30 p-4 text-xs leading-5 text-muted-foreground">
-            {isSuperAdmin ? (
-              <>
-                <strong className="text-foreground">
-                  Super Admin:
-                </strong>{" "}
-                Only the first Super Admin can be created through this page.
-                Once a Super Admin exists, additional Super Admin registration
-                is blocked by the system.
-              </>
-            ) : (
-              <>
-                <strong className="text-foreground">
-                  Admin:
-                </strong>{" "}
-                Your account will be created as pending. A Super Admin must
-                approve the account and assign permissions before you can access
-                the admin portal.
-              </>
-            )}
+            <strong className="text-foreground">Admin:</strong>{" "}
+            Your account will be created as pending. A Super Admin must
+            approve the account and assign permissions before you can access
+            the admin portal.
           </div>
         </div>
       </div>

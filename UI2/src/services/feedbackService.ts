@@ -1,3 +1,5 @@
+import { API_BASE } from "@/services/authService";
+
 export type Feedback = {
   id: number;
   name: string;
@@ -26,7 +28,7 @@ type FeedbackResponse = {
   total?: number;
 };
 
-const API_BASE_URL = "http://127.0.0.1:8001/api/v1";
+const API_BASE_URL = API_BASE;
 
 function getAuthHeaders(): HeadersInit {
   const token = localStorage.getItem("admin_token");

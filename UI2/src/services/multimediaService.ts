@@ -1,4 +1,4 @@
-import { getToken } from "@/services/authService";
+import { API_BASE, API_ORIGIN, getToken } from "@/services/authService";
 export type MultimediaItem = {
   id: number;
   title: string;
@@ -39,11 +39,8 @@ export type UpdateMultimediaData = {
   publishedAt?: string;
 };
 
-export const API_BASE_URL =
-  "http://127.0.0.1:8001/api/v1";
-
-export const BACKEND_BASE_URL =
-  "http://127.0.0.1:8001";
+export const API_BASE_URL = API_BASE;
+export const BACKEND_BASE_URL = API_ORIGIN;
 
 export const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 
@@ -66,7 +63,7 @@ function getAuthHeaders(): HeadersInit {
  * Examples:
  *
  * multimedia/photo.jpg
- * -> http://127.0.0.1:8001/storage/multimedia/photo.jpg
+ * -> backend storage URL
  *
  * https://example.com/photo.jpg
  * -> unchanged

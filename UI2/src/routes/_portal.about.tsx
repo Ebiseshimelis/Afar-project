@@ -13,7 +13,7 @@ import { getAbout } from "@/services/aboutService";
 export const Route = createFileRoute("/_portal/about")({
   head: () => ({
     meta: [
-      { title: "About â€” Afar UDCB" },
+      { title: "About - Afar UDCB" },
       {
         name: "description",
         content:
@@ -53,6 +53,7 @@ function AboutPage() {
   return (
     <>
       <PageHeader
+        section="about"
         eyebrow="About the Bureau"
         title="Serving Afar's urban future"
         description={about.description}

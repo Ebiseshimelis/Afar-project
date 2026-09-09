@@ -1,4 +1,4 @@
-import {
+﻿import {
   createFileRoute,
   Link,
   Outlet,
@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/portal/PortalLayout";
+import { API_ORIGIN } from "@/services/authService";
 import {
   getVacancy,
   type VacancyItem,
@@ -65,7 +66,7 @@ function getFileUrl(filePath: string) {
 
   const cleanPath = filePath.replace(/^\/+/, "");
 
-  return `http://127.0.0.1:8001/storage/${cleanPath}`;
+  return `${API_ORIGIN}/storage/${cleanPath}`;
 }
 
 function getFileName(filePath: string) {
@@ -321,7 +322,7 @@ function VacancyDetailPage() {
                     <div className="h-8 w-1 rounded-full bg-primary" />
 
                     <h3 className="font-display text-lg font-bold">
-  ??? ????
+  የሥራ መግለጫ
 </h3>
                   </div>
 
@@ -415,6 +416,7 @@ function VacancyDetailPage() {
     </>
   );
 }
+
 
 
 

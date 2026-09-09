@@ -13,6 +13,10 @@ import {
   useSectionBackground,
   type SectionKey,
 } from "@/lib/site-images";
+import {
+  getPublicSystemSettings,
+  type PublicSystemSettings,
+} from "@/services/systemSettingService";
 
 type NavChild = {
   to: string;
@@ -88,6 +92,16 @@ export function PortalLayout() {
   const { lang, setLang, t } = useLanguage();
 
   const [directorates, setDirectorates] = useState<Directorate[]>([]);
+  const [publicSettings, setPublicSettings] =
+    useState<Partial<PublicSystemSettings>>({});
+
+  useEffect(() => {
+    void getPublicSystemSettings()
+      .then(setPublicSettings)
+      .catch((error) => {
+        console.error("Failed to load public system settings:", error);
+      });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -209,12 +223,12 @@ export function PortalLayout() {
 
             <span className="inline-flex items-center gap-1.5">
               <Phone className="h-3 w-3" />
-              033-666-0577
+              {publicSettings.phone || "033-666-0577"}
             </span>
 
             <span className="inline-flex items-center gap-1.5">
               <Mail className="h-3 w-3" />
-              info@afarudcb.gov.et
+              {publicSettings.contact_email || "info@afarudcb.gov.et"}
             </span>
 
           </div>
@@ -224,7 +238,7 @@ export function PortalLayout() {
 
             {/* Facebook */}
             <a
-              href={SOCIAL_LINKS.facebook || undefined}
+              href={publicSettings.facebook_url || SOCIAL_LINKS.facebook || undefined}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -235,7 +249,7 @@ export function PortalLayout() {
 
             {/* X */}
             <a
-              href={SOCIAL_LINKS.x || undefined}
+              href={publicSettings.twitter_url || SOCIAL_LINKS.x || undefined}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"
@@ -311,15 +325,17 @@ export function PortalLayout() {
             <div className="min-w-0">
 
               <div className="truncate font-display text-sm font-bold leading-tight text-foreground sm:text-base">
-                {lang === "am"
-                  ? "የአፋር ክልል መንግስት"
-                  : "Afar Regional Government"}
+                {publicSettings.organization_name ||
+                  (lang === "am"
+                    ? "የአፋር ክልል መንግስት"
+                    : "Afar Regional Government")}
               </div>
 
               <div className="truncate text-xs text-muted-foreground">
-                {lang === "am"
-                  ? "የከተማ ልማት እና ግንባታ ቢሮ"
-                  : "Urban Development & Construction Bureau"}
+                {publicSettings.portal_tagline ||
+                  (lang === "am"
+                    ? "የከተማ ልማት እና ግንባታ ቢሮ"
+                    : "Urban Development & Construction Bureau")}
               </div>
 
             </div>
@@ -566,13 +582,17 @@ export function PortalLayout() {
         <Outlet />
       </main>
 
-      <SiteFooter />
+      <SiteFooter publicSettings={publicSettings} />
 
     </div>
   );
 }
 
-function SiteFooter() {
+function SiteFooter({
+  publicSettings,
+}: {
+  publicSettings: Partial<PublicSystemSettings>;
+}) {
 
   const { t } = useLanguage();
 
@@ -630,11 +650,11 @@ function SiteFooter() {
             <div>
 
               <div className="font-display text-sm font-semibold">
-                Afar Regional Government
+                {publicSettings.organization_name || "Afar Regional Government"}
               </div>
 
               <div className="text-xs text-sidebar-foreground/70">
-                UDCB
+                {publicSettings.portal_tagline || "UDCB"}
               </div>
 
             </div>
@@ -642,8 +662,8 @@ function SiteFooter() {
           </div>
 
           <p className="mt-4 text-sm text-sidebar-foreground/70">
-            Modernizing urban development and construction
-            services across the Afar Regional State.
+            {publicSettings.about_summary ||
+              "Modernizing urban development and construction services across the Afar Regional State."}
           </p>
 
         </div>
@@ -689,7 +709,7 @@ function SiteFooter() {
 
               <Phone className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
 
-              033-666-0577
+              {publicSettings.phone || "033-666-0577"}
 
             </li>
 
@@ -705,7 +725,7 @@ function SiteFooter() {
 
               <Mail className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gold" />
 
-              info@afarudcb.gov.et
+              {publicSettings.contact_email || "info@afarudcb.gov.et"}
 
             </li>
 
@@ -724,7 +744,7 @@ function SiteFooter() {
 
             {/* Facebook */}
             <a
-              href={SOCIAL_LINKS.facebook || undefined}
+              href={publicSettings.facebook_url || SOCIAL_LINKS.facebook || undefined}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -735,7 +755,7 @@ function SiteFooter() {
 
             {/* X */}
             <a
-              href={SOCIAL_LINKS.x || undefined}
+              href={publicSettings.twitter_url || SOCIAL_LINKS.x || undefined}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"

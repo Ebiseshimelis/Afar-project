@@ -28,7 +28,11 @@ import { useAuth } from "@/lib/auth";
 
 import { getNews, type NewsItem } from "@/services/newsService";
 import { getEvents, type EventItem } from "@/services/eventService";
-import { getTenders, type Tender } from "@/services/tenderService";
+import {
+  getTenders,
+  getTenderStatus,
+  type Tender,
+} from "@/services/tenderService";
 import { getVacancies } from "@/services/vacancyService";
 import { getPublications } from "@/services/publicationService";
 import { getMultimedia } from "@/services/multimediaService";
@@ -1052,7 +1056,7 @@ function Dashboard() {
                           <td className="px-5 py-4">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-semibold text-primary">
                               <CheckCircle2 className="h-3 w-3" />
-                              {tender.status || "Open"}
+                              {getTenderStatus(tender)}
                             </span>
                           </td>
 

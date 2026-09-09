@@ -1,4 +1,4 @@
-import { getAdminToken } from "./authService";
+import { API_BASE, API_ORIGIN, getAdminToken } from "./authService";
 
 export type Directorate = {
   id: number;
@@ -64,10 +64,6 @@ type ApiResponse = {
   data: ApiDirectorate[];
 };
 
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:8001/api/v1";
-
 /**
  * Convert a Laravel public-storage path into
  * a browser URL.
@@ -89,7 +85,7 @@ function makeStorageUrl(
 
   const cleanPath = path.replace(/^\/+/, "");
 
-  return `http://127.0.0.1:8001/storage/${cleanPath}`;
+  return `${API_ORIGIN}/storage/${cleanPath}`;
 }
 
 /**

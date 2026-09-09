@@ -16,7 +16,17 @@ import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 /* API / Storage                                                       */
 /* ------------------------------------------------------------------ */
 
-export const API_BASE = "http://127.0.0.1:8001/api/v1";
+const DEFAULT_API_BASE = "/api/v1";
+export const API_BASE =
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  DEFAULT_API_BASE;
+export const API_ORIGIN =
+  API_BASE.replace(/\/api\/v1\/?$/, "") ||
+  (typeof window !== "undefined" ? window.location.origin : "");
+
+const DEMO_AUTH_ENABLED =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_ENABLE_DEMO_AUTH !== "false";
 
 /*
  * The existing application uses "admin_token" in localStorage.
@@ -234,6 +244,13 @@ export async function login(
       }),
     });
   } catch {
+    if (!DEMO_AUTH_ENABLED) {
+      throw new AuthError(
+        "Unable to connect to the server. Please make sure the Laravel API is running.",
+        0,
+      );
+    }
+
     return demoLogin(email, password, loginType);
   }
 
@@ -294,7 +311,7 @@ export async function me(): Promise<AuthUser | null> {
    * Check demo session only as a fallback.
    */
   if (!token) {
-    return demoSession();
+    return DEMO_AUTH_ENABLED ? demoSession() : null;
   }
 
   let res: Response;
@@ -302,7 +319,7 @@ export async function me(): Promise<AuthUser | null> {
   try {
     res = await authFetch("/auth/me");
   } catch {
-    return demoSession();
+    return DEMO_AUTH_ENABLED ? demoSession() : null;
   }
 
   if (
@@ -359,7 +376,7 @@ export async function forgotPassword(email: string): Promise<void> {
 
   try {
     res = await fetch(
-      "http://127.0.0.1:8001/api/forgot-password",
+      `${API_BASE.replace(/\/api\/v1$/, "")}/api/forgot-password`,
       {
         method: "POST",
         headers: {
@@ -398,7 +415,7 @@ export async function resetPassword(
 
   try {
     res = await fetch(
-      "http://127.0.0.1:8001/api/reset-password",
+      `${API_BASE.replace(/\/api\/v1$/, "")}/api/reset-password`,
       {
         method: "POST",
         headers: {

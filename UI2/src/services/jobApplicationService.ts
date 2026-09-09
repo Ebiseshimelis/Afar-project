@@ -1,5 +1,7 @@
 import { getToken } from "@/services/authService";
 
+import { API_BASE, API_ORIGIN } from "@/services/authService";
+
 export type JobApplicationStatus =
   | "submitted"
   | "reviewing"
@@ -48,7 +50,7 @@ type PaginatedApplications = {
   total: number;
 };
 
-const API_BASE_URL = "http://127.0.0.1:8001/api/v1";
+const API_BASE_URL = API_BASE;
 
 function getAuthHeaders(): HeadersInit {
   const token = getToken();
@@ -350,5 +352,5 @@ export function getResumeUrl(
     return resumePath;
   }
 
-  return `http://127.0.0.1:8001/storage/${resumePath}`;
+  return `${API_ORIGIN}/storage/${resumePath}`;
 }

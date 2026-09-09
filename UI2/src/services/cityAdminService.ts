@@ -1,4 +1,4 @@
-import { getToken } from "@/services/authService";
+import { API_BASE, API_ORIGIN, getToken } from "@/services/authService";
 export type CityAdmin = {
   id: string;
   name: string;
@@ -24,8 +24,6 @@ export type CityAdminFormData = {
   image?: File | null;
 };
 
-const API_BASE_URL = "http://127.0.0.1:8001/api/v1";
-
 function mapCityAdmin(item: any): CityAdmin {
   return {
     id: String(item.id),
@@ -45,11 +43,11 @@ function mapCityAdmin(item: any): CityAdmin {
       ? String(item.image_path).startsWith("http")
         ? String(item.image_path)
         : String(item.image_path).startsWith("/storage/")
-          ? `http://127.0.0.1:8001${String(item.image_path)}`
+          ? `${API_ORIGIN}${String(item.image_path)}`
           : String(item.image_path).startsWith("storage/")
-            ? `http://127.0.0.1:8001/${String(item.image_path)}`
+            ? `${API_ORIGIN}/${String(item.image_path)}`
             : String(item.image_path).includes("city-admins/")
-              ? `http://127.0.0.1:8001/storage/${String(
+              ? `${API_ORIGIN}/storage/${String(
                 item.image_path
               ).replace(/^\/+/, "")}`
            : String(item.image_path)
@@ -64,7 +62,7 @@ function mapCityAdmin(item: any): CityAdmin {
 */
 
 export async function getCityAdmins(): Promise<CityAdmin[]> {
-  const response = await fetch(`${API_BASE_URL}/city-admins`, {
+  const response = await fetch(`${API_BASE}/city-admins`, {
     headers: {
       Accept: "application/json",
     },

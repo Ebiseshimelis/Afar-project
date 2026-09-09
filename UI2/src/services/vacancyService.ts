@@ -1,4 +1,4 @@
-import { getToken } from "@/services/authService";
+import { API_BASE, getToken } from "@/services/authService";
 export type VacancyItem = {
   id: number;
 
@@ -52,8 +52,7 @@ export type CreateVacancyData = {
 export type UpdateVacancyData =
   Partial<CreateVacancyData>;
 
-const API_BASE_URL =
-  "http://127.0.0.1:8001/api/v1";
+const API_BASE_URL = API_BASE;
 
 function getAuthHeaders(): HeadersInit {
   const token =

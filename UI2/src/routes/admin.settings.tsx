@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import {
   AdminLayout,
   AdminPageHeader,
@@ -9,7 +9,6 @@ import {
   Globe,
   LayoutTemplate,
   Loader2,
-  Navigation as NavIcon,
   Palette,
   Save,
   Settings as SettingsIcon,
@@ -20,7 +19,6 @@ import { toast } from "sonner";
 import {
   getSystemSettings,
   updateSystemSettings,
-  type NavigationItem,
   type SystemSettings,
 } from "@/services/systemSettingService";
 
@@ -37,9 +35,7 @@ export const Route = createFileRoute("/admin/settings")({
 const TABS = [
   { key: "general", label: "General", icon: SettingsIcon },
   { key: "portal", label: "Portal", icon: Globe },
-  { key: "navigation", label: "Navigation", icon: NavIcon },
   { key: "homepage", label: "Homepage", icon: LayoutTemplate },
-  { key: "appearance", label: "Appearance", icon: Palette },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -66,10 +62,9 @@ const EMPTY_SETTINGS: SystemSettings = {
   allow_admin_registration: true,
 
   navigation_items: [],
-
-  primary_color: "Navy",
-  corner_radius: "Rounded (default)",
-  density: "Comfortable",
+  primary_color: "",
+  corner_radius: "",
+  density: "",
 };
 
 function SettingsAdmin() {
@@ -250,22 +245,8 @@ function SettingsAdmin() {
             />
           )}
 
-          {tab === "navigation" && (
-            <NavigationSettings
-              settings={settings}
-              updateSetting={updateSetting}
-            />
-          )}
-
           {tab === "homepage" && (
             <HomepageSettings
-              settings={settings}
-              updateSetting={updateSetting}
-            />
-          )}
-
-          {tab === "appearance" && (
-            <AppearanceSettings
               settings={settings}
               updateSetting={updateSetting}
             />
@@ -499,114 +480,6 @@ function PortalSettings({
   );
 }
 
-function NavigationSettings({
-  settings,
-  updateSetting,
-}: SettingsProps) {
-  const items = [...settings.navigation_items].sort(
-    (a, b) => a.order - b.order,
-  );
-
-  function updateItems(nextItems: NavigationItem[]) {
-    updateSetting(
-      "navigation_items",
-      nextItems.map((item, index) => ({
-        ...item,
-        order: index + 1,
-      })),
-    );
-  }
-
-  function toggleVisibility(index: number) {
-    const next = [...items];
-
-    next[index] = {
-      ...next[index],
-      visible: !next[index].visible,
-    };
-
-    updateItems(next);
-  }
-
-  function moveItem(index: number, direction: -1 | 1) {
-    const target = index + direction;
-
-    if (target < 0 || target >= items.length) {
-      return;
-    }
-
-    const next = [...items];
-
-    [next[index], next[target]] = [
-      next[target],
-      next[index],
-    ];
-
-    updateItems(next);
-  }
-
-  return (
-    <div>
-      <p className="text-sm text-muted-foreground">
-        Order determines menu placement on the public portal.
-      </p>
-
-      <ul className="mt-4 divide-y rounded-lg border">
-        {items.map((item, index) => (
-          <li
-            key={item.label}
-            className="flex items-center justify-between gap-4 px-4 py-3"
-          >
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-secondary text-xs font-semibold">
-                {index + 1}
-              </span>
-
-              <span className="truncate text-sm font-medium">
-                {item.label}
-              </span>
-            </div>
-
-            <div className="flex shrink-0 items-center gap-3">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={index === 0}
-                  onClick={() => moveItem(index, -1)}
-                  className="rounded-md p-1 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
-                  aria-label={`Move ${item.label} up`}
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </button>
-
-                <button
-                  type="button"
-                  disabled={index === items.length - 1}
-                  onClick={() => moveItem(index, 1)}
-                  className="rounded-md p-1 hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-30"
-                  aria-label={`Move ${item.label} down`}
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-              </div>
-
-              <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={item.visible}
-                  onChange={() => toggleVisibility(index)}
-                  className="rounded border"
-                />
-                Visible
-              </label>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 function HomepageSettings({
   settings,
   updateSetting,
@@ -675,93 +548,3 @@ function HomepageSettings({
   );
 }
 
-function AppearanceSettings({
-  settings,
-  updateSetting,
-}: SettingsProps) {
-  const swatches = [
-    {
-      name: "Navy",
-      color: "oklch(0.28 0.06 260)",
-    },
-    {
-      name: "Gold",
-      color: "oklch(0.78 0.14 80)",
-    },
-    {
-      name: "Emerald",
-      color: "oklch(0.65 0.15 160)",
-    },
-    {
-      name: "Ruby",
-      color: "oklch(0.58 0.18 25)",
-    },
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <div className="text-sm font-medium">
-          Primary color
-        </div>
-
-        <div className="mt-3 flex gap-3">
-          {swatches.map((s) => {
-            const active =
-              settings.primary_color === s.name;
-
-            return (
-              <button
-                key={s.name}
-                type="button"
-                onClick={() =>
-                  updateSetting("primary_color", s.name)
-                }
-                className={
-                  "grid h-12 w-12 place-items-center rounded-xl border-2 " +
-                  (active
-                    ? "border-primary"
-                    : "border-transparent hover:border-primary")
-                }
-                style={{ background: s.color }}
-                aria-label={s.name}
-                aria-pressed={active}
-              >
-                {active && (
-                  <span className="h-2 w-2 rounded-full bg-white shadow" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <Field label="Corner radius">
-        <select
-          value={settings.corner_radius}
-          onChange={(e) =>
-            updateSetting("corner_radius", e.target.value)
-          }
-          className={input}
-        >
-          <option>Rounded (default)</option>
-          <option>Sharp</option>
-          <option>Pill</option>
-        </select>
-      </Field>
-
-      <Field label="Density">
-        <select
-          value={settings.density}
-          onChange={(e) =>
-            updateSetting("density", e.target.value)
-          }
-          className={input}
-        >
-          <option>Comfortable</option>
-          <option>Compact</option>
-        </select>
-      </Field>
-    </div>
-  );
-}

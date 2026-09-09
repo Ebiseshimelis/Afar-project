@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 
 import {
   AdminLayout,
@@ -35,8 +35,6 @@ import {
 } from "react";
 
 import { toast } from "sonner";
-import { API_ORIGIN } from "@/services/authService";
-import { useAuth } from "@/lib/auth";
 
 export const Route =
   createFileRoute("/admin/news")({
@@ -56,7 +54,6 @@ export const Route =
   });
 
 function NewsAdmin() {
-  const { can } = useAuth();
   const [news, setNews] =
     useState<any[]>([]);
 
@@ -721,7 +718,7 @@ function NewsAdmin() {
                           ).startsWith(
                             "news/"
                           )
-                            ? `${API_ORIGIN}/storage/${String(
+                            ? `http://127.0.0.1:8000/storage/${String(
                                 viewingNews.imagePath
                               )}`
                             : `/${String(
@@ -850,7 +847,7 @@ function NewsAdmin() {
                     <div className="rounded-xl border bg-background p-4">
                       <p className="whitespace-pre-wrap text-sm leading-8">
                         {viewingNews.contentAm ||
-                          "ይዘቱ አልተገኘም"}
+                          "ምንም የአማርኛ ይዘት የለም።"}
                       </p>
                     </div>
                   </div>
@@ -959,7 +956,7 @@ function NewsAdmin() {
                         e.target.value
                       )
                     }
-                    placeholder="የዜናውን ርዕስ ያስገቡ"
+                    placeholder="የዜና ርዕስ"
                     disabled={saving}
                     className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 disabled:opacity-50"
                   />
@@ -1000,7 +997,7 @@ function NewsAdmin() {
                         e.target.value
                       )
                     }
-                    placeholder="ይዘቱን ያስገቡ"
+                    placeholder="የዜና ይዘት"
                     rows={5}
                     disabled={saving}
                     className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 disabled:opacity-50"
@@ -1514,4 +1511,3 @@ function NewsAdmin() {
     </AdminLayout>
   );
 }
-

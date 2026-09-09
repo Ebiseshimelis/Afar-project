@@ -18,7 +18,8 @@ export const Route = createFileRoute("/admin/backgrounds")({
   component: BackgroundsAdmin,
 });
 
-const SECTIONS = Object.keys(DEFAULT_SECTION_BACKGROUNDS) as SectionKey[];
+const SECTIONS = (Object.keys(DEFAULT_SECTION_BACKGROUNDS) as SectionKey[])
+  .filter((key) => key !== "multimedia");
 
 function BackgroundsAdmin() {
   const { can } = useAuth();

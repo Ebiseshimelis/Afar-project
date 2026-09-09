@@ -51,6 +51,7 @@ type AdminPath =
   | "/admin/city-admins"
   | "/admin/directory"
   | "/admin/users"
+  | "/admin/accounts"
   | "/admin/roles"
   | "/admin/messages"
   | "/admin/notifications"
@@ -574,7 +575,7 @@ export function AdminLayout({
                 </span>
 
                 <kbd className="ml-auto hidden rounded border bg-secondary px-1.5 py-0.5 font-mono text-[10px] text-foreground/60 sm:inline-block">
-                  ?K
+                  Ctrl+K
                 </kbd>
               </button>
 

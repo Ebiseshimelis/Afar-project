@@ -1,4 +1,6 @@
-const API_BASE_URL = "http://127.0.0.1:8001/api/v1";
+import { API_BASE } from "@/services/authService";
+
+const API_BASE_URL = API_BASE;
 
 export interface ContactMessageData {
   full_name: string;

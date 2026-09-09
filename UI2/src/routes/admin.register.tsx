@@ -11,8 +11,6 @@ import { FormEvent, useEffect, useState } from "react";
 import logo from "@/assets/logo.png";
 import { getSetupStatus, registerAdmin } from "@/services/staffSetupService";
 
-const API_BASE = "http://127.0.0.1:8001/api/v1";
-
 export const Route = createFileRoute("/admin/register")({
   component: AdminRegisterPage,
   head: () => ({

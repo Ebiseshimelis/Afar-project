@@ -6,11 +6,12 @@ import {
 } from "@/services/publicationService";
 import { FileText, Eye, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { API_ORIGIN } from "@/services/authService";
 
 export const Route = createFileRoute("/_portal/publications")({
   head: () => ({
     meta: [
-      { title: "Publications â€” Afar UDCB" },
+      { title: "Publications - Afar UDCB" },
       {
         name: "description",
         content: "Strategies, reports, manuals, and policy documents.",
@@ -29,10 +30,10 @@ function getFileUrl(filePath: string): string {
   }
 
   if (filePath.startsWith("/")) {
-    return `http://127.0.0.1:8001${filePath}`;
+    return `${API_ORIGIN}${filePath}`;
   }
 
-  return `http://127.0.0.1:8001/storage/${filePath}`;
+  return `${API_ORIGIN}/storage/${filePath}`;
 }
 
 function getFileExtension(filePath: string): string {
@@ -268,21 +269,20 @@ function PublicationsPage() {
                           ? new Date(
                               publication.published_at,
                             ).toLocaleDateString()
-                          : "â€”"}
+                          : ""}
                       </td>
 
                       <td className="px-5 py-4 text-right">
                         {publication.file_path ? (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedPublication(publication)
-                            }
+                          <a
+                            href={getFileUrl(publication.file_path)}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             View
-                          </button>
+                          </a>
                         ) : (
                           <span className="text-xs text-muted-foreground">
                             No file

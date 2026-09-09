@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        ->call([
+        $this->call([
             RoleSeeder::class,
         ]);
 
@@ -134,5 +134,6 @@ class DatabaseSeeder extends Seeder
         ;
     }
 }
+
 
 

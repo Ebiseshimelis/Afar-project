@@ -20,6 +20,7 @@ import {
   createTender,
   updateTender,
   deleteTender,
+  getTenderStatus,
   type Tender,
   type CreateTenderData,
 } from "@/services/tenderService";
@@ -52,12 +53,12 @@ function getLocalizedText(
 }
 
 function formatDate(value?: string | null): string {
-  if (!value) return "â€”";
+  if (!value) return "—";
 
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return "â€”";
+    return "—";
   }
 
   return date.toLocaleDateString();
@@ -91,6 +92,7 @@ type FormState = {
   opensAt: string;
   closesAt: string;
   publishedAt: string;
+  file: File | null;
 
 };
 
@@ -104,6 +106,7 @@ const emptyForm: FormState = {
   opensAt: "",
   closesAt: "",
   publishedAt: "",
+  file: null,
 };
 
 function TendersAdmin() {
@@ -226,6 +229,7 @@ function TendersAdmin() {
         opensAt: toDateTimeLocal(tender.opens_at),
         closesAt: toDateTimeLocal(tender.closes_at),
         publishedAt: toDateTimeLocal(tender.published_at),
+        file: null,
       });
 
       setFormOpen(true);
@@ -280,12 +284,12 @@ function TendersAdmin() {
 
         status: form.status,
 
-        published_at:
-          form.publishedAt
-            ? form.publishedAt
-            : null,
-      };
+        published_at: form.publishedAt
+          ? form.publishedAt
+          : null,
 
+        file: form.file,
+      };
       if (editingId !== null) {
         await updateTender(editingId, payload);
 
@@ -452,7 +456,7 @@ function TendersAdmin() {
               ) : (
                 filtered.map((tender) => {
                   const status =
-                    tender.status || "draft";
+                    getTenderStatus(tender);
 
                   return (
                     <tr
@@ -472,14 +476,14 @@ function TendersAdmin() {
                       <td className="px-5 py-3 text-muted-foreground">
                         {tender.category_id
                           ? `Category ${tender.category_id}`
-                          : "â€”"}
+                          : "—"}
                       </td>
 
                       <td className="px-5 py-3">
                         <span
                           className={
                             "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase " +
-                            (status === "published"
+                            (status === "Open"
                               ? "bg-success/15 text-success"
                               : "bg-muted text-muted-foreground")
                           }
@@ -634,7 +638,7 @@ function TendersAdmin() {
                       })
                     }
                     className="h-10 w-full rounded-lg border bg-background px-3 text-sm"
-                    placeholder="á‹¨áŒ¨áˆ¨á‰³ áˆ­á‹•áˆµ"
+                    placeholder="የጨረታ ርዕስ ያስገቡ"
                   />
                 </div>
               </div>
@@ -674,11 +678,38 @@ function TendersAdmin() {
                     }
                     rows={5}
                     className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
-                    placeholder="á‹¨áŒ¨áˆ¨á‰³ áˆ˜áŒáˆˆáŒ«"
+                    placeholder="የጨረታ መግለጫ ያስገቡ"
                   />
                 </div>
               </div>
 
+              <div className="rounded-lg border border-dashed p-4">
+                <label className="mb-1 block text-sm font-medium">
+                  Tender Document / Attachment
+                </label>
+
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      file: e.target.files?.[0] ?? null,
+                    })
+                  }
+                  className="block w-full text-sm"
+                />
+
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Optional. Accepted: PDF, DOC, DOCX, JPG, JPEG, PNG, WEBP. Maximum 2 MB.
+                </p>
+
+                {form.file && (
+                  <p className="mt-2 text-sm">
+                    Selected file: <span className="font-medium">{form.file.name}</span>
+                  </p>
+                )}
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1 block text-sm font-medium">
@@ -844,7 +875,7 @@ function TendersAdmin() {
 
                 <p className="mt-1 font-medium">
                   {selectedTender.title?.en ||
-                    "â€”"}
+                    "—"}
                 </p>
               </div>
 
@@ -855,7 +886,7 @@ function TendersAdmin() {
 
                 <p className="mt-1 font-medium">
                   {selectedTender.title?.am ||
-                    "â€”"}
+                    "—"}
                 </p>
               </div>
 
@@ -867,7 +898,7 @@ function TendersAdmin() {
 
                   <p className="mt-1 whitespace-pre-wrap text-sm">
                     {selectedTender.content?.en ||
-                      "â€”"}
+                      "—"}
                   </p>
                 </div>
 
@@ -878,7 +909,7 @@ function TendersAdmin() {
 
                   <p className="mt-1 whitespace-pre-wrap text-sm">
                     {selectedTender.content?.am ||
-                      "â€”"}
+                      "—"}
                   </p>
                 </div>
               </div>
@@ -891,7 +922,7 @@ function TendersAdmin() {
 
                   <p className="mt-1">
                     {selectedTender.category_id ??
-                      "â€”"}
+                      "—"}
                   </p>
                 </div>
 
@@ -901,8 +932,9 @@ function TendersAdmin() {
                   </p>
 
                   <p className="mt-1 capitalize">
-                    {selectedTender.status ||
-                      "draft"}
+                    {getTenderStatus(
+                      selectedTender
+                    )}
                   </p>
                 </div>
 
@@ -961,6 +993,14 @@ function TendersAdmin() {
     </AdminLayout>
   );
 }
+
+
+
+
+
+
+
+
 
 
 

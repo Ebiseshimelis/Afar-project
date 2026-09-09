@@ -31,6 +31,10 @@ import { getCityAdmins } from "@/services/cityAdminService";
 import { getPortfolios, type PortfolioItem } from "@/services/portfolioService";
 import { useSectionBackground } from "@/lib/site-images";
 import afarHero from "@/assets/background.png";
+import {
+  getPublicSystemSettings,
+  type PublicSystemSettings,
+} from "@/services/systemSettingService";
 
 export const Route = createFileRoute("/_portal/")({
   head: () => ({
@@ -102,6 +106,8 @@ function isTenderOpen(
 
 function HomePage() {
   const homeBackground = useSectionBackground("home");
+  const [publicSettings, setPublicSettings] =
+    useState<Partial<PublicSystemSettings>>({});
   const [latestNews, setLatestNews] =
     useState<NewsItem[]>([]);
 
@@ -135,6 +141,14 @@ function HomePage() {
 
   const [eventsLoading, setEventsLoading] =
     useState(true);
+
+  useEffect(() => {
+    void getPublicSystemSettings()
+      .then(setPublicSettings)
+      .catch((error) => {
+        console.error("Failed to load public system settings:", error);
+      });
+  }, []);
 
   useEffect(() => {
     async function loadNews() {
@@ -424,23 +438,17 @@ function HomePage() {
             <div className="text-primary-foreground">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-medium text-gold ring-1 ring-primary-foreground/20">
                 <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-                Official Government Portal
+                {publicSettings.portal_tagline || "Official Government Portal"}
               </div>
 
               <h1 className="mt-4 font-display text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-                Building a modern,{" "}
-                <span className="text-gold">
-                  connected
-                </span>{" "}
-                Afar
+                {publicSettings.hero_headline || "Building a modern, connected Afar"}
               </h1>
 
               <p className="mt-4 max-w-xl text-lg text-primary-foreground/80">
-                The Afar Regional State Urban
-                Development and Construction Bureau
-                delivers services, information, and
-                opportunities to citizens,
-                contractors, and partners.
+                {publicSettings.hero_subheadline ||
+                  publicSettings.about_summary ||
+                  "The Afar Regional State Urban Development and Construction Bureau delivers services, information, and opportunities to citizens, contractors, and partners."}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -585,13 +593,15 @@ function HomePage() {
         </div>
       </section>
 
-      <SectionHeading
-        eyebrow="Newsroom"
-        title="Latest News"
-        href="/news"
-      />
+      {publicSettings.show_news !== false && (
+        <>
+          <SectionHeading
+            eyebrow="Newsroom"
+            title="Latest News"
+            href="/news"
+          />
 
-      <section className="mx-auto max-w-7xl px-6 pb-14">
+          <section className="mx-auto max-w-7xl px-6 pb-14">
         {newsLoading ? (
           <EmptyMessage message="Loading latest news..." />
         ) : latestNews.length === 0 ? (
@@ -668,10 +678,13 @@ function HomePage() {
             })}
           </div>
         )}
-      </section>
+          </section>
+        </>
+      )}
 
       <section className="border-y bg-secondary/40 py-14">
         <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-2">
+          {publicSettings.show_tenders !== false && (
           <div>
             <SectionHeading
               eyebrow="Procurement"
@@ -745,6 +758,7 @@ function HomePage() {
               )}
             </div>
           </div>
+          )}
 
           <div>
             <SectionHeading
@@ -864,13 +878,15 @@ function HomePage() {
         </div>
       </section>
 
-      <SectionHeading
-        eyebrow="Calendar"
-        title="Upcoming Events"
-        href="/events"
-      />
+      {publicSettings.show_events !== false && (
+        <>
+          <SectionHeading
+            eyebrow="Calendar"
+            title="Upcoming Events"
+            href="/events"
+          />
 
-      <section className="mx-auto max-w-7xl px-6 pb-14">
+          <section className="mx-auto max-w-7xl px-6 pb-14">
         {eventsLoading ? (
           <EmptyMessage message="Loading upcoming events..." />
         ) : upcomingEvents.length ===
@@ -940,7 +956,9 @@ function HomePage() {
             )}
           </div>
         )}
-      </section>
+          </section>
+        </>
+      )}
 
       <section className="mx-auto max-w-7xl px-6 pb-20">
         <div className="overflow-hidden rounded-2xl gradient-primary text-primary-foreground shadow-elegant">

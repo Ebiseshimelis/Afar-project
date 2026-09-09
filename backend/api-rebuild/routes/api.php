@@ -79,6 +79,14 @@ Route::prefix('v1')->group(function () {
         );
 
         /*
+        | First Super Admin setup
+        */
+        Route::post(
+            '/super-admin',
+            [StaffSetupController::class, 'createFirstSuperAdmin']
+        );
+
+        /*
         | Admin account registration request
         */
         Route::post(
@@ -277,6 +285,17 @@ Route::prefix('v1')->group(function () {
     Route::post(
         '/feedback',
         [FeedbackController::class, 'store']
+    );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Public System Settings
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/settings',
+        [SystemSettingController::class, 'public']
     );
 });
 
@@ -755,6 +774,7 @@ Route::prefix('v1')
         [SystemSettingController::class, 'update']
     )->middleware('permission:settings.update');
 });
+
 
 
 

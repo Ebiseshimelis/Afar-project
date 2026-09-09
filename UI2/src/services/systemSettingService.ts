@@ -1,4 +1,4 @@
-import { authFetch } from "@/services/authService";
+import { API_BASE, authFetch } from "@/services/authService";
 
 export type NavigationItem = {
   label: string;
@@ -34,6 +34,22 @@ export type SystemSettings = {
   density: string;
 };
 
+export type PublicSystemSettings = Pick<
+  SystemSettings,
+  | "organization_name"
+  | "contact_email"
+  | "phone"
+  | "portal_tagline"
+  | "about_summary"
+  | "facebook_url"
+  | "twitter_url"
+  | "hero_headline"
+  | "hero_subheadline"
+  | "show_news"
+  | "show_tenders"
+  | "show_events"
+>;
+
 export async function getSystemSettings(): Promise<SystemSettings> {
   const response = await authFetch("/admin/settings");
 
@@ -42,6 +58,23 @@ export async function getSystemSettings(): Promise<SystemSettings> {
   if (!response.ok) {
     throw new Error(
       body?.message || "Failed to load system settings.",
+    );
+  }
+
+  return body?.data ?? {};
+}
+
+export async function getPublicSystemSettings(): Promise<PublicSystemSettings> {
+  const response = await fetch(`${API_BASE}/settings`, {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
+
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      body?.message || "Failed to load public system settings.",
     );
   }
 

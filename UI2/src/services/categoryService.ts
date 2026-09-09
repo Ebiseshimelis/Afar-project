@@ -1,3 +1,5 @@
+import { API_BASE } from "@/services/authService";
+
 export type Category = {
   id: number;
   type: string;
@@ -8,8 +10,7 @@ export type Category = {
   slug: string;
 };
 
-const CATEGORY_API_URL =
-  "http://127.0.0.1:8001/api/v1/categories";
+const CATEGORY_API_URL = `${API_BASE}/categories`;
 
 export async function getCategories(): Promise<Category[]> {
   const response = await fetch(CATEGORY_API_URL, {

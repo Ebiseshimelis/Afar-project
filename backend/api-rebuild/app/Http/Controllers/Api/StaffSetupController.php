@@ -35,6 +35,65 @@ class StaffSetupController extends Controller
     }
 
     /**
+     * Create the first Super Admin account.
+     *
+     * This route is intentionally public only before the first
+     * Super Admin exists. Once a Super Admin is present, the route
+     * refuses further creation requests.
+     */
+    public function createFirstSuperAdmin(Request $request): JsonResponse
+    {
+        $superAdminExists = User::where('role', 'super_admin')->exists();
+
+        if ($superAdminExists) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'The first Super Admin has already been created.',
+            ], 409);
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email'),
+            ],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+            ],
+        ]);
+
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'super_admin',
+            'is_active' => true,
+            'account_status' => 'approved',
+            'permissions' => ['*'],
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Initial Super Admin created successfully.',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'is_active' => (bool) $user->is_active,
+                'account_status' => $user->account_status,
+                'permissions' => $user->assignedRole ? $user->assignedRole->permissionKeys() : ['*'],
+            ],
+        ], 201);
+    }
+
+    /**
      * Register a new Admin account.
      *
      * Registration is controlled by the system setting:
