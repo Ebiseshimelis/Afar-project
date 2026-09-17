@@ -1,4 +1,4 @@
-import { getToken } from "@/services/authService";
+﻿import { getMediaUrl, getToken } from "@/services/authService";
 export type EventItem = {
   id: number;
   category_id: number;
@@ -109,7 +109,7 @@ export async function getEvents(): Promise<EventItem[]> {
 
   const result = await parseResponse(response);
 
-  return Array.isArray(result?.data) ? result.data : [];
+  return Array.isArray(result?.data) ? result.data.map((item: EventItem) => ({ ...item, image_path: getMediaUrl(item.image_path) || null })) : [];
 }
 
 /* =========================
@@ -135,7 +135,7 @@ export async function getEvent(
     throw new Error("Invalid event response.");
   }
 
-  return result.data;
+  return { ...result.data, image_path: getMediaUrl(result.data.image_path) || null };
 }
 
 /* =========================
@@ -250,7 +250,7 @@ export async function createEvent(
     );
   }
 
-  return result.data;
+  return { ...result.data, image_path: getMediaUrl(result.data.image_path) || null };
 }
 
 /* =========================
@@ -282,7 +282,7 @@ export async function updateEvent(
     );
   }
 
-  return result.data;
+  return { ...result.data, image_path: getMediaUrl(result.data.image_path) || null };
 }
 
 /* =========================
@@ -304,3 +304,4 @@ export async function deleteEvent(
 
   return true;
 }
+

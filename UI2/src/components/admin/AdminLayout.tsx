@@ -154,7 +154,6 @@ const NAV_GROUPS: NavGroup[] = [
         label: "Job Applications",
         icon: FileText,
         permission: "job_applications.view",
-        alwaysVisible: true,
       },
       {
         to: "/admin/publications",
@@ -392,9 +391,19 @@ export function AdminLayout({
 
         if (item.superAdminOnly) return false;
 
+        /*
+         * Job Applications is intentionally NOT part of the
+         * legacy alwaysVisible behavior.
+         *
+         * It must only appear when the current user has
+         * job_applications.view.
+         */
+        if (item.to === "/admin/job-applications") {
+          return can("job_applications.view");
+        }
+
         if (item.alwaysVisible) return true;
 
-        
         if (item.to === "/admin/messages") {
           return (
             can("messages.view") ||
@@ -406,7 +415,6 @@ export function AdminLayout({
 
         if (!item.permission) return true;
 
-        
         return can(item.permission);
       }),
     })).filter((group) => group.items.length > 0);
@@ -1583,27 +1591,4 @@ export function EmptyState({
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

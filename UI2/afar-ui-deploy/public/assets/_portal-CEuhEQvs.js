@@ -1,0 +1,1 @@
+import{n as e}from"./PortalLayout-2ZF9KEd4.js";var t=e;export{t as component};

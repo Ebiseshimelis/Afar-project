@@ -1,4 +1,4 @@
-import type { StaffRole } from "@/lib/permissions";
+﻿import type { StaffRole } from "@/lib/permissions";
 import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 
 /**
@@ -17,12 +17,67 @@ import { ASSIGNABLE_MODULES, PERMISSION_ACTIONS } from "@/lib/permissions";
 /* ------------------------------------------------------------------ */
 
 const DEFAULT_API_BASE = "/api/v1";
+
 export const API_BASE =
   (import.meta.env.VITE_API_URL as string | undefined) ||
   DEFAULT_API_BASE;
+
 export const API_ORIGIN =
   API_BASE.replace(/\/api\/v1\/?$/, "") ||
   (typeof window !== "undefined" ? window.location.origin : "");
+
+/**
+ * Convert a Laravel storage-relative path into a browser URL.
+ *
+ * Examples:
+ *
+ * news/photo.jpg
+ * -> /storage/news/photo.jpg
+ *
+ * directorates/finance.jpg
+ * -> /storage/directorates/finance.jpg
+ *
+ * directorates/backgrounds/example.png
+ * -> /storage/directorates/backgrounds/example.png
+ *
+ * /storage/news/photo.jpg
+ * -> /storage/news/photo.jpg
+ *
+ * https://example.com/photo.jpg
+ * -> unchanged
+ *
+ * blob:/data:
+ * -> unchanged
+ */
+export function getMediaUrl(
+  path: string | null | undefined,
+  fallback = "",
+): string {
+  if (path === null || path === undefined) {
+    return fallback;
+  }
+
+  const value = String(path).trim();
+
+  if (!value) {
+    return fallback;
+  }
+
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:") ||
+    value.startsWith("data:")
+  ) {
+    return value;
+  }
+
+  const cleanPath = value
+    .replace(/^\/+/, "")
+    .replace(/^storage\/+/i, "");
+
+  return `${API_ORIGIN}/storage/${cleanPath}`;
+}
 
 const DEMO_AUTH_ENABLED =
   import.meta.env.DEV &&
@@ -114,10 +169,6 @@ export function getToken(): string | null {
 
 /**
  * Store/remove the Laravel Sanctum token.
- *
- * The main application token is stored in localStorage under
- * "admin_token" because the existing application already uses
- * this key.
  */
 function setToken(token: string | null) {
   if (typeof window === "undefined") {
@@ -129,10 +180,6 @@ function setToken(token: string | null) {
 
     window.localStorage.setItem(TOKEN_KEY, cleanToken);
 
-    /*
-     * Remove stale versions so the application has one
-     * authoritative authentication token.
-     */
     window.sessionStorage.removeItem(LEGACY_TOKEN_KEY);
     window.localStorage.removeItem(LEGACY_TOKEN_KEY);
   } else {
@@ -174,11 +221,6 @@ export async function authFetch(
 
   headers.set("Accept", "application/json");
 
-  /*
-   * Do not set Content-Type manually for FormData.
-   *
-   * The browser must generate the multipart boundary.
-   */
   if (!(init.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
@@ -272,9 +314,6 @@ export async function login(
 
   const token = extractToken(body);
 
-  /*
-   * A successful real API login MUST return a token.
-   */
   if (!token) {
     console.error(
       "Laravel login response did not contain a token:",
@@ -289,9 +328,6 @@ export async function login(
 
   setToken(token);
 
-  /*
-   * Real API authentication takes priority over demo authentication.
-   */
   if (typeof window !== "undefined") {
     window.localStorage.removeItem(DEMO_KEY);
   }
@@ -306,10 +342,6 @@ export async function login(
 export async function me(): Promise<AuthUser | null> {
   const token = getToken();
 
-  /*
-   * No Laravel token means there is no real API session.
-   * Check demo session only as a fallback.
-   */
   if (!token) {
     return DEMO_AUTH_ENABLED ? demoSession() : null;
   }

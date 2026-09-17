@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 import {
   AdminLayout,
@@ -103,7 +103,7 @@ function formatDate(
   value: string | null | undefined
 ) {
   if (!value) {
-    return "—";
+    return "â€”";
   }
 
   const date = new Date(value);
@@ -127,7 +127,8 @@ function getVacancyTitle(
 
 function JobApplicationsAdmin() {
   const { can } = useAuth();
-  const [applications, setApplications] =
+    const canViewApplications = can("job_applications.view");
+const [applications, setApplications] =
     useState<JobApplicationItem[]>([]);
 
   const [loading, setLoading] =
@@ -181,8 +182,13 @@ function JobApplicationsAdmin() {
   }
 
   useEffect(() => {
+    if (!canViewApplications) {
+      setLoading(false);
+      return;
+    }
+
     loadApplications();
-  }, [statusFilter]);
+  }, [statusFilter, canViewApplications]);
 
   async function handleSearch(
     event: React.FormEvent
@@ -477,7 +483,7 @@ function JobApplicationsAdmin() {
 
                         <td className="px-5 py-4 text-sm text-gray-600">
                           {application.phone ||
-                            "—"}
+                            "â€”"}
                         </td>
 
                         <td className="px-5 py-4">
@@ -821,6 +827,10 @@ function InfoItem({
   label: string;
   value: string | null | undefined;
 }) {
+  if (!canViewApplications) {
+    return <Navigate to="/admin" replace />;
+  }
+
   return (
     <div>
       <div className="text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -828,11 +838,12 @@ function InfoItem({
       </div>
 
       <div className="mt-1 whitespace-pre-wrap text-sm text-gray-900">
-        {value || "—"}
+        {value || "â€”"}
       </div>
     </div>
   );
 }
+
 
 
 

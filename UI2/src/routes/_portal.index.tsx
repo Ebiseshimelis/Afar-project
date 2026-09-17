@@ -1160,12 +1160,23 @@ function getEventContent(
 function getEventImage(
   imagePath: string,
 ): string {
-  return `/${String(imagePath).replace(
-    /^\/+/,
-    "",
-  )}`;
-}
+  const value = String(imagePath || "").trim();
 
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:") ||
+    value.startsWith("data:")
+  ) {
+    return value;
+  }
+
+  const cleanPath = value
+    .replace(/^\/+/, "")
+    .replace(/^storage\/+/i, "");
+
+  return `/storage/${cleanPath}`;
+}
 function formatDate(
   date:
     | string
@@ -1196,3 +1207,5 @@ function formatDate(
     },
   );
 }
+
+

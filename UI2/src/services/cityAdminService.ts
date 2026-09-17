@@ -1,4 +1,5 @@
-import { API_BASE, API_ORIGIN, getToken } from "@/services/authService";
+﻿import { API_BASE, getToken } from "@/services/authService";
+
 export type CityAdmin = {
   id: string;
   name: string;
@@ -40,18 +41,8 @@ function mapCityAdmin(item: any): CityAdmin {
     phone: item.phone || "",
 
     photo: item.image_path
-      ? String(item.image_path).startsWith("http")
-        ? String(item.image_path)
-        : String(item.image_path).startsWith("/storage/")
-          ? `${API_ORIGIN}${String(item.image_path)}`
-          : String(item.image_path).startsWith("storage/")
-            ? `${API_ORIGIN}/${String(item.image_path)}`
-            : String(item.image_path).includes("city-admins/")
-              ? `${API_ORIGIN}/storage/${String(
-                item.image_path
-              ).replace(/^\/+/, "")}`
-           : String(item.image_path)
-    : "",
+      ? new URL(item.image_path, window.location.origin).toString()
+      : "",
   };
 }
 
@@ -107,7 +98,7 @@ export async function createCityAdmin(
 
   const token = getToken();
 
-  const response = await fetch(`${API_BASE_URL}/city-admins`, {
+  const response = await fetch(`${API_BASE}/city-admins`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -166,21 +157,18 @@ export async function updateCityAdmin(
 
   const token = getToken();
 
-  const response = await fetch(
-    `${API_BASE_URL}/city-admins/${id}`,
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        ...(token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : {}),
-      },
-      body,
-    }
-  );
+  const response = await fetch(`${API_BASE}/city-admins/${id}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {}),
+    },
+    body,
+  });
 
   const result = await response.json();
 
@@ -199,25 +187,20 @@ export async function updateCityAdmin(
 |--------------------------------------------------------------------------
 */
 
-export async function deleteCityAdmin(
-  id: string
-): Promise<void> {
+export async function deleteCityAdmin(id: string): Promise<void> {
   const token = getToken();
 
-  const response = await fetch(
-    `${API_BASE_URL}/city-admins/${id}`,
-    {
-      method: "DELETE",
-      headers: {
-        Accept: "application/json",
-        ...(token
-          ? {
-              Authorization: `Bearer ${token}`,
-            }
-          : {}),
-      },
-    }
-  );
+  const response = await fetch(`${API_BASE}/city-admins/${id}`, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+      ...(token
+        ? {
+            Authorization: `Bearer ${token}`,
+          }
+        : {}),
+    },
+  });
 
   const result = await response.json();
 

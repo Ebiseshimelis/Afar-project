@@ -1,10 +1,95 @@
-import type { NewsItem } from "@/lib/mock-data";
-import { API_ORIGIN } from "@/services/authService";
-
-export type { NewsItem };
+﻿import type { NewsItem } from "@/lib/mock-data";
 import { API_BASE, getAdminToken } from "@/services/authService";
 
+export type { NewsItem };
+
 const NEWS_API_URL = `${API_BASE}/news`;
+
+/*
+|--------------------------------------------------------------------------
+| News image URL helper
+|--------------------------------------------------------------------------
+|
+| News images can come from two places:
+|
+| 1. Static frontend images:
+|      News1.jpg
+|      News2.jpg
+|      News3.jpg
+|
+|    These are served by the frontend from "/".
+|
+| 2. Laravel uploaded images:
+|      news/example.jpg
+|      storage/news/example.jpg
+|
+|    These are served by Laravel from "/storage/".
+|
+*/
+
+function getNewsImageUrl(
+  path: string | null | undefined,
+): string {
+  if (path === null || path === undefined) {
+    return "/News1.jpg";
+  }
+
+  const value = String(path).trim();
+
+  if (!value) {
+    return "/News1.jpg";
+  }
+
+  /*
+   * Already a complete URL or browser-generated URL.
+   */
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("blob:") ||
+    value.startsWith("data:")
+  ) {
+    return value;
+  }
+
+  const cleanPath = value.replace(/^\/+/, "");
+
+  /*
+   * Static frontend News images.
+   *
+   * Examples:
+   *   News1.jpg
+   *   News2.jpg
+   *   News3.jpg
+   *   News6.jpg
+   */
+  if (
+    /^News\d+\.(jpg|jpeg|png|webp)$/i.test(cleanPath)
+  ) {
+    return `/${cleanPath}`;
+  }
+
+  /*
+   * Laravel storage News images.
+   *
+   * Examples:
+   *   news/example.jpg
+   *   storage/news/example.jpg
+   */
+  const storagePath = cleanPath.replace(
+    /^storage\/+/i,
+    "",
+  );
+
+  const apiOrigin = API_BASE.replace(
+    /\/api\/v1\/?$/i,
+    "",
+  );
+
+  return `${apiOrigin}/storage/${storagePath}`;
+}
+
+const DEFAULT_NEWS_IMAGE = "/News1.jpg";
 
 export type AdminNewsData = {
   id: string;
@@ -35,9 +120,6 @@ function getAuthHeaders(): HeadersInit {
 |--------------------------------------------------------------------------
 | Public news mapper
 |--------------------------------------------------------------------------
-|
-| DO NOT CHANGE THE EXISTING IMAGE LOADER LOGIC.
-|
 */
 
 function mapNewsItem(item: any): NewsItem {
@@ -67,13 +149,9 @@ function mapNewsItem(item: any): NewsItem {
 
     date: item.published_at || "",
 
-    // Existing image loader — KEEP THIS.
-    image:
-      item.image_path
-        ? String(item.image_path).startsWith("news/")
-          ? `${API_ORIGIN}/storage/${String(item.image_path)}`
-          : `/${String(item.image_path).replace(/^\/+/, "")}`
-        : "/News1.jpg",
+    image: getNewsImageUrl(
+      item.image_path,
+    ) || DEFAULT_NEWS_IMAGE,
 
     author:
       item.author?.name ||
@@ -95,7 +173,7 @@ export async function getNews(): Promise<NewsItem[]> {
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch news: ${response.status}`
+      `Failed to fetch news: ${response.status}`,
     );
   }
 
@@ -115,10 +193,10 @@ export async function getNews(): Promise<NewsItem[]> {
 */
 
 export async function getNewsById(
-  id: string
+  id: string,
 ): Promise<NewsItem | null> {
   const response = await fetch(
-    `${NEWS_API_URL}/${id}`
+    `${NEWS_API_URL}/${id}`,
   );
 
   if (!response.ok) {
@@ -127,7 +205,7 @@ export async function getNewsById(
     }
 
     throw new Error(
-      `Failed to fetch news: ${response.status}`
+      `Failed to fetch news: ${response.status}`,
     );
   }
 
@@ -147,7 +225,7 @@ export async function getNewsById(
 */
 
 function mapAdminNewsItem(
-  item: any
+  item: any,
 ): AdminNewsData {
   return {
     id: String(item.id),
@@ -198,13 +276,13 @@ function mapAdminNewsItem(
 */
 
 export async function getAdminNewsById(
-  id: string
+  id: string,
 ): Promise<AdminNewsData> {
   const response = await fetch(
     `${NEWS_API_URL}/${id}`,
     {
       headers: getAuthHeaders(),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -228,12 +306,12 @@ export async function getAdminNewsById(
 
   if (!result?.data) {
     throw new Error(
-      "Invalid news response"
+      "Invalid news response",
     );
   }
 
   return mapAdminNewsItem(
-    result.data
+    result.data,
   );
 }
 
@@ -241,8 +319,6 @@ export async function getAdminNewsById(
 |--------------------------------------------------------------------------
 | Build News FormData
 |--------------------------------------------------------------------------
-|
-| This is important.
 |
 | Laravel receives:
 |
@@ -271,51 +347,44 @@ function buildNewsFormData(data: {
 
   formData.append(
     "title[en]",
-    data.titleEn
+    data.titleEn,
   );
 
   formData.append(
     "title[am]",
-    data.titleAm
+    data.titleAm,
   );
 
   formData.append(
     "content[en]",
-    data.contentEn
+    data.contentEn,
   );
 
   formData.append(
     "content[am]",
-    data.contentAm
+    data.contentAm,
   );
 
   formData.append(
     "category_id",
-    data.categoryId
+    data.categoryId,
   );
 
   formData.append(
     "status",
-    data.status
+    data.status,
   );
 
   /*
   |--------------------------------------------------------------------------
   | Published date
   |--------------------------------------------------------------------------
-  |
-  | datetime-local gives:
-  |
-  | 2026-08-14T15:30
-  |
-  | Laravel accepts this as a date.
-  |
   */
 
   if (data.publishedAt) {
     formData.append(
       "published_at",
-      data.publishedAt
+      data.publishedAt,
     );
   }
 
@@ -328,7 +397,7 @@ function buildNewsFormData(data: {
   if (data.image instanceof File) {
     formData.append(
       "image",
-      data.image
+      data.image,
     );
   }
 
@@ -360,7 +429,7 @@ export async function createNews(data: {
       method: "POST",
       headers: getAuthHeaders(),
       body: formData,
-    }
+    },
   );
 
   if (!response.ok) {
@@ -377,7 +446,7 @@ export async function createNews(data: {
 
       if (result?.errors) {
         const errors = Object.values(
-          result.errors
+          result.errors,
         )
           .flat()
           .join(" ");
@@ -398,7 +467,7 @@ export async function createNews(data: {
 
   if (!result?.data) {
     throw new Error(
-      "Invalid create news response"
+      "Invalid create news response",
     );
   }
 
@@ -435,7 +504,7 @@ export async function updateNews(data: {
 
   formData.append(
     "_method",
-    "PUT"
+    "PUT",
   );
 
   const response = await fetch(
@@ -444,7 +513,7 @@ export async function updateNews(data: {
       method: "POST",
       headers: getAuthHeaders(),
       body: formData,
-    }
+    },
   );
 
   if (!response.ok) {
@@ -461,7 +530,7 @@ export async function updateNews(data: {
 
       if (result?.errors) {
         const errors = Object.values(
-          result.errors
+          result.errors,
         )
           .flat()
           .join(" ");
@@ -482,7 +551,7 @@ export async function updateNews(data: {
 
   if (!result?.data) {
     throw new Error(
-      "Invalid update news response"
+      "Invalid update news response",
     );
   }
 
@@ -496,14 +565,14 @@ export async function updateNews(data: {
 */
 
 export async function deleteNews(
-  id: string
+  id: string,
 ) {
   const response = await fetch(
     `${NEWS_API_URL}/${id}`,
     {
       method: "DELETE",
       headers: getAuthHeaders(),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -526,4 +595,3 @@ export async function deleteNews(
 
   return true;
 }
-

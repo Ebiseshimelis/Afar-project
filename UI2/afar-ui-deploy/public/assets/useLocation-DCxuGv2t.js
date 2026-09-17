@@ -1,0 +1,1 @@
+import{n as e,t}from"./useStore-BI3_Wmfo.js";import{B as n}from"./index-ruWlaTNJ.js";function r(r){let i=e();return t(i.stores.location,n(r,i))}export{r as t};

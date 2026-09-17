@@ -114,10 +114,9 @@ function mapDirectorate(
     phone: d.phone || "",
 
     // Director photo
-    photo: makeStorageUrl(
-      d.photo_path,
-      "/land.jpg"
-    ),
+    photo: d.photo_path
+      ? `/${d.photo_path.split("/").pop()}`
+      : "/land.jpg",
 
     // Directorate hero/background
     background: makeStorageUrl(
@@ -210,6 +209,7 @@ export async function getDirectorate(
 
   return mapDirectorate(json.data as ApiDirectorate);
 }
+
 /**
  * Data used by the create/edit form.
  */
@@ -472,4 +472,3 @@ export async function deleteDirectorate(
 
   await parseResponse(response);
 }
-
